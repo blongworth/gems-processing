@@ -1,0 +1,31 @@
+---
+title: "Untitled"
+format: html
+---
+
+```{r}
+library(tidyverse)
+library(arrow)
+library(plotly)
+```
+
+```{r}
+df <- read_parquet("data/processed/valve_combined.parquet")
+
+df <- df %>%
+  filter(timestamp > "2025-01-01")
+```
+
+```{r}
+ggplot(df, aes(timestamp, voltage)) +
+  geom_line()
+```
+
+```{r}
+c <- df |> 
+  ggplot(aes(timestamp, current)) +
+  geom_line()
+  
+ggplotly(c)
+```
+
