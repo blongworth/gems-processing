@@ -1,0 +1,102 @@
+---
+title: "rga eda"
+format: html
+---
+
+```{r}
+library(tidyverse)
+library(arrow)
+library(plotly)
+
+source("bin_timeseries.R")
+```
+
+```{r}
+df <- open_dataset("data/processed/landergems_rga/rga.parquet")
+bad_times <- read_csv("data/2025_Hadleys_Harbor/gems_2025_bad_data_periods.csv")
+```
+
+
+```{r}
+df_wide <- df |> 
+  collect() |> 
+  process_rga_to_wide()
+```
+
+Remove bad data periods and normalize by argon
+
+```{r}
+df_wide_cl <- df_wide |> 
+  anti_join(bad_times, by = join_by(timestamp >= start_time, timestamp <= end_time)) |>
+  mutate(
+    across(starts_with("mass_"), ~ .x / mass_40, .names = "{.col}_40")
+  )
+```
+
+
+```{r}
+df_binned <- bin_timeseries(
+  df_wide_cl,
+  datetime_col = "timestamp",
+  value_cols = c(
+    "mass_15_40",
+    "mass_28_40",
+    "mass_32_40",
+    "mass_44_40"
+  )
+)
+    
+```
+
+```{r}
+e <- ggplot(df_binned, aes(bin_time, mass_32_40, color = inlet)) +
+  geom_line()
+
+p <- ggplotly(e, dynamicTicks = TRUE)
+p
+```
+
+```{r}
+e <- ggplot(df_binned, aes(bin_time, mass_44_40, color = inlet)) +
+  geom_line()
+
+p <- ggplotly(e, dynamicTicks = TRUE)
+p
+```
+
+Make one row for each high-low pair
+
+```{r}
+df_binned_wide <- df_binned |>
+  group_by(grp = cumsum(inlet == "high")) |>
+  mutate(timestamp = mean(bin_time)) |>
+  ungroup() |>
+  pivot_wider(
+    id_cols = c(grp, timestamp),
+    names_from = inlet,
+    values_from = starts_with("mass_"),
+    names_sep = "_"
+  ) |>
+  select(-grp) |>
+  mutate(
+    across(ends_with("_high"), 
+             \(x) x - get(sub("_high$", "_low", cur_column())), 
+             .names = "{.col}_diff")
+  )
+```
+
+```{r}
+e <- ggplot(df_binned_wide, aes(timestamp, mass_32_40_high_diff)) +
+  geom_line()
+
+p <- ggplotly(e, dynamicTicks = TRUE)
+p
+```
+
+```{r}
+e <- ggplot(df_binned_wide, aes(timestamp, mass_44_40_high_diff)) +
+  geom_line()
+
+p <- ggplotly(e, dynamicTicks = TRUE)
+p
+```

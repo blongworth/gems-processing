@@ -29,3 +29,11 @@ c <- df |>
 ggplotly(c)
 ```
 
+
+```{r}
+c <- df |> 
+  ggplot(aes(timestamp, valve_position)) +
+  geom_line()
+  
+ggplotly(c)
+```
