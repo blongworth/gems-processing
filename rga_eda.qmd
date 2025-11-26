@@ -69,21 +69,29 @@ Make one row for each high-low pair
 ```{r}
 df_binned_wide <- df_binned |>
   group_by(grp = cumsum(inlet == "high")) |>
-  mutate(timestamp = mean(bin_time)) |>
+  mutate(mean_timestamp = mean(bin_time)) |>
   ungroup() |>
   pivot_wider(
-    id_cols = c(grp, timestamp),
+    id_cols = c(grp, mean_timestamp),
     names_from = inlet,
     values_from = starts_with("mass_"),
     names_sep = "_"
   ) |>
   select(-grp) |>
   mutate(
+    timestamp = lubridate::round_date(mean_timestamp, unit = "15 minutes"),
+    across(ends_with("_high"), 
+             \(x) (x + get(sub("_high$", "_low", cur_column()))) / 2, 
+             .names = "{.col}_mean"),
     across(ends_with("_high"), 
              \(x) x - get(sub("_high$", "_low", cur_column())), 
-             .names = "{.col}_diff")
-  )
+             .names = "{.col}_diff"),
+  ) |> 
+  dplyr::relocate(timestamp, .before = dplyr::everything())
 ```
+
+
+Difference plots
 
 ```{r}
 e <- ggplot(df_binned_wide, aes(timestamp, mass_32_40_high_diff)) +
@@ -95,6 +103,75 @@ p
 
 ```{r}
 e <- ggplot(df_binned_wide, aes(timestamp, mass_44_40_high_diff)) +
+  geom_line()
+
+p <- ggplotly(e, dynamicTicks = TRUE)
+p
+```
+
+
+# calibration
+
+read seaphox data, aggregate to 15 min avg and fit to GEMS data
+
+```{r}
+seaphox_df <- data.table::fread("data/2025_Hadleys_Harbor/seaphox/Shallow SeapHox2-0000453-Data-20250716T200119.csv") |> 
+  janitor::clean_names() |> 
+  mutate(timestamp = lubridate::mdy_hms(date_time_utc_00_00,
+                          tz = "UTC")) |>
+  select(timestamp,
+           pH = internal_p_h_p_h,
+           temp = p_h_temperature_celsius,
+           pressure = pressure_decibar,
+           sal = salinity_psu,
+           oxygen = oxygen_ml_l) |> 
+  filter(timestamp > "2025-07-12 00:00:00",
+         timestamp <= "2025-07-16 14:00:00")
+         
+```
+
+```{r}
+ggplot(seaphox_df, aes(timestamp, oxygen)) +
+  geom_line()
+```
+
+```{r}
+ # aggregate seaphox to nearest minute
+  sp_m <- seaphox_df %>%
+    mutate(timestamp = lubridate::floor_date(timestamp, "15 minute")) |>
+    dplyr::group_by(timestamp) |>
+    dplyr::summarise(seaphox_oxy = mean(oxygen))
+
+  joined_data <- dplyr::inner_join(sp_m, df_binned_wide, by = dplyr::join_by(timestamp))
+
+  o2_lm <- lm(seaphox_oxy ~ mass_32_40_high_mean, data = joined_data)
+  coef(o2_lm)
+```
+
+```{r}
+ggplot(joined_data, aes(timestamp, seaphox_oxy)) + 
+  geom_line()
+```
+
+
+fit oxygen
+
+```{r}
+ox_i = coef(o2_lm)[1]
+ox_m = coef(o2_lm)[2]
+df_binned_wide <- df_binned_wide |> 
+  mutate(oxygen_high = ox_i + ox_m * mass_32_40_high,
+         oxygen_low = ox_i + ox_m * mass_32_40_low)
+```
+
+```{r}
+e <- df_binned_wide |>
+  select(timestamp, oxygen_high, oxygen_low) |> 
+  pivot_longer(
+    cols = c(oxygen_high, oxygen_low),
+    names_to = "inlet",
+    values_to = "oxygen") |> 
+    ggplot(aes(timestamp, oxygen, color = inlet)) +
   geom_line()
 
 p <- ggplotly(e, dynamicTicks = TRUE)
