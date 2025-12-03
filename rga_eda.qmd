@@ -7,6 +7,8 @@ format: html
 library(tidyverse)
 library(arrow)
 library(plotly)
+library(gemstools)
+
 
 source("bin_timeseries.R")
 ```
@@ -112,9 +114,14 @@ p
 
 # calibration
 
+## oxygen
+
 read seaphox data, aggregate to 15 min avg and fit to GEMS data
 
+TODO: add september seaphox
+
 ```{r}
+
 seaphox_df <- data.table::fread("data/2025_Hadleys_Harbor/seaphox/Shallow SeapHox2-0000453-Data-20250716T200119.csv") |> 
   janitor::clean_names() |> 
   mutate(timestamp = lubridate::mdy_hms(date_time_utc_00_00,
@@ -149,8 +156,14 @@ ggplot(seaphox_df, aes(timestamp, oxygen)) +
 ```
 
 ```{r}
-ggplot(joined_data, aes(timestamp, seaphox_oxy)) + 
+joined_data |>
+  pivot_longer(
+    cols = c(seaphox_oxy, mass_32_40_high_mean),
+    names_to = "source",
+    values_to = "value"
+  ) |>  ggplot(aes(timestamp, value, color = source)) +
   geom_line()
+
 ```
 
 
@@ -172,6 +185,70 @@ e <- df_binned_wide |>
     names_to = "inlet",
     values_to = "oxygen") |> 
     ggplot(aes(timestamp, oxygen, color = inlet)) +
+  geom_line()
+
+p <- ggplotly(e, dynamicTicks = TRUE)
+p
+```
+
+## Carbon dioxide
+
+```{r}
+co2_df <- read_prooceanus("data/2025_Hadleys_Harbor/prooceanus/prooceanus_co2_gems_hadley_2025-08-19.txt")
+
+co2_df_res <- co2_df |> 
+  filter(ts >= as.Date("2025-07-17 20:50:00"),
+         ts <= as.Date("2025-08-03")) |> 
+  mutate(ts = floor_date(ts, unit = "15 mins")) |>
+  group_by(ts) |>
+  summarize(co2 = mean(co2, na.rm = TRUE))
+```
+
+
+```{r}
+co2p <- ggplot(co2_df_res, aes(x =ts, y = co2)) +
+  #geom_point() +
+  geom_line() +
+  labs(
+    title = "ProOceanus CO2 Data",
+    x = "Date",
+    y = "CO2 (ppm)"
+  ) +
+  theme_minimal()
+
+ggplotly(co2p)
+```
+
+
+```{r}
+co2_df_res <- co2_df_res |> 
+  rename(timestamp = ts,
+         prooceanus_co2 = co2)
+
+co2_j <- dplyr::inner_join(co2_df_res, df_binned_wide, by = dplyr::join_by(timestamp))
+
+co2_lm <- lm(prooceanus_co2 ~ mass_44_40_high_mean, data = co2_j)
+coef(co2_lm)
+```
+
+fit CO2
+
+```{r}
+co2_i = coef(co2_lm)[1]
+co2_m = coef(co2_lm)[2]
+df_binned_wide <- df_binned_wide |> 
+  mutate(co2_high = co2_i + co2_m * mass_44_40_high,
+         co2_low = co2_i + co2_m * mass_44_40_low)
+```
+
+```{r}
+e <- df_binned_wide |>
+  select(timestamp, co2_high, co2_low) |> 
+  pivot_longer(
+    cols = c(co2_high, co2_low),
+    names_to = "inlet",
+    values_to = "co2") |> 
+    ggplot(aes(timestamp, co2, color = inlet)) +
   geom_line()
 
 p <- ggplotly(e, dynamicTicks = TRUE)
