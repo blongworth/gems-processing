@@ -8,6 +8,8 @@ library(tidyverse)
 library(arrow)
 library(plotly)
 library(gemstools)
+library(suntools)
+library(patchwork)
 
 
 source("bin_timeseries.R")
@@ -92,6 +94,23 @@ df_binned_wide <- df_binned |>
   dplyr::relocate(timestamp, .before = dplyr::everything())
 ```
 
+generate PAR data
+
+```{r}
+crds <- matrix(c(-70.7003, 41.51875), nrow = 1)
+
+# calculate predicted par from solar azimuth
+pred_par <- function(crds, timestamp) {
+  altitude <- solarpos(crds, timestamp)[,2]
+  altitude <- replace(altitude, altitude <= 0, 0)
+  insolation = sin(altitude * pi / 180)
+  par = 0.45 * insolation * 4.6 * 1000
+  par
+}    
+
+df_binned_wide <- df_binned_wide |> 
+  mutate(par = pred_par(crds, timestamp))
+```
 
 Difference plots
 
@@ -99,8 +118,14 @@ Difference plots
 e <- ggplot(df_binned_wide, aes(timestamp, mass_32_40_high_diff)) +
   geom_line()
 
-p <- ggplotly(e, dynamicTicks = TRUE)
-p
+f <- ggplot(df_binned_wide, aes(timestamp, par)) +
+  geom_line()
+
+# Convert to interactive plotly
+p1_pl <- ggplotly(e, dynamicTicks = TRUE)
+p2_pl <- ggplotly(f, dynamicTicks = TRUE)
+
+subplot(p1_pl, p2_pl, nrows = 2, shareX = TRUE, titleY = TRUE, heights = c(0.5, 0.5))
 ```
 
 ```{r}
@@ -253,4 +278,165 @@ e <- df_binned_wide |>
 
 p <- ggplotly(e, dynamicTicks = TRUE)
 p
+```
+
+
+```{r}
+df_p <- df_binned_wide |> 
+  mutate(
+    ox = oxygen_low - oxygen_high,
+    co2 = co2_low - co2_high) |> 
+  select(timestamp, ox, co2)
+
+ox_p <- ggplot(df_p, aes(timestamp, ox)) +
+  geom_line() +
+  labs(
+    #title = "Oxygen Difference (Low - High)",
+    x = "Timestamp",
+    y = "Oxygen Difference (ml/L)"
+  ) +
+  theme_minimal()
+
+co2_p <- ggplot(df_p, aes(timestamp, co2)) +
+  geom_line() +
+  labs(
+    #title = "CO2 Difference (Low - High)",
+    x = "Timestamp",
+    y = "CO2 Difference (ppm)"
+  ) +
+  theme_minimal()
+
+par_p <- ggplot(df_binned_wide, aes(timestamp, par)) +
+  geom_line() +
+  labs(
+    #title = "Predicted PAR",
+    x = "Timestamp",
+    y = "PAR (µmol/m²/s)"
+  ) +
+  theme_minimal()
+
+ox_ply <- ggplotly(ox_p, dynamicTicks = TRUE)
+co2_ply <- ggplotly(co2_p, dynamicTicks = TRUE)
+par_ply <- ggplotly(par_p, dynamicTicks = TRUE)
+
+subplot(ox_ply, co2_ply, par_ply, nrows = 3, shareX = TRUE, titleY = TRUE, heights = c(0.4, 0.4, 0.2))
+```
+
+# Data output
+
+write out RGA data
+
+```{r}
+write_parquet(df_binned_wide, "data/processed/lander/rga_calibrated.parquet")
+```
+
+Combine with velocity data and write to parquet
+
+```{r}
+adv_df <- open_dataset("data/processed/lander/adv_bin_rot.parquet") |> 
+  collect()
+```
+
+bin velocity data to 15 min bins
+
+```{r}
+adv_bin <- adv_df |>
+  group_by(grp = cumsum(inlet == "high")) |>
+  summarize(
+    mean_timestamp = mean(bin_time),
+    timestamp = lubridate::round_date(mean_timestamp, unit = "15 minutes"),
+    across(c(pressure, cur_speed, cur_dir, u_rot, v_rot, w_rot), \(x) mean(x))
+  ) |> 
+  dplyr::relocate(timestamp, .before = dplyr::everything())
+```
+
+```{r}
+adv_select <- adv_bin |> 
+  select(timestamp,
+         pressure,
+         cur_speed,
+         cur_dir,
+         u = u_rot,
+         v = v_rot,
+         w = w_rot)
+```
+
+join to rga
+
+```{r}
+df_all <- df_binned_wide |> 
+  left_join(adv_select, by = join_by(timestamp)) |> 
+  drop_na()
+```
+
+remove bad times
+
+
+```{r}
+df_all <- df_all |> 
+  anti_join(bad_times, by = join_by(timestamp >= start_time, timestamp <= end_time))
+```
+
+
+```{r}
+df_p <- df_all |> 
+  mutate(
+    ox = oxygen_low - oxygen_high,
+    co2 = co2_low - co2_high) |> 
+  select(timestamp, ox, co2, par, cur_speed, cur_dir, w)
+
+ox_p <- ggplot(df_p, aes(timestamp, ox)) +
+  geom_line() +
+  labs(
+    #title = "Oxygen Difference (Low - High)",
+    x = "Timestamp",
+    y = "Oxygen Difference (ml/L)"
+  ) +
+  theme_minimal()
+
+co2_p <- ggplot(df_p, aes(timestamp, co2)) +
+  geom_line() +
+  labs(
+    #title = "CO2 Difference (Low - High)",
+    x = "Timestamp",
+    y = "CO2 Difference (ppm)"
+  ) +
+  theme_minimal()
+
+cur_p <- ggplot(df_p, aes(timestamp, cur_speed)) +
+  geom_line() +
+  labs(
+    #title = "Predicted PAR",
+    x = "Timestamp",
+    y = "Horizontal speed"
+  ) +
+  theme_minimal()
+
+dir_p <- ggplot(df_p, aes(timestamp, cur_dir)) +
+  geom_line() +
+  labs(
+    #title = "Predicted PAR",
+    x = "Timestamp",
+    y = "Horizontal dir"
+  ) +
+  theme_minimal()
+
+par_p <- ggplot(df_p, aes(timestamp, par)) +
+  geom_line() +
+  labs(
+    #title = "Predicted PAR",
+    x = "Timestamp",
+    y = "PAR (µmol/m²/s)"
+  ) +
+  theme_minimal()
+
+ox_ply <- ggplotly(ox_p, dynamicTicks = TRUE)
+co2_ply <- ggplotly(co2_p, dynamicTicks = TRUE)
+cur_ply <- ggplotly(cur_p, dynamicTicks = TRUE)
+dir_ply <- ggplotly(dir_p, dynamicTicks = TRUE)
+par_ply <- ggplotly(par_p, dynamicTicks = TRUE)
+
+subplot(ox_ply, co2_ply, cur_ply, dir_ply, par_ply,
+        nrows = 5, shareX = TRUE, titleY = TRUE
+)
 ```

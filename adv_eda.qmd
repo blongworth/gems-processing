@@ -100,3 +100,10 @@ p <- ggplot(df_bin_rot, aes(bin_time, w_rot)) +
 
 ggplotly(p, dynamicTicks = TRUE)
 ```
+
+write output
+
+```{r}
+write_parquet(df_bin_rot, "data/processed/lander/adv_bin_rot.parquet")
+```
+
