@@ -369,6 +369,22 @@ df_all <- df_binned_wide |>
   drop_na()
 ```
 
+add temp from status file
+
+```{r}
+status_df <- open_dataset("data/processed/lander/gems_status.parquet") |> 
+  select(timestamp, temp) |> 
+  collect() |>  
+  mutate(timestamp = lubridate::floor_date(timestamp, unit = "15 minutes")) |> 
+  group_by(timestamp) |> 
+  summarize(temp = mean(temp, na.rm = TRUE))
+```
+
+```{r}
+df_all <- df_all |> 
+  left_join(status_df, by = join_by(timestamp))
+```
+
 remove bad times
 
 
@@ -440,3 +456,33 @@ subplot(ox_ply, co2_ply, cur_ply, dir_ply, par_ply,
         nrows = 5, shareX = TRUE, titleY = TRUE
 )
 ```
+
+convert ox to umol/l
+
+```{r}
+df_all <- df_all |> 
+  mutate(
+    ox_high_umol_l = o2_ml_l_to_umol_l(oxygen_high, temp),
+    ox_low_umol_l = o2_ml_l_to_umol_l(oxygen_low, temp)
+  )
+
+```
+
+write out dataset
+
+```{r}
+write_parquet(df_all, "data/processed/lander/rga_adv_calibrated.parquet")
+```
+
+generate test dataset for oxygen flux
+
+```{r}
+df_flux <- df_all |> 
+  select(time = timestamp,
+         C_high = ox_high_umol_l,
+         C_low = ox_low_umol_l,
+         w)
+
+write_csv(df_flux, "data/processed/lander/rga_oxygen_flux_input.csv")
+```
+
