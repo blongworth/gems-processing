@@ -173,12 +173,12 @@ rotate_to_minimize_z <- function(data, u_col, v_col, w_col) {
     select(all_of(c(setdiff(names(data), c(u_col, v_col, w_col)))), 
            u_rot, v_rot, w_rot)
   
-  # list(
-  #   rotated_data = result,
-  #   theta = theta,
-  #   phi = phi,
-  #   mean_w_rotated = mean(w_rot, na.rm = TRUE)
-  # )
+  list(
+    rotated_data = result,
+    theta = theta,
+    phi = phi,
+    mean_w_rotated = mean(w_rot, na.rm = TRUE)
+  )
     
-    result
+  #  result
 }

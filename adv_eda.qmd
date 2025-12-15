@@ -89,16 +89,33 @@ df_binned_mv <- df_binned |>
 df_bin_rot <- df_binned_mv |> 
   group_by(lander_position) |>
   nest() %>%
-  mutate(data = map(data, ~rotate_to_minimize_z(.x, "u", "v", "w"))) %>%
+  mutate(data = map(data, \(x) rotate_to_minimize_z(x, "u", "v", "w")$rotated_data)) %>%
   unnest(data) %>%
   ungroup()
 ```
 
+Rotation angles for each lander position. 
+These are needed in eddyflux_batch.m
+
+```{r}
+df_binned_mv |> 
+  group_by(lander_position) |>
+  nest() %>%
+  mutate(data = map(data, \(x) rotate_to_minimize_z(x, "u", "v", "w")$phi)) %>%
+  unnest(data) %>%
+  ungroup()
+```
 ```{r}
 p <- ggplot(df_bin_rot, aes(bin_time, w_rot)) +
   geom_line()
 
 ggplotly(p, dynamicTicks = TRUE)
+```
+
+```{r}
+p <- ggplot(df_bin_rot, aes(pressure, cur_speed)) +
+  geom_point()
+p
 ```
 
 write output
