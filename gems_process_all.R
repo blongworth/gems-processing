@@ -12,7 +12,7 @@ out_dir <- "./data/processed/lander/"
 # rotate z plane to minimize mean z for each lander position
 
 # RGA data
-# Extract R lines 
+# Extract R lines
 # pivot longer to average time for masses
 # normalize using prooceanus and seaphox data
 
