@@ -1,7 +1,16 @@
 library(dplyr)
 library(lubridate)
 
-utils::globalVariables(c("minute_of_hour", "bin_index", "bin_start_minute", "date_part", "hour", "bin_id", "bin_time", "inlet"))
+utils::globalVariables(c(
+  "minute_of_hour",
+  "bin_index",
+  "bin_start_minute",
+  "date_part",
+  "hour",
+  "bin_id",
+  "bin_time",
+  "inlet"
+))
 
 #' Bin timeseries into 7.5-minute chunks by clock time
 #'
@@ -29,9 +38,13 @@ utils::globalVariables(c("minute_of_hour", "bin_index", "bin_start_minute", "dat
 #' }
 #'
 #' @export
-bin_timeseries <- function(data, datetime_col, value_cols, 
-                           avg_start = 2, avg_end = 7) {
-  
+bin_timeseries <- function(
+  data,
+  datetime_col,
+  value_cols,
+  avg_start = 2,
+  avg_end = 7
+) {
   data %>%
     # Calculate minutes within the hour
     mutate(
@@ -46,8 +59,10 @@ bin_timeseries <- function(data, datetime_col, value_cols,
       bin_start_minute = bin_index * 7.5
     ) %>%
     # Filter to only include minutes avg_start through avg_end of each chunk
-    filter(minute_of_hour >= bin_start_minute + avg_start &
-           minute_of_hour < bin_start_minute + avg_end) %>%
+    filter(
+      minute_of_hour >= bin_start_minute + avg_start &
+        minute_of_hour < bin_start_minute + avg_end
+    ) %>%
     # Create bin identifier
     mutate(
       bin_id = paste0(date_part, "_", hour, "_", bin_index)
@@ -67,9 +82,14 @@ bin_timeseries <- function(data, datetime_col, value_cols,
     ) %>%
     # Reconstruct approximate bin start time (top of hour + bin offset)
     mutate(
-      bin_time = as_datetime(paste0(date_part, " ", 
-                             sprintf("%02d", hour), ":", 
-                             sprintf("%02.0f", bin_start_minute), ":00"))
+      bin_time = as_datetime(paste0(
+        date_part,
+        " ",
+        sprintf("%02d", hour),
+        ":",
+        sprintf("%02.0f", bin_start_minute),
+        ":00"
+      ))
     ) %>%
     # Clean up temporary columns and reorder
     select(bin_time, inlet, all_of(value_cols)) %>%
@@ -88,7 +108,7 @@ bin_timeseries <- function(data, datetime_col, value_cols,
 #' @param cycle_start_mass The mass value that indicates the start of a new
 #'   measurement cycle. Defaults to 18.
 #'
-#' @return A tibble in wide format, 
+#' @return A tibble in wide format,
 #' with a row for each cycle and columns for each mass.
 #' @export
 #'
@@ -98,17 +118,18 @@ bin_timeseries <- function(data, datetime_col, value_cols,
 #' rga_wide <- process_rga_to_wide(rga_data)
 #' }
 process_rga_to_wide <- function(data, cycle_start_mass = 18) {
-    data |>
-        mutate(cycle = cumsum(mass == cycle_start_mass)) %>%
-        group_by(cycle) %>%
-        mutate(cycle_ts = mean(timestamp)) %>%
-        ungroup() %>%
-        select(timestamp = cycle_ts, mass, pressure) %>%
-        tidyr::pivot_wider(
-            names_from = mass, names_prefix = "mass_",
-            values_from = pressure,
-            values_fn = mean
-        )
+  data |>
+    mutate(cycle = cumsum(mass == cycle_start_mass)) %>%
+    group_by(cycle) %>%
+    mutate(cycle_ts = mean(timestamp)) %>%
+    ungroup() %>%
+    select(timestamp = cycle_ts, mass, pressure) %>%
+    tidyr::pivot_wider(
+      names_from = mass,
+      names_prefix = "mass_",
+      values_from = pressure,
+      values_fn = mean
+    )
 }
 
 #' Rotate coordinate axes to minimize mean z-velocity
@@ -136,33 +157,32 @@ process_rga_to_wide <- function(data, cycle_start_mass = 18) {
 #'
 #' @export
 rotate_to_minimize_z <- function(data, u_col, v_col, w_col) {
-  
   # Extract velocity vectors
   u <- data[[u_col]]
   v <- data[[v_col]]
   w <- data[[w_col]]
-  
+
   # Step 1: Find theta to align mean horizontal velocity with x-axis
   # Minimize by rotating in xy-plane
   mean_u <- mean(u, na.rm = TRUE)
   mean_v <- mean(v, na.rm = TRUE)
   theta <- atan2(mean_v, mean_u)
-  
+
   # Step 2: Rotate to find phi that minimizes mean w
   # First rotate u,v by -theta
   u_temp <- u * cos(theta) + v * sin(theta)
   v_temp <- -u * sin(theta) + v * cos(theta)
-  
+
   # Then find phi to align horizontal velocity with x-axis in xz-plane
   mean_u_temp <- mean(u_temp, na.rm = TRUE)
   mean_w <- mean(w, na.rm = TRUE)
   phi <- atan2(mean_w, mean_u_temp)
-  
+
   # Apply full rotation
   u_rot <- u_temp * cos(phi) + w * sin(phi)
   v_rot <- v_temp
   w_rot <- -u_temp * sin(phi) + w * cos(phi)
-  
+
   # Return rotated data and angles
   result <- data %>%
     mutate(
@@ -170,15 +190,19 @@ rotate_to_minimize_z <- function(data, u_col, v_col, w_col) {
       v_rot = v_rot,
       w_rot = w_rot
     ) %>%
-    select(all_of(c(setdiff(names(data), c(u_col, v_col, w_col)))), 
-           u_rot, v_rot, w_rot)
-  
+    select(
+      all_of(c(setdiff(names(data), c(u_col, v_col, w_col)))),
+      u_rot,
+      v_rot,
+      w_rot
+    )
+
   list(
     rotated_data = result,
     theta = theta,
     phi = phi,
     mean_w_rotated = mean(w_rot, na.rm = TRUE)
   )
-    
+
   #  result
 }
