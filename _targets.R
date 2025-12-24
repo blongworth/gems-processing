@@ -16,22 +16,37 @@ tar_option_set(
     "data.table",
     "janitor",
     "lubridate",
-    "dplyr"
+    "dplyr",
+    "imputeTS"
   ),
 )
 
 # Source helper functions
 source("bin_timeseries.R")
 source("functions.R")
+source("matlab_cpsd.R")
 
+# config variables
+data_dir_path <- "data/processed/lander/"
+flux_output_file <- file.path(data_dir_path, "gems_flux_8hz_rot2.parquet")
 
 # Define the pipeline
 list(
   # input files and parameters
-  tar_target(data_dir, "data/processed/lander/"),
+  tar_target(data_dir, data_dir_path),
   tar_target(
     rga_file,
-    "data/processed/landergems_rga/rga.parquet",
+    "data/processed/lander/gems_rga.parquet",
+    format = "file"
+  ),
+  tar_target(
+    raw_adv_path,
+    file.path(data_dir, "gems_adv.parquet"),
+    format = "file"
+  ),
+  tar_target(
+    moves_file_name,
+    "data/2025_Hadleys_Harbor/gems_lander_move_times.csv",
     format = "file"
   ),
   tar_target(
@@ -69,6 +84,16 @@ list(
     format = "file"
   ),
   tar_target(crds, matrix(c(-70.7003, 41.51875), nrow = 1)),
+
+  # Initial processing from raw files
+  tar_target(
+    gems_raw,
+    gems_process_data(
+      file_dir = "./data/2025_Hadleys_Harbor/GEMS_LANDER",
+      out_dir = data_dir,
+      dedupe = FALSE
+    )
+  ),
 
   # Load and process RGA data
   tar_target(rga_wide, load_and_widen_rga(rga_file)),
@@ -244,6 +269,17 @@ list(
     calculate_oxygen_metrics(rga_adv_complete)
   ),
 
+  # ADV data and flux calculation
+  tar_target(
+    adv_matlab_input,
+    process_adv_to_ml_input(raw_adv_path, moves_file_name)
+  ),
+
+  tar_target(pos_df, get_lander_positions(adv_matlab_input)),
+  #tar_target(matlab_eddyflux, run_matlab_eddyflux()),
+
+  tar_target(flux_dataset, process_flux_data(pos = pos_df)),
+
   # Join with Ustar and calculate flux
   tar_target(
     rga_adv_flux,
@@ -253,13 +289,7 @@ list(
   # Write RGA+ADV flux dataset
   tar_target(
     rga_adv_flux_file,
-    {
-      write_parquet(
-        rga_adv_flux,
-        "data/processed/lander/rga_adv_oxygen_flux.parquet"
-      )
-      "data/processed/lander/rga_adv_oxygen_flux.parquet"
-    },
+    write_parquet(rga_adv_flux, flux_output_file),
     format = "file"
   ),
 
