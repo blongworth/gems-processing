@@ -13,6 +13,7 @@ library(imputeTS)
 process_adv_to_ml_input <- function(adv_file_name, moves_file_name) {
   adv_df <- read_adv_data(adv_file_name)
   proc_adv_df <- adv_df |>
+    scale_adv_velocity() |>
     impute_adv_data() |>
     group_adv_data() |>
     flag_adv_lander_moves(moves_file_name)
@@ -25,6 +26,15 @@ read_adv_data <- function(adv_file_path) {
   open_dataset(adv_file_path) |>
     select(timestamp, pressure, u, v, w, amp3, corr3) |>
     collect()
+}
+
+scale_adv_velocity <- function(adv_data, scale_factor = 10) {
+  adv_data |>
+    mutate(
+      u = u * scale_factor,
+      v = v * scale_factor,
+      w = w * scale_factor
+    )
 }
 
 # Impute by interpolation with a max gap of 1 s
