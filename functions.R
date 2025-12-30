@@ -231,9 +231,8 @@ calculate_oxygen_flux <- function(data, length_scale = 0.3) {
     )
 }
 
-get_ustar <- function(flux_file) {
-  open_dataset(file.path(flux_file)) |>
-    collect() |>
+get_ustar <- function(flux_dataset) {
+  flux_dataset |>
     select(timestamp, Ustar) |>
     mutate(
       timestamp = lubridate::floor_date(timestamp, unit = "15 minutes")
@@ -244,8 +243,8 @@ get_ustar <- function(flux_file) {
 
 
 # Join with Ustar and calculate flux
-calculate_grad_flux <- function(rga_adv_processed, flux_file) {
-  ustar_data <- get_ustar(flux_file)
+calculate_grad_flux <- function(rga_adv_processed, flux_dataset) {
+  ustar_data <- get_ustar(flux_dataset)
   rga_adv_processed |>
     left_join(ustar_data, by = join_by(timestamp)) |>
     calculate_oxygen_flux()

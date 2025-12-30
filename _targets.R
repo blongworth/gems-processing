@@ -27,13 +27,28 @@ source("functions.R")
 source("matlab_cpsd.R")
 
 # config variables
-data_dir_path <- "data/processed/lander/"
-flux_output_file <- file.path(data_dir_path, "gems_flux_8hz_rot2.parquet")
+data_dir_path <- "data/processed/lander"
+flux_output_file <- file.path(data_dir_path, "gems_flux.parquet")
 
 # Define the pipeline
 list(
-  # input files and parameters
+  ### input files and parameters ###
+
   tar_target(data_dir, data_dir_path),
+  tar_target(
+    moves_file_name,
+    "data/2025_Hadleys_Harbor/gems_lander_move_times.csv",
+    format = "file"
+  ),
+  tar_target(
+    bad_times_file,
+    "data/2025_Hadleys_Harbor/gems_2025_bad_data_periods.csv",
+    format = "file"
+  ),
+
+  ### intermediate file targets ###
+
+  # combined, cleaned RGA and ADV data
   tar_target(
     rga_file,
     "data/processed/lander/gems_rga.parquet",
@@ -45,23 +60,14 @@ list(
     format = "file"
   ),
   tar_target(
-    moves_file_name,
-    "data/2025_Hadleys_Harbor/gems_lander_move_times.csv",
+    status_file,
+    file.path(data_dir, "gems_status.parquet"),
     format = "file"
   ),
+
   tar_target(
     adv_file,
     file.path(data_dir, "adv_bin_rot.parquet"),
-    format = "file"
-  ),
-  tar_target(
-    flux_file,
-    file.path(data_dir, "gems_flux_8hz_rot2.parquet"),
-    format = "file"
-  ),
-  tar_target(
-    bad_times_file,
-    "data/2025_Hadleys_Harbor/gems_2025_bad_data_periods.csv",
     format = "file"
   ),
   tar_target(
@@ -78,22 +84,23 @@ list(
     "data/2025_Hadleys_Harbor/prooceanus/prooceanus_co2_gems_hadley_2025-08-19.txt",
     format = "file"
   ),
-  tar_target(
-    status_file,
-    file.path(data_dir, "gems_status.parquet"),
-    format = "file"
-  ),
+  # location for calculating PAR
   tar_target(crds, matrix(c(-70.7003, 41.51875), nrow = 1)),
 
-  # Initial processing from raw files
+  ### Initial processing from raw files ###
+
+  # Uses functions from gemstools package
   tar_target(
     gems_raw,
     gems_process_data(
       file_dir = "./data/2025_Hadleys_Harbor/GEMS_LANDER",
       out_dir = data_dir,
       dedupe = FALSE
-    )
+    ),
+    format = "file"
   ),
+
+  ### RGA data processing and calibration ###
 
   # Load and process RGA data
   tar_target(rga_wide, load_and_widen_rga(rga_file)),
@@ -190,8 +197,11 @@ list(
     write_parquet(
       rga_calibrated,
       "data/processed/lander/rga_calibrated.parquet"
-    )
+    ),
+    format = "file"
   ),
+
+  ### ADV data processing ###
 
   # Load and bin ADV data
   tar_target(
@@ -269,6 +279,8 @@ list(
     calculate_oxygen_metrics(rga_adv_complete)
   ),
 
+  ### Flux calculation ###
+
   # ADV data and flux calculation
   tar_target(
     adv_matlab_input,
@@ -276,21 +288,21 @@ list(
   ),
 
   tar_target(pos_df, get_lander_positions(adv_matlab_input)),
-  #tar_target(matlab_eddyflux, run_matlab_eddyflux()),
+
+  tar_target(matlab_eddyflux, run_matlab_eddyflux(), format = "file"),
 
   tar_target(flux_dataset, process_flux_data(pos = pos_df)),
 
   # Join with Ustar and calculate flux
   tar_target(
     rga_adv_flux,
-    calculate_grad_flux(rga_adv_processed, flux_file)
+    calculate_grad_flux(rga_adv_processed, flux_dataset)
   ),
 
   # Write RGA+ADV flux dataset
   tar_target(
     rga_adv_flux_file,
     write_parquet(rga_adv_flux, flux_output_file),
-    format = "file"
   ),
 
   # Calculate hourly statistics

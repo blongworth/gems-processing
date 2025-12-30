@@ -193,23 +193,34 @@ generate_matlab_input_files <- function(proc_adv_df) {
   # future_map(positions, \(x) group_ml(x, proc_adv_df))
 }
 
+copy_matlab_input_files <- function(
+  source_dir = "data/processed/matlab_input",
+  dest_dir = "matlab"
+) {
+  files <- list.files(source_dir, full.names = TRUE)
+  file.copy(files, dest_dir, overwrite = TRUE)
+}
+
 # Run all fluxes using matlab/eddyflux_batch.m scripted using run_eddyflux.sh
 run_matlab_eddyflux <- function() {
+  copy_matlab_input_files()
+  setwd("matlab")
   result <- system2(
     command = "bash",
     args = c(
-      "-c",
-      "cd matlab && cp ../data/processed/matlab_input/* . && ./run_eddyflux.sh"
+      "./run_eddyflux.sh"
     ),
     stdout = TRUE,
     stderr = TRUE
   )
+  setwd("..")
 
   if (!is.null(attr(result, "status")) && attr(result, "status") != 0) {
     stop("MATLAB processing failed with status ", attr(result, "status"))
   }
 
-  invisible(result)
+  # return file paths of output files
+  read_flux_files()
 }
 
 # get t0 for all files and convert from decimal hours to UTC timestamps
