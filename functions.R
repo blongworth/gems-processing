@@ -91,57 +91,63 @@ add_par <- function(rga_df, crds) {
 #' @return Data frame with timestamp and oxygen columns
 #'
 #' @export
-load_seaphox_oxygen <- function(file_path, start_time, end_time) {
-  data.table::fread(file_path) |>
+load_seaphox_oxygen <- function(seaphox_path, start_time, end_time) {
+  data.table::fread(seaphox_path) |>
     janitor::clean_names() |>
     mutate(timestamp = lubridate::mdy_hms(date_time_utc_00_00, tz = "UTC")) |>
     select(
       timestamp,
-      pH = internal_p_h_p_h,
-      temp = p_h_temperature_celsius,
-      pressure = pressure_decibar,
-      sal = salinity_psu,
-      oxygen = oxygen_ml_l
+      seaphox_pH = internal_p_h_p_h,
+      seaphox_temp_c = p_h_temperature_celsius,
+      seaphox_pressure_db = pressure_decibar,
+      seaphox_salinity_psu = salinity_psu,
+      seaphox_oxygen_ml_l = oxygen_ml_l
     ) |>
     filter(timestamp >= start_time, timestamp <= end_time)
 }
 
-
-#' Aggregate calibration data to 15-minute intervals
+#' Add oxygen data to RGA data
 #'
-#' @param calib_data Data frame with timestamp and oxygen columns
-#' @param rga_data RGA data to join with
+#' @param seaphox_df Data frame with timestamp and oxygen columns
+#' @param rga_df RGA data to join with
 #'
 #' @return Joined data frame ready for linear regression
 #'
 #' @export
-prepare_oxygen_calibration <- function(calib_data, rga_data) {
-  seaphox_15min <- calib_data |>
+add_oxygen <- function(
+  rga_df,
+  seaphox_path,
+  start_time,
+  end_time,
+  sensor_separation = 1.02
+) {
+  seaphox_df <- load_seaphox_oxygen(seaphox_path, start_time, end_time)
+  seaphox_15min <- seaphox_df |>
     mutate(timestamp = lubridate::floor_date(timestamp, "15 minute")) |>
     dplyr::group_by(timestamp) |>
-    dplyr::summarise(seaphox_oxy = mean(oxygen))
+    summarize(across(where(is.numeric), \(x) mean(x, na.rm = TRUE)))
 
-  dplyr::inner_join(seaphox_15min, rga_data, by = dplyr::join_by(timestamp))
-}
+  ox_cal_df <- dplyr::left_join(
+    seaphox_15min,
+    rga_df,
+    by = dplyr::join_by(timestamp)
+  )
 
+  ox_model <- lm(seaphox_oxygen_ml_l ~ mass_32_40_high_mean, data = ox_cal_df)
+  ox_i <- coef(ox_model)[1]
+  ox_m <- coef(ox_model)[2]
 
-#' Apply oxygen calibration coefficients to RGA data
-#'
-#' @param rga_data RGA data with raw mass ratios
-#' @param intercept Calibration intercept
-#' @param slope Calibration slope
-#'
-#' @return Data frame with oxygen_high and oxygen_low columns
-#'
-#' @export
-apply_oxygen_calibration <- function(rga_data, intercept, slope) {
-  rga_data |>
+  rga_df |>
     mutate(
-      oxygen_high = intercept + slope * mass_32_40_high,
-      oxygen_low = intercept + slope * mass_32_40_low
+      oxygen_high = ox_i + ox_m * mass_32_40_high,
+      oxygen_low = ox_i + ox_m * mass_32_40_low,
+      ox_high_umol_l = o2_ml_l_to_umol_l(oxygen_high, adv_temp),
+      ox_low_umol_l = o2_ml_l_to_umol_l(oxygen_low, adv_temp),
+      ox_mean_umol_l = (ox_low_umol_l + ox_high_umol_l) / 2,
+      ox_gradient_umol_l_m = (ox_low_umol_l - ox_high_umol_l) /
+        sensor_separation
     )
 }
-
 
 #' Load and process ProOceanus CO2 data
 #'
@@ -157,11 +163,11 @@ load_prooceanus_co2 <- function(file_path, start_time, end_time) {
     filter(ts >= as.Date(start_time), ts <= as.Date(end_time)) |>
     mutate(ts = floor_date(ts, unit = "15 mins")) |>
     group_by(ts) |>
-    summarize(co2 = mean(co2, na.rm = TRUE))
+    summarize(across(where(is.numeric), \(x) mean(x, na.rm = TRUE)))
 }
 
 
-#' Prepare CO2 calibration data
+#' Add CO2 data to RGA data
 #'
 #' @param co2_raw Raw CO2 data from ProOceanus
 #' @param rga_data RGA data with oxygen
@@ -169,11 +175,45 @@ load_prooceanus_co2 <- function(file_path, start_time, end_time) {
 #' @return Joined data frame ready for linear regression
 #'
 #' @export
-prepare_co2_calibration <- function(co2_raw, rga_data) {
+add_co2 <- function(
+  rga_df,
+  prooceanus_path,
+  start_time,
+  end_time,
+  sensor_separation = 1.02
+) {
+  co2_raw <- load_prooceanus_co2(prooceanus_path, start_time, end_time)
   co2_df <- co2_raw |>
-    rename(timestamp = ts, prooceanus_co2 = co2)
+    select(timestamp = ts, prooceanus_co2_ppm = co2, cell_pressure)
+  co2_cal_df <- dplyr::left_join(
+    co2_df,
+    rga_df,
+    by = dplyr::join_by(timestamp)
+  ) |>
+    mutate(
+      prooceanus_co2_umol_l = co2_ppm_to_umol_per_l(
+        xco2_ppm = prooceanus_co2_ppm,
+        temp = adv_temp, # status temp
+        sal = seaphox_salinity_psu, # seaphox salinity
+        pressure_mbar = cell_pressure
+      )
+    )
 
-  dplyr::inner_join(co2_df, rga_data, by = dplyr::join_by(timestamp))
+  co2_model <- lm(
+    prooceanus_co2_umol_l ~ mass_44_40_high_mean,
+    data = co2_cal_df
+  )
+  co2_i <- coef(co2_model)[1]
+  co2_m <- coef(co2_model)[2]
+
+  rga_df |>
+    mutate(
+      co2_high_umol_l = co2_i + co2_m * mass_44_40_high,
+      co2_low_umol_l = co2_i + co2_m * mass_44_40_low,
+      co2_mean_umol_l = (co2_low_umol_l + co2_high_umol_l) / 2,
+      co2_gradient_umol_l_m = (co2_low_umol_l - co2_high_umol_l) /
+        sensor_separation
+    )
 }
 
 
@@ -206,8 +246,8 @@ apply_co2_calibration <- function(rga_data, intercept, slope) {
 calculate_oxygen_metrics <- function(rga_adv_data, sensor_separation = 1.02) {
   rga_adv_data |>
     mutate(
-      ox_high_umol_l = o2_ml_l_to_umol_l(oxygen_high, temp),
-      ox_low_umol_l = o2_ml_l_to_umol_l(oxygen_low, temp),
+      ox_high_umol_l = o2_ml_l_to_umol_l(oxygen_high, adv_temp),
+      ox_low_umol_l = o2_ml_l_to_umol_l(oxygen_low, adv_temp),
       ox_mean_umol_l = (ox_low_umol_l + ox_high_umol_l) / 2,
       ox_gradient_umol_l_m = (ox_low_umol_l - ox_high_umol_l) /
         sensor_separation
@@ -274,5 +314,24 @@ calculate_hourly_statistics <- function(flux_data, coordinates) {
       ox_flux_hourly = mean(ox_flux, na.rm = TRUE),
       ox_flux_hourly_sd = sd(ox_flux, na.rm = TRUE),
       .groups = "drop"
+    )
+}
+
+# add status temperature
+add_status_temp <- function(rga_df, status_file, bad_times) {
+  status_temp_df <- open_dataset(status_file) |>
+    select(timestamp, adv_temp = temp) |>
+    collect() |>
+    mutate(
+      timestamp = lubridate::floor_date(timestamp, unit = "15 minutes")
+    ) |>
+    group_by(timestamp) |>
+    summarize(adv_temp = mean(adv_temp, na.rm = TRUE))
+
+  rga_df |>
+    left_join(status_temp_df, by = join_by(timestamp)) |>
+    anti_join(
+      bad_times,
+      by = join_by(timestamp >= start_time, timestamp <= end_time)
     )
 }

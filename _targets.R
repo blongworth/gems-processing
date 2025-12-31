@@ -127,78 +127,32 @@ list(
 
   tar_target(rga_with_par, add_par(rga_binned_wide, crds)),
 
-  # Load and process SeaPhox data (July)
+  # Add temperature and remove bad times
   tar_target(
-    seaphox_jul,
-    load_seaphox_oxygen(
+    rga_temp,
+    add_status_temp(rga_with_par, status_file, bad_times)
+  ),
+
+  # Add oxygen calibration
+  tar_target(
+    rga_with_oxygen,
+    add_oxygen(
+      rga_temp,
       seaphox_file,
       "2025-07-12 00:00:00",
       "2025-07-16 14:00:00"
     )
   ),
 
-  # Aggregate SeaPhox to 15 min and join with RGA
-  tar_target(
-    oxygen_calib_data,
-    prepare_oxygen_calibration(seaphox_jul, rga_with_par)
-  ),
-
-  # Fit oxygen model
-  tar_target(
-    oxygen_model,
-    lm(seaphox_oxy ~ mass_32_40_high_mean, data = oxygen_calib_data)
-  ),
-
-  # Add calibrated oxygen to RGA data
-  tar_target(
-    rga_with_oxygen,
-    {
-      ox_i <- coef(oxygen_model)[1]
-      ox_m <- coef(oxygen_model)[2]
-      apply_oxygen_calibration(rga_with_par, ox_i, ox_m)
-    }
-  ),
-
-  # Load and process ProOceanus CO2 data
-  tar_target(
-    co2_calib_raw,
-    load_prooceanus_co2(
-      prooceanus_file,
-      "2025-07-17 20:50:00",
-      "2025-08-03"
-    )
-  ),
-
-  # Join CO2 with RGA for calibration
-  tar_target(
-    co2_calib_data,
-    prepare_co2_calibration(co2_calib_raw, rga_with_oxygen)
-  ),
-
-  # Fit CO2 model
-  tar_target(
-    co2_model,
-    lm(prooceanus_co2 ~ mass_44_40_high_mean, data = co2_calib_data)
-  ),
-
   # Add calibrated CO2 to RGA data
   tar_target(
     rga_calibrated,
-    {
-      co2_i <- coef(co2_model)[1]
-      co2_m <- coef(co2_model)[2]
-      apply_co2_calibration(rga_with_oxygen, co2_i, co2_m)
-    }
-  ),
-
-  # Write RGA calibrated data
-  tar_target(
-    rga_cal_file,
-    write_parquet(
-      rga_calibrated,
-      "data/processed/lander/rga_calibrated.parquet"
-    ),
-    format = "file"
+    add_co2(
+      rga_with_oxygen,
+      prooceanus_file,
+      "2025-07-17 20:50:00",
+      "2025-08-03 00:00:00",
+    )
   ),
 
   ### ADV data processing ###
@@ -245,32 +199,6 @@ list(
     rga_calibrated |>
       left_join(adv_select, by = join_by(timestamp)) |>
       drop_na()
-  ),
-
-  # Load and aggregate status temperature
-  tar_target(
-    status_temp,
-    {
-      open_dataset(status_file) |>
-        select(timestamp, temp) |>
-        collect() |>
-        mutate(
-          timestamp = lubridate::floor_date(timestamp, unit = "15 minutes")
-        ) |>
-        group_by(timestamp) |>
-        summarize(temp = mean(temp, na.rm = TRUE))
-    }
-  ),
-
-  # Add temperature and remove bad times
-  tar_target(
-    rga_adv_complete,
-    rga_adv_joined |>
-      left_join(status_temp, by = join_by(timestamp)) |>
-      anti_join(
-        bad_times,
-        by = join_by(timestamp >= start_time, timestamp <= end_time)
-      )
   ),
 
   # Convert oxygen to umol/l and calculate mean and gradient
