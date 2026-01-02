@@ -177,15 +177,12 @@ load_prooceanus_co2 <- function(file_path, start_time, end_time) {
 #' @export
 add_co2 <- function(
   rga_df,
-  prooceanus_path,
-  start_time,
-  end_time,
+  co2_raw,
   sensor_separation = 1.02
 ) {
-  co2_raw <- load_prooceanus_co2(prooceanus_path, start_time, end_time)
   co2_df <- co2_raw |>
     select(timestamp = ts, prooceanus_co2_ppm = co2, cell_pressure)
-  co2_cal_df <- dplyr::left_join(
+  co2_cal_df <- dplyr::inner_join(
     co2_df,
     rga_df,
     by = dplyr::join_by(timestamp)
@@ -193,8 +190,8 @@ add_co2 <- function(
     mutate(
       prooceanus_co2_umol_l = co2_ppm_to_umol_per_l(
         xco2_ppm = prooceanus_co2_ppm,
-        temp = adv_temp, # status temp
-        sal = seaphox_salinity_psu, # seaphox salinity
+        temp_c = adv_temp, # status temp
+        sal_psu = 31.425, # mean seaphox salinity
         pressure_mbar = cell_pressure
       )
     )
@@ -263,11 +260,11 @@ calculate_oxygen_metrics <- function(rga_adv_data, sensor_separation = 1.02) {
 #' @return Data frame with ox_flux column added
 #'
 #' @export
-calculate_oxygen_flux <- function(data, length_scale = 0.3) {
+calculate_grad_flux <- function(data, grad_var, length_scale = 0.3) {
   data |>
     mutate(
       lscale = length_scale,
-      ox_flux = -1 * Ustar * lscale * (ox_gradient_umol_l_m)
+      ox_flux = -1 * Ustar * lscale * {{ grad_var }}
     )
 }
 
@@ -281,13 +278,16 @@ get_ustar <- function(flux_dataset) {
     summarize(Ustar = mean(Ustar, na.rm = TRUE))
 }
 
-
 # Join with Ustar and calculate flux
-calculate_grad_flux <- function(rga_adv_processed, flux_dataset) {
+add_grad_flux <- function(rga_adv_processed, flux_dataset, length_scale) {
   ustar_data <- get_ustar(flux_dataset)
   rga_adv_processed |>
     left_join(ustar_data, by = join_by(timestamp)) |>
-    calculate_oxygen_flux()
+    mutate(
+      lscale = length_scale,
+      ox_flux = -1 * Ustar * lscale * ox_gradient_umol_l_m,
+      co2_flux = -1 * Ustar * lscale * co2_gradient_umol_l_m
+    )
 }
 
 #' Calculate hourly statistics for oxygen metrics and flux

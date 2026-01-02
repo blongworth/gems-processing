@@ -87,6 +87,9 @@ list(
   # location for calculating PAR
   tar_target(crds, matrix(c(-70.7003, 41.51875), nrow = 1)),
 
+  # length scale in meters for flux calculation
+  tar_target(length_scale, 0.3),
+
   ### Initial processing from raw files ###
 
   # Uses functions from gemstools package
@@ -144,14 +147,30 @@ list(
     )
   ),
 
+  tar_target(
+    seaphox_df_jul,
+    load_seaphox_oxygen(
+      seaphox_file,
+      "2025-07-12 00:00:00",
+      "2025-07-16 14:00:00"
+    )
+  ),
+
+  tar_target(
+    proco2_df_jul,
+    load_prooceanus_co2(
+      prooceanus_file,
+      "2025-07-20 00:00:00",
+      "2025-07-29 00:00:00"
+    )
+  ),
+
   # Add calibrated CO2 to RGA data
   tar_target(
     rga_calibrated,
     add_co2(
       rga_with_oxygen,
-      prooceanus_file,
-      "2025-07-17 20:50:00",
-      "2025-08-03 00:00:00",
+      proco2_df_jul
     )
   ),
 
@@ -201,12 +220,6 @@ list(
       drop_na()
   ),
 
-  # Convert oxygen to umol/l and calculate mean and gradient
-  tar_target(
-    rga_adv_processed,
-    calculate_oxygen_metrics(rga_adv_complete)
-  ),
-
   ### Flux calculation ###
 
   # ADV data and flux calculation
@@ -224,7 +237,7 @@ list(
   # Join with Ustar and calculate flux
   tar_target(
     rga_adv_flux,
-    calculate_grad_flux(rga_adv_processed, flux_dataset)
+    add_grad_flux(rga_adv_joined, flux_dataset, length_scale)
   ),
 
   # Write RGA+ADV flux dataset
