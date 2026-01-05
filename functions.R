@@ -116,12 +116,9 @@ load_seaphox_oxygen <- function(seaphox_path, start_time, end_time) {
 #' @export
 add_oxygen <- function(
   rga_df,
-  seaphox_path,
-  start_time,
-  end_time,
+  seaphox_df,
   sensor_separation = 1.02
 ) {
-  seaphox_df <- load_seaphox_oxygen(seaphox_path, start_time, end_time)
   seaphox_15min <- seaphox_df |>
     mutate(timestamp = lubridate::floor_date(timestamp, "15 minute")) |>
     dplyr::group_by(timestamp) |>

@@ -10,7 +10,11 @@ library(imputeTS)
 # data_dir <- "data/processed/lander/"
 
 #' Read and process adv data to matlab flux input format
-process_adv_to_ml_input <- function(adv_file_name, moves_file_name) {
+process_adv_to_ml_input <- function(
+  adv_file_name,
+  moves_file_name,
+  min_correlation = NULL
+) {
   adv_df <- read_adv_data(adv_file_name)
   proc_adv_df <- adv_df |>
     scale_adv_velocity() |>
@@ -22,8 +26,17 @@ process_adv_to_ml_input <- function(adv_file_name, moves_file_name) {
   proc_adv_df
 }
 
-read_adv_data <- function(adv_file_path) {
-  open_dataset(adv_file_path) |>
+read_adv_data <- function(adv_file_path, min_correlation = NULL) {
+  ds <- open_dataset(adv_file_path)
+  if (!is.null(min_correlation)) {
+    ds <- ds |>
+      filter(
+        corr1 > min_correlation,
+        corr2 > min_correlation,
+        corr3 > min_correlation
+      )
+  }
+  ds |>
     select(timestamp, pressure, u, v, w, amp3, corr3) |>
     collect()
 }

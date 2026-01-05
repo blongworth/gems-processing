@@ -1,0 +1,74 @@
+---
+title: "Untitled"
+format: html
+---
+
+```{r}
+library(targets)
+library(ggplot2)
+library(plotly)
+library(patchwork)
+tar_load(rga_adv_flux)
+```
+
+```{r}
+gop = ggplot(rga_adv_flux, aes(timestamp, ox_flux)) + 
+geom_line()
+
+gcp = ggplot(rga_adv_flux, aes(timestamp, co2_flux)) + 
+geom_line()
+
+gpp = ggplot(rga_adv_flux, aes(timestamp, par)) + 
+geom_line()
+
+gop_ply <- ggplotly(gop, dynamicTicks = TRUE)
+gcp_ply <- ggplotly(gcp, dynamicTicks = TRUE)
+gpp_ply <- ggplotly(gpp, dynamicTicks = TRUE)
+
+subplot(gop_ply, gcp_ply, gpp_ply, nrows = 3, shareX = TRUE, titleY = TRUE)
+```
+
+hourly concentration, gradient, flux
+
+### hourly concentration and gradient
+
+```{r}
+tar_load(hourly_stats)
+```
+
+plot
+
+```{r}
+hmp <- hourly_stats |> 
+  ggplot(aes(solar_hour, ox_mean_umol_l_hourly)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = ox_mean_umol_l_hourly - ox_mean_umol_l_hourly_sd,
+                  ymax = ox_mean_umol_l_hourly + ox_mean_umol_l_hourly_sd),
+              alpha = 0.2) +
+  labs(x = NULL,
+       y = "Oxygen Conc. [mmol/m3]")
+
+hgp <- hourly_stats |> 
+  ggplot(aes(solar_hour, ox_gradient_umol_l_m_hourly)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = ox_gradient_umol_l_m_hourly - ox_gradient_umol_l_m_hourly_sd,
+                  ymax = ox_gradient_umol_l_m_hourly + ox_gradient_umol_l_m_hourly_sd),
+              alpha = 0.2) +
+  labs(x = "Hour of Day",
+       y = "Oxygen Gradient [mmol/m4]")
+
+flp <- hourly_stats |> 
+  ggplot(aes(solar_hour, ox_flux_hourly)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = ox_flux_hourly - ox_flux_hourly_sd,
+                  ymax = ox_flux_hourly + ox_flux_hourly_sd),
+              alpha = 0.2) +
+  labs(x = "Hour of Day",
+       y = "Oxygen Flux [mmol/m2]")
+
+hmp / hgp / flp
+
+# hm_ply <- ggplotly(hmp, dynamicTicks = TRUE)
+# hg_ply <- ggplotly(hgp, dynamicTicks = TRUE)
+# subplot(hm_ply, hg_ply, nrows = 2, shareX = TRUE, titleY = TRUE)
+```
