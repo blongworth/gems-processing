@@ -215,7 +215,7 @@ copy_matlab_input_files <- function(
 }
 
 # Run all fluxes using matlab/eddyflux_batch.m scripted using run_eddyflux.sh
-run_matlab_eddyflux <- function() {
+run_matlab_eddyflux <- function(adv_matlab_input) {
   copy_matlab_input_files()
   setwd("matlab")
   result <- system2(
@@ -251,6 +251,7 @@ read_flux_files <- function(
 }
 
 process_flux_data <- function(
+  matlab_eddyflux,
   matlab_dir = "matlab",
   pattern = "outfile2Rot_lecs_ml*",
   pos

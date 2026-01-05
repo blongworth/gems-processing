@@ -188,9 +188,13 @@ list(
 
   tar_target(pos_df, get_lander_positions(adv_matlab_input)),
 
-  tar_target(matlab_eddyflux, run_matlab_eddyflux(), format = "file"),
+  tar_target(
+    matlab_eddyflux,
+    run_matlab_eddyflux(adv_matlab_input),
+    format = "file"
+  ),
 
-  tar_target(flux_dataset, process_flux_data(pos = pos_df)),
+  tar_target(flux_dataset, process_flux_data(matlab_eddyflux, pos = pos_df)),
 
   # Join with Ustar and calculate flux
   tar_target(
