@@ -11,3 +11,17 @@ rga_eda_files/*
 *.png
 *.dat
 *.csv
+
+*.css
+*.scss
+*.js
+*.html
+*.pdf
+*.woff
+*.js.map
+*.min.map
+
+__pycache__/
+*.pyc
+_targets/meta/meta
+reports/gems_flux_report_files/libs/jquery-3.5.1/jquery-AUTHORS.txt

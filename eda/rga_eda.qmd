@@ -168,6 +168,12 @@ ggplot(seaphox_df_jul, aes(timestamp, oxygen)) +
 ```
 
 ```{r}
+ggplot(seaphox_df_jul, aes(timestamp, sal)) +
+  geom_line()
+
+```
+
+```{r}
 
 seaphox_df_sep <- data.table::fread("data/2025_Hadleys_Harbor/seaphox/Shallow SeapHox2-0000453-Data-20250916T181837.csv") |> 
   janitor::clean_names() |> 
@@ -252,6 +258,7 @@ co2_df_res <- co2_df |>
 ```
 
 
+
 ```{r}
 co2p <- ggplot(co2_df_res, aes(x =ts, y = co2)) +
   #geom_point() +
@@ -266,6 +273,20 @@ co2p <- ggplot(co2_df_res, aes(x =ts, y = co2)) +
 ggplotly(co2p)
 ```
 
+```{r}
+tar_load(proco2_df_jul)
+co2p <- ggplot(proco2_df_jul, aes(x =ts, y = co2)) +
+  #geom_point() +
+  geom_line() +
+  labs(
+    title = "ProOceanus CO2 Data",
+    x = "Date",
+    y = "CO2 (ppm)"
+  ) +
+  theme_minimal()
+
+ggplotly(co2p)
+```
 
 ```{r}
 co2_df_res <- co2_df_res |> 
@@ -585,6 +606,20 @@ df_all_ustar <- df_all |>
   left_join(flux_ustar, by = join_by(timestamp))
 ```
 
+```{r}
+tar_load(flux_dataset)
+flux_ustar <- flux_dataset |>
+  collect() |>
+  select(timestamp, Ustar) |>
+  mutate(timestamp = lubridate::floor_date(timestamp, unit = "15 minutes"),
+         timestamp = lubridate::with_tz(timestamp, "UTC")) |>
+  group_by(timestamp) |>
+  summarize(Ustar = mean(Ustar, na.rm = TRUE))
+
+df_all_ustar <- df_all |>
+  left_join(flux_ustar, by = join_by(timestamp))
+```
+
 Calculate gradient flux
 
 Using a placeholder length scale based on adv height
@@ -604,13 +639,34 @@ geom_line()
 ggplotly(gp, dynamicTicks = TRUE)
 ```
 
+```{r}
+tar_load(rga_adv_flux)
+```
+
+```{r}
+gop = ggplot(rga_adv_flux, aes(timestamp, ox_flux)) + 
+geom_line()
+
+gcp = ggplot(rga_adv_flux, aes(timestamp, co2_flux)) + 
+geom_line()
+
+gpp = ggplot(rga_adv_flux, aes(timestamp, par)) + 
+geom_line()
+
+gop_ply <- ggplotly(gop, dynamicTicks = TRUE)
+gcp_ply <- ggplotly(gcp, dynamicTicks = TRUE)
+gpp_ply <- ggplotly(gpp, dynamicTicks = TRUE)
+
+subplot(gop_ply, gcp_ply, gpp_ply, nrows = 3, shareX = TRUE, titleY = TRUE)
+```
+
 hourly concentration, gradient, flux
 
 ### hourly concentration and gradient
 
 ```{r}
 
-sol_noon = solarnoon(crds, df_all$timestamp, POSIXct.out = TRUE)
+sol_noon = solarnoon(crds, rga_adv_flux$timestamp, POSIXct.out = TRUE)
 mean(sol_noon) # about 16800 seconds
 
 # calculate difference from solar noon in hours
@@ -625,7 +681,7 @@ time_before_after_noon <- function(ts, solar_noon) {
   as.numeric(wrapped) / 3600  # convert back to hours
 }
 
-df_flux_hourly <- df_flux |> 
+df_flux_hourly <- rga_adv_flux |> 
   mutate(
     hour = hour(timestamp),
     diff_noon = timestamp - 16800,
@@ -670,7 +726,7 @@ flp <- df_flux_hourly |>
                   ymax = ox_flux_hourly + ox_flux_hourly_sd),
               alpha = 0.2) +
   labs(x = "Hour of Day",
-       y = "Oxygen Flus [mmol/m2]")
+       y = "Oxygen Flux [mmol/m2]")
 
 hmp / hgp / flp
 

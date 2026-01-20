@@ -1,0 +1,131 @@
+---
+title: "GEMS Status Timestamp Analysis"
+format: html
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(arrow)
+library(lubridate)
+library(patchwork)
+library(plotly)
+```
+
+## Load Data
+
+```{r}
+status_path <- "data/processed/lander/gems_status.parquet"
+df <- open_dataset(status_path) |> 
+  select(timestamp, adv_timestamp) |> 
+  collect() #|> 
+  # filter(timestamp > "2025-07-16",
+  #        timestamp < "2025-07-17")
+
+# Inspect the first few rows
+head(df)
+```
+
+## Gap Analysis
+
+We look for gaps in `timestamp` and `adv_timestamp`. We'll define a gap as any jump larger than 2 seconds (assuming 1Hz or similar sampling).
+
+```{r}
+df <- df %>%
+  #arrange(adv_timestamp) %>%
+  mutate(
+    dt_timestamp = as.numeric(difftime(timestamp, lag(timestamp), units = "secs")),
+    dt_adv_timestamp = as.numeric(difftime(adv_timestamp, lag(adv_timestamp), units = "secs"))
+  )
+
+# Summary of gaps
+summary(df$dt_timestamp)
+summary(df$dt_adv_timestamp)
+
+# Identify large gaps (> 2 seconds)
+gaps_timestamp <- df %>% filter(dt_timestamp > 2)
+gaps_adv_timestamp <- df %>% filter(dt_adv_timestamp > 2)
+
+# find duplicate timestamps
+ts_dup <- df %>%
+  group_by(timestamp) %>%
+  filter(n() > 1) %>%
+  ungroup()
+adv_ts_dup <- df %>%
+  group_by(adv_timestamp) %>%
+  filter(n() > 1) %>%
+  ungroup()
+
+cat("Number of gaps in timestamp (>2s):", nrow(gaps_timestamp), "\n")
+cat("Number of gaps in adv_timestamp (>2s):", nrow(gaps_adv_timestamp), "\n")
+```
+
+## Timestamp vs ADV Timestamp Difference
+
+```{r}
+df <- df %>%
+  arrange(timestamp) %>%
+  mutate(ts_diff = as.numeric(difftime(timestamp, adv_timestamp, units = "secs")),
+         diff_change = ts_diff - lag(ts_diff),
+         clock_set = ifelse(abs(diff_change) > 3000, TRUE, FALSE),
+         adv_adj 
+          = case_when(
+           timestamp < as.Date("2025-07-08") ~ 740848785,
+           timestamp >= as.Date("2025-09-01") ~ 746986938,
+           timestamp >= as.Date("2025-08-01") ~ 355255,
+           timestamp >= as.Date("2025-07-08") ~ 4740,
+         ),
+         adv_ts_cor = adv_timestamp + adv_adj,
+         ts_diff_cor = as.numeric(difftime(timestamp, adv_ts_cor, units = "secs")))
+```
+
+
+resample and plot
+
+```{r}
+df_resample <- df %>%
+  slice(seq(1, n(), by = 10))  # downsample for plotting
+```
+
+```{r}
+gp <- ggplot(df_resample, aes(x = timestamp, y = ts_diff)) +
+  geom_line() +
+  labs(
+    title = "Difference between System Timestamp and ADV Timestamp",
+    x = "Time",
+    y = "Difference (seconds)"
+  ) +
+  theme_classic()
+
+ggplotly(gp)
+```
+
+
+```{r}
+gp <- ggplot(df_resample, aes(x = timestamp, y = ts_diff_cor)) +
+  geom_line() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(
+    title = "Difference between System Timestamp and ADV Timestamp",
+    x = "Time",
+    y = "Difference (seconds)"
+  ) +
+  theme_classic()
+
+ggplotly(gp)
+```
+
+## Distribution of Time Steps
+
+```{r}
+p1 <- ggplot(df, aes(x = dt_timestamp)) +
+  geom_histogram(bins = 50) +
+  scale_x_log10() +
+  labs(title = "Distribution of System Timestamp Steps", x = "dt (s)")
+
+p2 <- ggplot(df, aes(x = dt_adv_timestamp)) +
+  geom_histogram(bins = 50) +
+  scale_x_log10() +
+  labs(title = "Distribution of ADV Timestamp Steps", x = "dt (s)")
+
+p1 / p2
+```

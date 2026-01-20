@@ -19,16 +19,16 @@ process_file <- function(file_path) {
   file_path
   # Read all lines from the file
   all_lines <- readLines(file_path)
-  
+
   # Extract lines starting with "Rebooted"
   reboot_lines <- all_lines[grepl("^Rebooted", all_lines)]
-  
+
   # Get lines that don't start with "Rebooted" (CSV data)
   csv_lines <- all_lines[!grepl("^Rebooted", all_lines)]
-  
+
   # Parse CSV data
   csv_data <- read_csv(
-    I(csv_lines), 
+    I(csv_lines),
     col_types = cols(
       timestamp = col_datetime(),
       voltage = col_double(),
@@ -40,7 +40,7 @@ process_file <- function(file_path) {
       source_file = basename(file_path),
       reboot_info = paste(reboot_lines, collapse = "; ")
     )
-  
+
   return(csv_data)
 }
 

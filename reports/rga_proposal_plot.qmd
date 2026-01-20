@@ -1,0 +1,72 @@
+---
+title: "Untitled"
+format: html
+---
+
+
+```{r}
+library(tidyverse)
+library(targets)
+library(patchwork)
+
+theme_set(theme_classic() +
+  theme(
+    axis.title.x = element_text(size = 9),
+    axis.title.y = element_text(size = 9)) )
+```
+
+
+```{r}
+tar_load(rga_adv_flux)
+```
+
+```{r}
+ggplot(rga_adv_flux, aes(timestamp, mass_32_40_low)) +
+    geom_line()
+```
+
+
+```{r}
+rga_filt <- rga_adv_flux |>
+    filter(timestamp > "2025-07-11",
+           timestamp < "2025-08-04") 
+
+oxp <- ggplot(rga_filt, aes(timestamp, mass_32_40_low)) +
+    geom_line() +
+    ylab("Mass 32/40") +
+    theme(axis.title.x = element_blank(),
+          axis.text.x = element_blank())
+oxpc <- ggplot(rga_filt, aes(timestamp, ox_low_umol_l)) +
+    geom_line() +
+    ylab(expression(Oxygen~"["*mu*"mol "*l^{-1}*"]")) +
+    theme(axis.title.x = element_blank(),
+          axis.text.x = element_blank())
+cop <- ggplot(rga_filt, aes(timestamp, co2_low)) +
+    geom_line() +
+    ylab(expression(CO[2]~"["*ppm*"]")) +
+    theme(axis.title.x = element_blank(),
+          axis.text.x = element_blank())
+tp <- ggplot(rga_filt, aes(timestamp, temp)) +
+    geom_line() +
+    ylab("Temperature [C]") +
+    theme(axis.title.x = element_blank(),
+          axis.text.x = element_blank())
+pp <- ggplot(rga_filt, aes(timestamp, pressure)) +
+    geom_line() +
+    ylab("Depth [m]") +
+    theme(axis.title.x = element_blank(),
+          axis.text.x = element_blank())
+lp <- ggplot(rga_filt, aes(timestamp, par)) +
+    ylab(expression(PAR~"["*mu*"mol "*m^{-2}*" "*s^{-1}*"]")) +
+    geom_line()
+
+out <- (oxp / oxpc / cop / tp / pp / lp)  +
+  plot_layout(heights = c(2, 2, 2, 1, 1, 1)) +
+  plot_annotation(tag_levels = "A") &
+  theme(
+    plot.tag = element_text(size = 9, face = "bold"),  # style the tags
+    plot.tag.position = "topleft"                       # positions: topleft, top, topright, etc.
+  )
+
+out
+```
