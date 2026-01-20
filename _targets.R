@@ -22,10 +22,10 @@ tar_option_set(
 )
 
 # Source helper functions
-source("bin_timeseries.R")
-source("functions.R")
-source("matlab_cpsd.R")
-source("adv_processing.R")
+source("R/bin_timeseries.R")
+source("R/functions.R")
+source("R/matlab_cpsd.R")
+source("R/adv_processing.R")
 
 # config variables
 data_dir_path <- "data/processed/lander"

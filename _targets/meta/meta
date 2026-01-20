@@ -1,0 +1,99 @@
+name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
+seaphox_file|stem|af45260eab0e1505|201fd153d4276189|2c530c1562a7fbd1|-1198598235|data/2025_Hadleys_Harbor/seaphox/Shallow SeapHox2-0000453-Data-20250716T200119.csv|t20285.8377239699s|s4509262b|4509262|file|local|vector|||0||
+bad_times_file|stem|8b5911c15a60c798|c7c4e6c4fd3ded8a|2c530c1562a7fbd1|-1762739000|data/2025_Hadleys_Harbor/gems_2025_bad_data_periods.csv|t20413.6397728092s|s506b|506|file|local|vector|||0||
+prooceanus_file|stem|ea03898f0062cb07|29ecb0a1d268a92c|2c530c1562a7fbd1|-918483484|data/2025_Hadleys_Harbor/prooceanus/prooceanus_co2_gems_hadley_2025-08-19.txt|t20322.390775463s|s99708894b|99708894|file|local|vector|||0||
+crds|stem|45fe3fafa572e1a0|0e43cdf0fd892d8e|2c530c1562a7fbd1|-1297675158||t20440.7755209434s|s88b|88|rds|local|vector|||0.001||
+seaphox_jul|stem|c12c5b763787c61b|96cd2a7df2df9cbd|01d3ba33c567ecfc|1570090199||t20440.7755227616s|s96151b|96151|rds|local|vector|||0.062||
+bad_times|stem|1d694ac538ce4766|ee6c4f4d69e9cf03|7934f2b534d5ec77|-424130701||t20440.7755242547s|s537b|537|rds|local|vector|||0.122||
+adv_binned|stem|9e7575b60487562d|37e14987c9a67170|cab1a2b517415702|726358332||t20440.775530791s|s484205b|484205|rds|local|vector|||0.531||
+adv_select|stem|093a6099ed3441af|4666c082dcf5b97a|028221d21a48520f|-42808305||t20440.7760667397s|s430991b|430991|rds|local|vector|||0.004||
+rga_clean|stem|56b480705ce49e38|081bac135eb9822e|531369837c692407|-1247811168||t20440.7760891226s|s33557205b|33557205|rds|local|vector|||0.083||
+rga_normalized|stem|aa6fbb9fe624a869|8617ed871920591f|661457b1668ab8b0|2135783524||t20440.7761306182s|s77614523b|77614523|rds|local|vector|||0.007||
+rga_binned|stem|da23494a9878cd07|20c6e49484d5c498|04ba4f0e029cd21c|-750791821||t20440.7761414101s|s436819b|436819|rds|local|vector|||0.615||
+rga_binned_wide|stem|f9bedd3412f83aff|34c23833b30cef68|ec09a98b11dc8b19|449940500||t20440.7761432877s|s848911b|848911|rds|local|vector|||0.112||
+rga_with_par|stem|49b953f3f25af0b5|0c56fd9d150c5c7a|56e802e0d693bdc8|1147606759||t20440.7761449837s|s878139b|878139|rds|local|vector|||0.096||
+oxygen_model|stem|3953a21fdc63f80b|1a422671ae7d0d10|2a9b6ae9f9db8b3e|106420946||t20440.7761453423s|s79986b|79986|rds|local|vector|||0.004||
+co2_model|stem|67f710b86f23ba30|3b0e9d7ebba595df|15a27e7ac63cfa66|-1942479997||t20440.7761463479s|s264514b|264514|rds|local|vector|||0.001||
+adv_raw|stem|3adebc912389e61b|6627034ad3c6c2a7|5a261ff8d74e843e|637024988||t20440.7789299966s|s843564b|843564|rds|local|vector|||0.019||
+moves_file_name|stem|1013f1e0d1e55523|f936e6005a224761|2c530c1562a7fbd1|-42249202|data/2025_Hadleys_Harbor/gems_lander_move_times.csv|t20413.7988269241s|s129b|129|file|local|vector|||0.082||
+rga_wide|stem|2aab683143fe0c96|262e432fc56da4a1|6ab7b4a5c042c442|-1032881454||t20446.8364750027s|s44455895b|44455895|rds|local|vector|||38.563||
+status_temp|stem|4334d14310cfebcd|cabfce7ac71c7a49|136774fb3bc47d75|-1409455625||t20446.839319253s|s90675b|90675|rds|local|vector|||1.205||
+rga_adv_complete|stem|4a9099d26390f7cf|97198af93fecdb2f|988a397469ee7098|-1518938560||t20446.8394063863s|s1408913b|1408913|rds|local|vector|||0.004||
+pos_df|stem|bd0c01177e76a1a0|e8f94df09ceecd23|8508319083514c7c|-2124287268||t20451.6353687181s|s270b|270|rds|local|vector|||0.4||
+data_dir|stem|91fe8f06ca21b7fa|c84ddfbbc840434e|defaf5e113f5d6b1|-145075625||t20451.8798841576s|s74b|74|rds|local|vector|||0.062||
+flux_file|stem|1e5dddbeffe68456|1c8807a0d33adfba|46b6b50dca9c7924|-1814121553|data/processed/lander//gems_flux_8hz_rot2.parquet|t20437.8004053504s||776397|file|local|vector|||||Error resolving output location: missing files: data/processed/lander/gems_flux_8hz_rot2.parquet
+gems_raw|stem|35c21b0384cd4af1|f0cb1a00a3aef89e|46b6b50dca9c7924|-2054403639|data/processed/lander/gems_rga.parquet*data/processed/lander/gems_status.parquet*data/processed/lander/gems_adv.parquet|t20452.8600812031s|s1562373288b|1562373288|file|local|vector|||736.246|File ./data/2025_Hadleys_Harbor/GEMS_LANDER/gems_2025-05-14-18-55.txt is empty. Skipping.. File ./data/2025_Hadleys_Harbor/GEMS_LANDER/gems_2025-05-14-19-02.txt is empty. Skipping.. File ./data/2025_Hadleys_Harbor/GEMS_LANDER/gems_2025-05-19-16-10.txt is empty. Skipping.. File ./data/2025_Hadleys_Harbor/GEMS_LANDER/gems_2025-05-19-20-10.txt is empty. Skipping.. File ./data/2025_Hadleys_Harbor/GEMS_LANDER/gems_2025-05-20-00-10.txt is empty. Skipping.. File ./data/2025_Hadleys_Harbor/GEMS_LANDER/gems_2025-05-20-04-10.txt is empty. Skipping.. File ./data/2025_Hadleys_Harbor/GEMS_LANDER/gems_2025-05-20-08-10.txt is empty. Skipping.. File ./data/2025_Hadleys_Harbor/GEMS_LANDER/gems_2025-05-20-12-10.txt is empty. Skipping.. File ./data/2025_Hadleys_Harbor/GEMS_LANDER/gems_2025-05-20-16-10.txt is empty. Skipping.. File ./data/2025_Hadleys_Harbor/GEMS_LANDER/gems_2025-05-21-17-20.txt contains no status data. File ./data/2025_Hadleys_Harbor/GEMS_LANDER/gems_2025-05-21-17-20.txt contains no ADV data. File ./data/2025_Hadleys_Harbor/GEMS_LANDER/gems_2025-05-21-20-10.txt is empty. Skipping.. File ./data/2025_Hadleys_Harbor/GEMS_LANDER/gems_2025-05-22-00-10.txt is empty. Skipping.. File ./data/2025_Hadleys_Harbor/GEMS_LANDER/gems_2025-05-22-04-10.txt is empty. Skipping.. File ./data/2025_Hadleys_Harbor/GEMS_LANDER/gems_2025-05-22-08-10.txt is empty. Skipping.. File ./data/2025_Hadleys_Harbor/GEMS_LANDER/gems_2025-05-23-20-10.txt is empty. Skipping.. File ./data/2025_Hadleys_Harbor/GEMS_LANDER/gems_2025-05-24-00-10.txt is empty. Skipping.. File ./data/2025_Hadleys_Harbor/GEMS_LANDER/gems_2025-05-24-08-10.txt is empty. Skipping.. File ./data/2025_Hadleys_Harbor/GEMS_LANDER/gems_2025-05-24-12-10.txt is empty. Skipping.. File ./data/2025_Hadleys_Harbor/GEMS_LANDER/gems_2025-05-24-16-10.txt is empty. Skipping.. File ./data/2025_Hadleys_Harbor/GEMS_LANDER/gems_2025-05-24-20-10.txt is empty. Skipping.. File ./data/2025_Hadleys_Harbor/GEMS_LANDER/gems_2025-05-25-00-10.txt is empty. Skipping.. File ./data/2025_Hadleys_Harbor/GEMS_LAND|
+rga_cal_file|stem|b84fca1d9827e730|d43eb6cf27789f31|937733efd7277f18|969635964||t20440.7789309866s||1079291|rds|local|vector|||||Error resolving stored output: target rga_cal_file did not return a character. File targets (targets with format = 'file') must return character vectors of file or directory paths.
+co2_calib_data|stem|6cdf0346dc910a4f|fc95b4db860bb659|2b08befcabf68efc|-1493894847||t20452.8626894307s|s202801b|202801|rds|local|vector|||0.006||
+co2_calib_raw|stem|099a6cf73d0fb47e|fda6818294035143|ca965ec06aaf9793|-1595941739||t20453.6867668236s|s96753b|96753|rds|local|vector|||3.741|One or more parsing issues, call `problems()` on your data frame for details, e.g.:   dat <- vroom(...)   problems(dat)|
+prepare_co2_calibration|function|1105b736eaf89f3e|||||||||||||||
+prepare_oxygen_calibration|function|f3e236d199d4c6e1|||||||||||||||
+add_co2_umol_l|function|cec3056cfb50ae55|||||||||||||||
+oxygen_calib_data|stem|f748942f928cb7b2|53ed94ff84c6f491|283be11ce470c80a|-1351275672||t20453.7548721128s|s73326b|73326|rds|local|vector|||0.019||
+apply_oxygen_calibration|function|9bc8e2b7d7f4f924|||||||||||||||
+rga_temp|stem|895ed4389a9b65a6|7189146880ff0f3c|e6e63716c356926e|937706436||t20453.8976317262s|s923225b|923225|rds|local|vector|||1.472||
+rga_with_oxygen|stem|cdd6552e6f02dccb|354e348d90fd756f|f1105752cc4c3db9|607512855||t20453.9358849286s|s1227767b|1227767|rds|local|vector|||0.089||
+calculate_oxygen_flux|function|8313f359dae7d7cb|||||||||||||||
+rga_adv_processed|stem|2c973c7b363d67bb|4ea55fe88ee95165|f5f09c9519e709bf|1199850783||t20446.8394072893s||1609087|rds|local|vector|||0.074||object 'rga_adv_complete' not found
+length_scale|stem|4701fd7042dcfb6a|712f50211213eaee|2c530c1562a7fbd1|1608740760||t20455.8834330037s|s51b|51|rds|local|vector|||0.067||
+seaphox_df_jul|stem|fa00f52c1a5d10ef|96cd2a7df2df9cbd|0a96d6e4b27abf66|58497243||t20455.9207305948s|s96190b|96190|rds|local|vector|||0.056||
+raw_adv_path|stem|add96940ffb45537|c65776d37a33ee95|46b6b50dca9c7924|-1055211466|data/processed/lander/gems_adv.parquet|t20446.8316268812s|s96b|96|file|local|vector|||0||
+rga_oxygen|stem|cdd6552e6f02dccb|aacb846a41cf69a4|91da8b6111ef6c6e|-979132526||t20458.6197117629s|s1227767b|1227767|rds|local|vector|||0.036||
+moves_file|stem|1013f1e0d1e55523|f936e6005a224761|2c530c1562a7fbd1|-593783196|data/2025_Hadleys_Harbor/gems_lander_move_times.csv|t20413.7988269241s|s129b|129|file|local|vector|||0.074||
+adv_file|stem|add96940ffb45537|c65776d37a33ee95|46b6b50dca9c7924|1545025646|data/processed/lander/gems_adv.parquet|t20452.8600812031s|s1247550934b|1247550934|file|local|vector|||0||
+min_correlation|stem|c445006cb482ce93|d6c480ee8049249e|2c530c1562a7fbd1|-1987451332||t20458.8015424806s|s51b|51|rds|local|vector|||0.059||
+adv_bin_rot_df|stem|606beb0bd35e4cf1|4b96ba13d5932395|92bcce8f06a857ef|-1653354987||t20458.8016669448s|s862262b|862262|rds|local|vector|||10.627||
+adv_matlab_input|stem|70189d8aa8d4fa69|a6631ce59a72e3c0|fe79a4f3e5aa49f9|-648601694||t20458.8047244258s|s738711366b|738711366|rds|local|vector|||118.555||
+matlab_eddyflux|stem|6f87a8355d67e701|0c6eb6ed2bd90fe9|08b57952542ed5c8|1835177919|matlab/outfile2Rot_lecs_ml_data_1.dat*matlab/outfile2Rot_lecs_ml_data_2.dat*matlab/outfile2Rot_lecs_ml_data_3.dat*matlab/outfile2Rot_lecs_ml_data_4.dat*matlab/outfile2Rot_lecs_ml_data_5.dat*matlab/outfile2Rot_lecs_ml_data_6.dat|t20458.8180681216s|s3293182b|3293182|file|local|vector|||200.092||
+flux_dataset|stem|00239f025281610e|139bc02f0f7a6a2e|fcfee9aa5999c5ea|-210948964||t20458.8181093373s|s1274936b|1274936|rds|local|vector|||0.207|One or more parsing issues, call `problems()` on your data frame for details, e.g.:   dat <- vroom(...)   problems(dat)|
+rga_adv_joined|stem|4362dc385db57601|c622115ff61880a1|9eb267be64c05379|-1087593305||t20458.8208460086s|s1735465b|1735465|rds|local|vector|||0.642|Detected an unexpected many-to-many relationship between `x` and `y`. ℹ Row 194 of `x` matches multiple rows in `y`. ℹ Row 8382 of `y` matches multiple rows in `x`. ℹ If a many-to-many relationship is expected, set `relationship =   'many-to-many'` to silence this warning.|
+rga_adv_flux|stem|e8be1778f86e3c60|0a235cfe5ebe33ec|cc085a762a051591|-1956896169||t20458.8211637033s|s1888710b|1888710|rds|local|vector|||0.063||
+rga_adv_flux_file|stem|e8be1778f86e3c60|6b3d69fd9f2689a3|043c3aa3a60f808f|827738669||t20458.8218303974s|s1888710b|1888710|rds|local|vector|||0.034||
+hourly_stats|stem|a25ef6767aa00c49|e7cf04620162c613|124e34136351c55c|2076586652||t20459.6827935895s|s1843b|1843|rds|local|vector|||0.008||
+proco2_df_jul|stem|b428be58c012828f|f3992dd236ba72cf|52242dca6ba210f6|7308510||t20462.8589979037s|s4855934b|4855934|rds|local|vector|||3.221|One or more parsing issues, call `problems()` on your data frame for details, e.g.:   dat <- vroom(...)   problems(dat)|
+rga_calibrated|stem|fffc3a465dfa7ac8|5b9883c4bff9ddba|fa3614d30ecb71f8|225833548||t20462.8592134459s|s1431274b|1431274|rds|local|vector|||0.076||
+report|stem|b8ce526706ba9bb0|a05c0c3e44f70e43|c04d69900487e3ef|787668912|reports/gems_flux_report.html*reports/gems_flux_report.qmd|t20473.9138624793s|s2212221b|2212221|file|local|vector|||5.719||
+group_adv_data|function|067797cdbd9b51d5
+calculate_par|function|addf57fd460c9032
+calculate_grad_flux|function|8dfd6bb588334108
+write_flux_file|function|a6f615da2e1b1a11
+add_oxygen|function|9492434f6a2fee3f
+flag_adv_lander_moves|function|2780f407a6f0211a
+.__global__|object|42f9bdde69cb7b3d
+.Random.seed|object|56ce2053bd9694f8
+rotate_to_minimize_z|function|e235a92a43444b05
+pair_gradient_measurements|function|5e79d85025af3dfa
+scale_adv_velocity|function|645a3769ef828ded
+get_ustar|function|0ce3bc6feb80fdfd
+read_adv_data|function|92747535fdccfba7
+lecs_to_ml|function|4e9a0df4ce8fc24f
+flux_output_file|object|8e61df6480b5894b
+remove_bad_rga_periods|function|867111c9b3a3f4e5
+normalize_rga_by_argon|function|251b7b497d96ea5d
+process_rga_to_wide|function|f1c661fd031c2465
+add_adv|function|eaca0d29ab27d884
+get_lander_positions|function|1f45452e003abf57
+copy_matlab_input_files|function|7d44b88f49d14be8
+add_status_temp|function|af9700300022585f
+data_dir_path|object|1c8cd09904cf4ee1
+write_grouped_adv_data|function|f33a2dd4a7c8a184
+bin_timeseries|function|cf1aeefd725ee19c
+impute_adv_data|function|46d939df1f3fb96b
+apply_co2_calibration|function|b69d38fb0efedebb
+read_flux_files|function|ad12a59dab772f63
+calculate_oxygen_metrics|function|629eafe354299c8c
+calculate_hourly_statistics|function|05b00d5203fa6cda
+load_prooceanus_co2|function|b4aaca3fd3a22efa
+add_co2|function|0b27cb3c00c784a3
+load_seaphox_oxygen|function|9480ac0e046712bd
+add_par|function|9be53925fdd69775
+add_grad_flux|function|b666567953bd737a
+group_ml|function|135cc909a9a4f3f5
+load_and_widen_rga|function|e3724663bbb005f2
+load_and_bin_adv|function|7e8d974a98046360
+run_matlab_eddyflux|function|b034d308a9fd13ce
+process_flux_data|function|af36c2a990801180
+generate_matlab_input_files|function|19e99ed8595221a6
+process_adv_to_ml_input|function|e83bf999916dca7c
+rga_file|stem|bbfea72fe36b13ee|b04d6c72fbf5d44d|2c530c1562a7fbd1|-196828762|data/processed/lander/gems_rga.parquet|t20446.8315878272s|s96b|96|file|local|vector|||0.059||
+status_file|stem|716f8a48b85f5f1a|cac9377614966fd2|46b6b50dca9c7924|-320583171|data/processed/lander/gems_status.parquet|t20409.8428391163s|s96b|96|file|local|vector|||0||
