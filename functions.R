@@ -157,10 +157,7 @@ add_oxygen <- function(
 #' @export
 load_prooceanus_co2 <- function(file_path, start_time, end_time) {
   read_prooceanus(file_path) |>
-    filter(ts >= as.Date(start_time), ts <= as.Date(end_time)) |>
-    mutate(ts = floor_date(ts, unit = "15 mins")) |>
-    group_by(ts) |>
-    summarize(across(where(is.numeric), \(x) mean(x, na.rm = TRUE)))
+    filter(ts >= as.Date(start_time), ts <= as.Date(end_time))
 }
 
 
@@ -178,7 +175,10 @@ add_co2 <- function(
   sensor_separation = 1.02
 ) {
   co2_df <- co2_raw |>
-    select(timestamp = ts, prooceanus_co2_ppm = co2, cell_pressure)
+    mutate(ts = floor_date(ts, unit = "15 mins")) |>
+    group_by(ts) |>
+    select(timestamp = ts, prooceanus_co2_ppm = co2, cell_pressure) |>
+    summarize(across(where(is.numeric), \(x) mean(x, na.rm = TRUE)))
   co2_cal_df <- dplyr::inner_join(
     co2_df,
     rga_df,
@@ -308,6 +308,8 @@ calculate_hourly_statistics <- function(flux_data, coordinates) {
       ox_mean_umol_l_hourly_sd = sd(ox_mean_umol_l, na.rm = TRUE),
       ox_gradient_umol_l_m_hourly = mean(ox_gradient_umol_l_m, na.rm = TRUE),
       ox_gradient_umol_l_m_hourly_sd = sd(ox_gradient_umol_l_m, na.rm = TRUE),
+      co2_gradient_umol_l_m_hourly = mean(co2_gradient_umol_l_m, na.rm = TRUE),
+      co2_gradient_umol_l_m_hourly_sd = sd(co2_gradient_umol_l_m, na.rm = TRUE),
       ox_flux_hourly = mean(ox_flux, na.rm = TRUE),
       ox_flux_hourly_sd = sd(ox_flux, na.rm = TRUE),
       .groups = "drop"
