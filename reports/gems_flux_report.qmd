@@ -29,13 +29,13 @@ tar_load(proco2_df_jul)
 # Flux
 
 ```{r}
-gop = ggplot(rga_adv_flux, aes(timestamp, ox_flux)) + 
+gop = ggplot(rga_adv_flux, aes(timestamp, ox_flux)) +
 geom_line()
 
-gcp = ggplot(rga_adv_flux, aes(timestamp, co2_flux)) + 
+gcp = ggplot(rga_adv_flux, aes(timestamp, co2_flux)) +
 geom_line()
 
-gpp = ggplot(rga_adv_flux, aes(timestamp, par)) + 
+gpp = ggplot(rga_adv_flux, aes(timestamp, par)) +
 geom_line()
 
 gop_ply <- ggplotly(gop, dynamicTicks = TRUE)
@@ -51,7 +51,7 @@ subplot(gop_ply, gcp_ply, gpp_ply, nrows = 3, shareX = TRUE, titleY = TRUE)
 Daily summary by hour-of-day
 
 ```{r}
-hmp <- hourly_stats |> 
+hmp <- hourly_stats |>
   ggplot(aes(solar_hour, ox_mean_umol_l_hourly)) +
   geom_line() +
   geom_ribbon(aes(ymin = ox_mean_umol_l_hourly - ox_mean_umol_l_hourly_sd,
@@ -60,7 +60,7 @@ hmp <- hourly_stats |>
   labs(x = NULL,
        y = "Oxygen Conc. [mmol/m3]")
 
-hgp <- hourly_stats |> 
+hgp <- hourly_stats |>
   ggplot(aes(solar_hour, ox_gradient_umol_l_m_hourly)) +
   geom_line() +
   geom_ribbon(aes(ymin = ox_gradient_umol_l_m_hourly - ox_gradient_umol_l_m_hourly_sd,
@@ -69,7 +69,7 @@ hgp <- hourly_stats |>
   labs(x = "Hour of Day",
        y = "Oxygen Gradient [mmol/m4]")
 
-flp <- hourly_stats |> 
+flp <- hourly_stats |>
   ggplot(aes(solar_hour, ox_flux_hourly)) +
   geom_line() +
   geom_ribbon(aes(ymin = ox_flux_hourly - ox_flux_hourly_sd,
@@ -85,4 +85,18 @@ hmp / hgp / flp
 # subplot(hm_ply, hg_ply, nrows = 2, shareX = TRUE, titleY = TRUE)
 ```
 
+Comparison of CO2 and O2 gradient
+
+```{r}
+cgp <- hourly_stats |>
+  ggplot(aes(solar_hour, co2_gradient_umol_l_m_hourly)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = co2_gradient_umol_l_m_hourly - co2_gradient_umol_l_m_hourly_sd,
+                  ymax = co2_gradient_umol_l_m_hourly + co2_gradient_umol_l_m_hourly_sd),
+              alpha = 0.2) +
+  labs(x = "Hour of Day",
+       y = "CO2 Gradient [mmol/m4]")
+
+hgp / cgp
+```
 Monthly summary by hour-of-day

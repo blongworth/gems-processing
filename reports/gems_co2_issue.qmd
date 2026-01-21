@@ -24,21 +24,6 @@ tar_load(proco2_df_jul)
 
 ## CO2 flux magnitude issue
 
-Comparison of CO2 and O2 gradient
-
-
-```{r}
-cgp <- hourly_stats |> 
-  ggplot(aes(solar_hour, co2_gradient_umol_l_m_hourly)) +
-  geom_line() +
-  geom_ribbon(aes(ymin = co2_gradient_umol_l_m_hourly - co2_gradient_umol_l_m_hourly_sd,
-                  ymax = co2_gradient_umol_l_m_hourly + co2_gradient_umol_l_m_hourly_sd),
-              alpha = 0.2) +
-  labs(x = "Hour of Day",
-       y = "CO2 Gradient [mmol/m4]")
-
-hgp / cgp
-```
 
 Compare ProCO2 and RGA
 
