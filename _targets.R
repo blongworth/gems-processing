@@ -22,10 +22,13 @@ tar_option_set(
 )
 
 # Source helper functions
-source("R/bin_timeseries.R")
-source("R/functions.R")
-source("R/matlab_cpsd.R")
-source("R/adv_processing.R")
+source("R/binning.R")
+source("R/rga.R")
+source("R/adv.R")
+source("R/calibration.R")
+source("R/par.R")
+source("R/flux.R")
+source("R/analyse.R")
 
 # config variables
 data_dir_path <- "data/processed/lander"

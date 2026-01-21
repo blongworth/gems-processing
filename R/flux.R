@@ -272,6 +272,44 @@ process_flux_data <- function(
     ungroup()
 }
 
+#' Calculate flux from concentration gradient and velocity
+#'
+#' @param data Data frame with oxygen gradient and Ustar values
+#' @param length_scale Turbulent length scale parameter (default: 0.3)
+#'
+#' @return Data frame with ox_flux column added
+#'
+#' @export
+calculate_grad_flux <- function(data, grad_var, length_scale = 0.3) {
+  data |>
+    mutate(
+      lscale = length_scale,
+      ox_flux = -1 * Ustar * lscale * {{ grad_var }}
+    )
+}
+
+get_ustar <- function(flux_dataset) {
+  flux_dataset |>
+    select(timestamp, Ustar) |>
+    mutate(
+      timestamp = lubridate::floor_date(timestamp, unit = "15 minutes")
+    ) |>
+    group_by(timestamp) |>
+    summarize(Ustar = mean(Ustar, na.rm = TRUE))
+}
+
+# Join with Ustar and calculate flux
+add_grad_flux <- function(rga_adv_processed, flux_dataset, length_scale) {
+  ustar_data <- get_ustar(flux_dataset)
+  rga_adv_processed |>
+    left_join(ustar_data, by = join_by(timestamp)) |>
+    mutate(
+      lscale = length_scale,
+      ox_flux = -1 * Ustar * lscale * ox_gradient_umol_l_m,
+      co2_flux = -1 * Ustar * lscale * co2_gradient_umol_l_m
+    )
+}
+
 write_flux_file <- function(flux_df, data_dir = "data/processed/lander/") {
   write_dataset(flux_df, file.path(data_dir, "gems_flux_8hz_rot2.parquet"))
 }
