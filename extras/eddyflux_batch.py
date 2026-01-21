@@ -14,6 +14,9 @@ Output:
 
 Date created: 6/5/2013; updated 9/14/18; modified for batch input 11/21/24
 Translated to Python: 12/2025
+
+UNTESTED!
+Not currenty used for flux processing
 """
 
 import numpy as np

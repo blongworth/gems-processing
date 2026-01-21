@@ -32,9 +32,9 @@ source("R/analyse.R")
 
 # config variables
 data_dir_path <- "data/processed/lander"
-flux_output_file <- file.path(data_dir_path, "gems_flux.parquet")
+flux_output_file <- file.path(data_dir_path, "gems_2025_flux.parquet")
 
-# Define the pipeline
+# define the pipeline
 list(
   ### input files and parameters ###
 
@@ -207,8 +207,11 @@ list(
 
   # Write RGA+ADV flux dataset
   tar_target(
-    rga_adv_flux_file,
-    write_parquet(rga_adv_flux, flux_output_file)
+    rga_adv_flux_files,
+    {
+      write_parquet(rga_adv_flux, paste0(flux_output_file, ".parquet"))
+      write_csv(rga_adv_flux, paste0(flux_output_file, ".csv"))
+    }
   ),
 
   # Calculate hourly statistics
@@ -218,5 +221,6 @@ list(
   ),
 
   # Visualizations
-  tar_quarto(report, "reports/gems_flux_report.qmd")
+  tar_quarto(co2_report, "reports/gems_co2_issue.qmd"),
+  tar_quarto(flux_report, "reports/gems_flux_report.qmd")
 )
