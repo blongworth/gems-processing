@@ -1,14 +1,6 @@
 # process GEMS ADV data into files per lander position
 # for MATLAB eddyflux processing
 
-library(tidyverse)
-library(arrow)
-library(furrr)
-library(imputeTS)
-
-# adv_file <- "data/processed/lander/adv_data_.parquet"
-# data_dir <- "data/processed/lander/"
-
 #' Read and process adv data to matlab flux input format
 process_adv_to_ml_input <- function(
   adv_file_name,
@@ -55,13 +47,13 @@ impute_adv_data <- function(adv_data) {
   st <- min(adv_data$timestamp)
   et <- max(adv_data$timestamp)
   ts_8hz <- seq(from = st, to = et, by = 0.125)
-  df_ts_8hz <- tibble(timestamp = ts_8hz)
+  df_ts_8hz <- dplyr::tibble(timestamp = ts_8hz)
 
   df_8hz_all <- df_ts_8hz |>
-    left_join(adv_data)
+    dplyr::left_join(adv_data)
 
   df_8hz_all |>
-    mutate(across(-timestamp, \(x) {
+    dplyr::mutate(across(-timestamp, \(x) {
       na_interpolation(x, maxgap = 8)
     }))
 }
@@ -97,7 +89,7 @@ flag_adv_lander_moves <- function(grouped_adv_df, moves_file_name) {
       lander_moves,
       by = join_by(closest(timestamp >= change_timestamp))
     ) |>
-    fill(lander_position, .direction = "down") |>
+    tidyr::fill(lander_position, .direction = "down") |>
     mutate(lander_position = replace_na(lander_position, 1)) |>
     select(-change_timestamp)
 
@@ -301,12 +293,13 @@ get_ustar <- function(flux_dataset) {
 # Join with Ustar and calculate flux
 add_grad_flux <- function(rga_adv_processed, flux_dataset, length_scale) {
   ustar_data <- get_ustar(flux_dataset)
+  von_karman <- 0.41
   rga_adv_processed |>
     left_join(ustar_data, by = join_by(timestamp)) |>
     mutate(
       lscale = length_scale,
-      ox_flux = -1 * Ustar * lscale * ox_gradient_umol_l_m,
-      co2_flux = -1 * Ustar * lscale * co2_gradient_umol_l_m
+      ox_flux = -1 * Ustar * von_karman * lscale * ox_gradient_umol_l_m,
+      co2_flux = -1 * Ustar * von_karman * lscale * co2_gradient_umol_l_m
     )
 }
 
