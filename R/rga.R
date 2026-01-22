@@ -15,12 +15,6 @@
 #' @return A tibble in wide format,
 #' with a row for each cycle and columns for each mass.
 #' @export
-#'
-#' @examples
-#' \dontrun{
-#' # Assuming 'rga_data' is a tibble with the required columns
-#' rga_wide <- process_rga_to_wide(rga_data)
-#' }
 process_rga_to_wide <- function(data, cycle_start_mass = 18) {
   data |>
     mutate(cycle = cumsum(mass == cycle_start_mass)) %>%

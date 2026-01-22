@@ -17,8 +17,13 @@ tar_option_set(
     "lubridate",
     "dplyr",
     "imputeTS",
-    "quarto"
+    "readr",
+    "quarto",
+    "tidyr",
+    "purrr",
+    "stringr"
   ),
+
 )
 
 # Source helper functions
@@ -52,22 +57,6 @@ list(
 
   ### intermediate file targets ###
 
-  # combined, cleaned RGA and ADV data
-  tar_target(
-    rga_file,
-    "data/processed/lander/gems_rga.parquet",
-    format = "file"
-  ),
-  tar_target(
-    adv_file,
-    file.path(data_dir, "gems_adv.parquet"),
-    format = "file"
-  ),
-  tar_target(
-    status_file,
-    file.path(data_dir, "gems_status.parquet"),
-    format = "file"
-  ),
   tar_target(
     bad_times,
     read_csv(bad_times_file)
@@ -104,6 +93,37 @@ list(
     format = "file"
   ),
 
+  # confirm expected output filenames are present in gems_raw
+  tar_target(
+    rga_file,
+    {
+      files <- gems_raw
+      expected <- file.path(data_dir, "gems_rga.parquet")
+      stopifnot(expected %in% files)
+      expected
+    },
+    format = "file"
+  ),
+  tar_target(
+    adv_file,
+    {
+      files <- gems_raw
+      expected <- file.path(data_dir, "gems_adv.parquet")
+      stopifnot(expected %in% files)
+      expected
+    },
+    format = "file"
+  ),
+  tar_target(
+    status_file,
+    {
+      files <- gems_raw
+      expected <- file.path(data_dir, "gems_status.parquet")
+      stopifnot(expected %in% files)
+      expected
+    },
+    format = "file"
+  ),
   ### RGA data processing and calibration ###
 
   # Load and process RGA data
@@ -135,7 +155,6 @@ list(
     rga_temp,
     add_status_temp(rga_with_par, status_file, bad_times)
   ),
-
   tar_target(
     seaphox_df_jul,
     load_seaphox_oxygen(
@@ -153,7 +172,6 @@ list(
       seaphox_df_jul
     )
   ),
-
   tar_target(
     proco2_df_jul,
     load_prooceanus_co2(
@@ -188,15 +206,12 @@ list(
     adv_matlab_input,
     process_adv_to_ml_input(adv_file, moves_file, min_correlation)
   ),
-
   tar_target(pos_df, get_lander_positions(adv_matlab_input)),
-
   tar_target(
     matlab_eddyflux,
     run_matlab_eddyflux(adv_matlab_input),
     format = "file"
   ),
-
   tar_target(flux_dataset, process_flux_data(matlab_eddyflux, pos = pos_df)),
 
   # Join with Ustar and calculate flux
