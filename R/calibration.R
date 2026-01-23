@@ -59,7 +59,7 @@ add_oxygen <- function(
       ox_high_umol_l = o2_ml_l_to_umol_l(oxygen_high, adv_temp),
       ox_low_umol_l = o2_ml_l_to_umol_l(oxygen_low, adv_temp),
       ox_mean_umol_l = (ox_low_umol_l + ox_high_umol_l) / 2,
-      ox_gradient_umol_l_m = (ox_low_umol_l - ox_high_umol_l) /
+      ox_gradient_umol_l_m = (ox_high_umol_l - ox_low_umol_l) /
         sensor_separation
     )
 }
@@ -123,7 +123,7 @@ add_co2 <- function(
       co2_high_umol_l = co2_i + co2_m * mass_44_40_high,
       co2_low_umol_l = co2_i + co2_m * mass_44_40_low,
       co2_mean_umol_l = (co2_low_umol_l + co2_high_umol_l) / 2,
-      co2_gradient_umol_l_m = (co2_low_umol_l - co2_high_umol_l) /
+      co2_gradient_umol_l_m = (co2_high_umol_l - co2_low_umol_l) /
         sensor_separation
     )
 }

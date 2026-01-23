@@ -23,7 +23,6 @@ tar_option_set(
     "purrr",
     "stringr"
   ),
-
 )
 
 # Source helper functions
@@ -219,20 +218,28 @@ list(
     rga_adv_flux,
     add_grad_flux(rga_adv_joined, flux_dataset, length_scale)
   ),
+  tar_target(
+    hourly_flux,
+    calc_hourly_flux(rga_adv_flux)
+  ),
 
   # Write RGA+ADV flux dataset
   tar_target(
     rga_adv_flux_files,
     {
-      write_parquet(rga_adv_flux, paste0(flux_output_file, ".parquet"))
-      write_csv(rga_adv_flux, paste0(flux_output_file, ".csv"))
+      write_parquet(hourly_flux, paste0(flux_output_file, ".parquet"))
+      write_csv(hourly_flux, paste0(flux_output_file, ".csv"))
     }
   ),
 
-  # Calculate hourly statistics
+  # Calculate statistics
   tar_target(
     hourly_stats,
-    calculate_hourly_statistics(rga_adv_flux, crds)
+    calculate_hourly_statistics(hourly_flux)
+  ),
+  tar_target(
+    monthly_stats,
+    calculate_monthly_statistics(hourly_flux)
   ),
 
   # Visualizations

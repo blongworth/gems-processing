@@ -8,23 +8,96 @@
 #' @return Data frame with hourly statistics grouped by solar hour
 #'
 #' @export
-calculate_hourly_statistics <- function(flux_data, coordinates) {
+calculate_hourly_statistics <- function(flux_data) {
   flux_data |>
     mutate(
       hour = hour(timestamp),
       diff_noon = timestamp - 16800,
-      solar_hour = hour(diff_noon)
+      solar_hour = hour(diff_noon),
+      month = as.integer(month(timestamp)),
+      season = case_when(
+        month %in% 10:12 ~ "Fall",
+        month %in% 1:3 ~ "Winter",
+        month %in% 4:6 ~ "Spring",
+        TRUE ~ "Summer"
+      )
     ) |>
     group_by(solar_hour) |>
-    summarize(
-      ox_mean_umol_l_hourly = mean(ox_mean_umol_l, na.rm = TRUE),
-      ox_mean_umol_l_hourly_sd = sd(ox_mean_umol_l, na.rm = TRUE),
-      ox_gradient_umol_l_m_hourly = mean(ox_gradient_umol_l_m, na.rm = TRUE),
-      ox_gradient_umol_l_m_hourly_sd = sd(ox_gradient_umol_l_m, na.rm = TRUE),
-      co2_gradient_umol_l_m_hourly = mean(co2_gradient_umol_l_m, na.rm = TRUE),
-      co2_gradient_umol_l_m_hourly_sd = sd(co2_gradient_umol_l_m, na.rm = TRUE),
-      ox_flux_hourly = mean(ox_flux, na.rm = TRUE),
-      ox_flux_hourly_sd = sd(ox_flux, na.rm = TRUE),
+    summarise(
+      across(
+        c(-timestamp),
+        c(
+          mean = \(x) mean(x, na.rm = TRUE),
+          sd = \(x) sd(x, na.rm = TRUE),
+          se = \(x) sd(x, na.rm = TRUE) / sqrt(length(x))
+        )
+      ),
       .groups = "drop"
     )
 }
+
+calculate_monthly_statistics <- function(flux_data) {
+  flux_data |>
+    mutate(
+      hour = hour(timestamp),
+      diff_noon = timestamp - 16800,
+      solar_hour = hour(diff_noon),
+      month = month(timestamp),
+      season = case_when(
+        month %in% 10:12 ~ "Fall",
+        month %in% 1:3 ~ "Winter",
+        month %in% 4:6 ~ "Spring",
+        TRUE ~ "Summer"
+      )
+    ) |>
+    group_by(solar_hour, month) |>
+    summarise(
+      across(
+        c(-timestamp),
+        c(
+          mean = \(x) mean(x, na.rm = TRUE),
+          sd = \(x) sd(x, na.rm = TRUE),
+          se = \(x) sd(x, na.rm = TRUE) / sqrt(length(x))
+        )
+      ),
+      .groups = "drop"
+    )
+}
+
+calculate_seasonal_statistics <- function(flux_data, coordinates) {
+  flux_data |>
+    mutate(
+      hour = hour(timestamp),
+      diff_noon = timestamp - 16800,
+      solar_hour = hour(diff_noon),
+      month = month(timestamp),
+      season = case_when(
+        month %in% 10:12 ~ "Fall",
+        month %in% 1:3 ~ "Winter",
+        month %in% 4:6 ~ "Spring",
+        TRUE ~ "Summer"
+      )
+    ) |>
+    group_by(solar_hour, season) |>
+    summarise(
+      across(
+        c(-timestamp),
+        c(
+          mean = \(x) mean(x, na.rm = TRUE),
+          sd = \(x) sd(x, na.rm = TRUE),
+          se = \(x) sd(x, na.rm = TRUE) / sqrt(length(x))
+        )
+      ),
+      .groups = "drop"
+    )
+}
+
+# summarize(
+#   ox_mean_umol_l_hourly = mean(ox_mean_umol_l, na.rm = TRUE),
+#   ox_mean_umol_l_hourly_sd = sd(ox_mean_umol_l, na.rm = TRUE),
+#   ox_gradient_umol_l_m_hourly = mean(ox_gradient_umol_l_m, na.rm = TRUE),
+#   ox_gradient_umol_l_m_hourly_sd = sd(ox_gradient_umol_l_m, na.rm = TRUE),
+#   co2_gradient_umol_l_m_hourly = mean(co2_gradient_umol_l_m, na.rm = TRUE),
+#   co2_gradient_umol_l_m_hourly_sd = sd(co2_gradient_umol_l_m, na.rm = TRUE),
+#   ox_flux_hourly = mean(ox_flux, na.rm = TRUE),
+#   ox_flux_hourly_sd = sd(ox_flux, na.rm = TRUE),

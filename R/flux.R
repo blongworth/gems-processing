@@ -248,8 +248,9 @@ process_flux_data <- function(
   pattern = "outfile2Rot_lecs_ml*",
   pos
 ) {
-  read_delim(read_flux_files(matlab_dir, pattern), id = "file") |>
+  readr::read_delim(read_flux_files(matlab_dir, pattern), id = "file") |>
     mutate(
+      Flux_cpsd_xy_low = readr::parse_number(Flux_cpsd_xy_low),
       lander_position = as.integer(str_extract(file, "(\\d{1,2})(?=\\.dat$)"))
     ) |>
     left_join(select(pos, lander_position, t0)) |>
@@ -300,6 +301,29 @@ add_grad_flux <- function(rga_adv_processed, flux_dataset, length_scale) {
       lscale = length_scale,
       ox_flux = -1 * Ustar * von_karman * lscale * ox_gradient_umol_l_m,
       co2_flux = -1 * Ustar * von_karman * lscale * co2_gradient_umol_l_m
+    )
+}
+
+calc_hourly_flux <- function(rga_adv_flux) {
+  rga_adv_flux |>
+    select(
+      !c(mean_timestamp, oxygen_high, oxygen_low, u, v, starts_with("mass_"))
+    ) |>
+    mutate(
+      timestamp = lubridate::floor_date(timestamp, unit = "hour")
+    ) |>
+    group_by(timestamp) |>
+    summarise(
+      across(
+        !c(ox_flux, co2_flux),
+        c(
+          mean = \(x) mean(x, na.rm = TRUE) #,
+          # sd = \(x) sd(x, na.rm = TRUE),
+          # se = \(x) sd(x, na.rm = TRUE) / sqrt(length(x))
+        )
+      ),
+      across(c(ox_flux, co2_flux), \(x) sum(x, na.rm = TRUE)),
+      .groups = "drop"
     )
 }
 

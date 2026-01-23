@@ -19,24 +19,26 @@ library(here)
 # Configure targets to look in parent directory
 tar_config_set(store = here("_targets"))
 
-tar_load(rga_adv_flux)
+tar_load(hourly_flux)
 tar_load(hourly_stats)
+tar_load(monthly_stats)
 tar_load(rga_oxygen)
 tar_load(seaphox_df_jul)
 tar_load(proco2_df_jul)
 ```
 
+
 # Flux
 
 ```{r}
-gop = ggplot(rga_adv_flux, aes(timestamp, ox_flux)) +
-geom_line()
+gop = ggplot(hourly_flux, aes(timestamp, ox_flux)) +
+  geom_line()
 
-gcp = ggplot(rga_adv_flux, aes(timestamp, co2_flux)) +
-geom_line()
+gcp = ggplot(hourly_flux, aes(timestamp, co2_flux)) +
+  geom_line()
 
-gpp = ggplot(rga_adv_flux, aes(timestamp, par)) +
-geom_line()
+gpp = ggplot(hourly_flux, aes(timestamp, par_mean)) +
+  geom_line()
 
 gop_ply <- ggplotly(gop, dynamicTicks = TRUE)
 gcp_ply <- ggplotly(gcp, dynamicTicks = TRUE)
@@ -46,57 +48,164 @@ subplot(gop_ply, gcp_ply, gpp_ply, nrows = 3, shareX = TRUE, titleY = TRUE)
 ```
 
 
-# Hourly Summary
+## Hourly Summary
 
 Daily summary by hour-of-day
 
 ```{r}
 hmp <- hourly_stats |>
-  ggplot(aes(solar_hour, ox_mean_umol_l_hourly)) +
+  ggplot(aes(solar_hour, ox_mean_umol_l_mean_mean)) +
   geom_line() +
-  geom_ribbon(aes(ymin = ox_mean_umol_l_hourly - ox_mean_umol_l_hourly_sd,
-                  ymax = ox_mean_umol_l_hourly + ox_mean_umol_l_hourly_sd),
-              alpha = 0.2) +
-  labs(x = NULL,
-       y = "Oxygen Conc. [mmol/m3]")
+  geom_pointrange(
+    aes(
+      ymin = ox_mean_umol_l_mean_mean - ox_mean_umol_l_mean_se,
+      ymax = ox_mean_umol_l_mean_mean + ox_mean_umol_l_mean_se
+    ),
+    size = 0.1,
+    # position = position_dodge(width = 0.5)
+  ) +
+  geom_hline(yintercept = 0) +
+  labs(x = NULL, y = "Oxygen Conc. [mmol/m3]")
 
 hgp <- hourly_stats |>
-  ggplot(aes(solar_hour, ox_gradient_umol_l_m_hourly)) +
+  ggplot(aes(solar_hour, ox_gradient_umol_l_m_mean_mean)) +
   geom_line() +
-  geom_ribbon(aes(ymin = ox_gradient_umol_l_m_hourly - ox_gradient_umol_l_m_hourly_sd,
-                  ymax = ox_gradient_umol_l_m_hourly + ox_gradient_umol_l_m_hourly_sd),
-              alpha = 0.2) +
-  labs(x = "Hour of Day",
-       y = "Oxygen Gradient [mmol/m4]")
+  geom_pointrange(
+    aes(
+      ymin = ox_gradient_umol_l_m_mean_mean - ox_gradient_umol_l_m_mean_se,
+      ymax = ox_gradient_umol_l_m_mean_mean + ox_gradient_umol_l_m_mean_se
+    ),
+    size = 0.1,
+    # position = position_dodge(width = 0.5)
+  ) +
+  geom_hline(yintercept = 0) +
+  labs(x = "Hour of Day", y = "Oxygen Gradient [mmol/m4]")
 
 flp <- hourly_stats |>
-  ggplot(aes(solar_hour, ox_flux_hourly)) +
+  ggplot(aes(solar_hour, ox_flux_mean)) +
   geom_line() +
-  geom_ribbon(aes(ymin = ox_flux_hourly - ox_flux_hourly_sd,
-                  ymax = ox_flux_hourly + ox_flux_hourly_sd),
-              alpha = 0.2) +
-  labs(x = "Hour of Day",
-       y = "Oxygen Flux [mmol/m2]")
+  geom_pointrange(
+    aes(
+      ymin = ox_flux_mean - ox_flux_se,
+      ymax = ox_flux_mean + ox_flux_se
+    ),
+    size = 0.1,
+    # position = position_dodge(width = 0.5)
+  ) +
+  geom_hline(yintercept = 0) +
+  labs(x = "Hour of Day", y = "Oxygen Flux [mmol/m2/h]")
 
-hmp / hgp / flp
+parp <- hourly_stats |>
+  ggplot(aes(solar_hour, par_mean_mean)) +
+  geom_line() +
+  labs(x = "Hour of Day", y = "Predicted PAR [mmol/m2]")
+
+hmp / hgp / flp / parp
 
 # hm_ply <- ggplotly(hmp, dynamicTicks = TRUE)
 # hg_ply <- ggplotly(hgp, dynamicTicks = TRUE)
 # subplot(hm_ply, hg_ply, nrows = 2, shareX = TRUE, titleY = TRUE)
 ```
 
+## Seasonal variability
+
+Same as above but plotted by season/month
+
+Monthly Oxygen flux
+
+```{r}
+
+monthly_stats <- mutate(monthly_stats, month = as.factor(month))
+
+hmp <- monthly_stats |>
+  ggplot(aes(solar_hour, ox_mean_umol_l_mean_mean, color = month)) +
+  geom_line() +
+  geom_pointrange(
+    aes(
+      ymin = ox_mean_umol_l_mean_mean - ox_mean_umol_l_mean_se,
+      ymax = ox_mean_umol_l_mean_mean + ox_mean_umol_l_mean_se
+    ),
+    size = 0.1,
+    # position = position_dodge(width = 0.5)
+  ) +
+  geom_hline(yintercept = 0) +
+  labs(x = NULL, y = "Oxygen Conc. [mmol/m3]")
+
+hgp <- monthly_stats |>
+  ggplot(aes(solar_hour, ox_gradient_umol_l_m_mean_mean, color = month)) +
+  geom_line() +
+  geom_pointrange(
+    aes(
+      ymin = ox_gradient_umol_l_m_mean_mean - ox_gradient_umol_l_m_mean_se,
+      ymax = ox_gradient_umol_l_m_mean_mean + ox_gradient_umol_l_m_mean_se
+    ),
+    size = 0.1,
+    # position = position_dodge(width = 0.5)
+  ) +
+  geom_hline(yintercept = 0) +
+  labs(x = "Hour of Day", y = "Oxygen Gradient [mmol/m4]")
+
+flp <- monthly_stats |>
+  ggplot(aes(solar_hour, ox_flux_mean, color = month)) +
+  geom_line() +
+  geom_pointrange(
+    aes(
+      ymin = ox_flux_mean - ox_flux_se,
+      ymax = ox_flux_mean + ox_flux_se
+    ),
+    size = 0.1,
+    # position = position_dodge(width = 0.5)
+  ) +
+  geom_hline(yintercept = 0) +
+  labs(x = "Hour of Day", y = "Oxygen Flux [mmol/m2/h]")
+
+parp <- monthly_stats |>
+  ggplot(aes(solar_hour, par_mean_mean, color = month)) +
+  geom_line() +
+  labs(x = "Hour of Day", y = "Predicted PAR [mmol/m2]")
+
+hmp / hgp / flp / parp
+
+# hm_ply <- ggplotly(hmp, dynamicTicks = TRUE)
+# hg_ply <- ggplotly(hgp, dynamicTicks = TRUE)
+# subplot(hm_ply, hg_ply, nrows = 2, shareX = TRUE, titleY = TRUE)
+```
+
+# CO2
+
 Comparison of CO2 and O2 gradient
 
 ```{r}
-cgp <- hourly_stats |>
-  ggplot(aes(solar_hour, co2_gradient_umol_l_m_hourly)) +
+
+hgp <- hourly_stats |>
+  ggplot(aes(solar_hour, ox_gradient_umol_l_m_mean_mean)) +
   geom_line() +
-  geom_ribbon(aes(ymin = co2_gradient_umol_l_m_hourly - co2_gradient_umol_l_m_hourly_sd,
-                  ymax = co2_gradient_umol_l_m_hourly + co2_gradient_umol_l_m_hourly_sd),
-              alpha = 0.2) +
-  labs(x = "Hour of Day",
-       y = "CO2 Gradient [mmol/m4]")
+  geom_pointrange(
+    aes(
+      ymin = ox_gradient_umol_l_m_mean_mean - ox_gradient_umol_l_m_mean_se,
+      ymax = ox_gradient_umol_l_m_mean_mean + ox_gradient_umol_l_m_mean_se
+    ),
+    size = 0.1,
+    # position = position_dodge(width = 0.5)
+  ) +
+  geom_hline(yintercept = 0) +
+  labs(x = "Hour of Day", y = "Oxygen Gradient [mmol/m4]")
+
+cgp <- hourly_stats |>
+  ggplot(aes(solar_hour, co2_gradient_umol_l_m_mean_mean)) +
+  geom_line() +
+  geom_pointrange(
+    aes(
+      ymin = co2_gradient_umol_l_m_mean_mean -
+        co2_gradient_umol_l_m_mean_se,
+      ymax = co2_gradient_umol_l_m_mean_mean +
+        co2_gradient_umol_l_m_mean_se
+    ),
+    size = 0.1,
+    # position = position_dodge(width = 0.5)
+  ) +
+  geom_hline(yintercept = 0) +
+  labs(x = "Hour of Day", y = "CO2 Gradient [mmol/m4]")
 
 hgp / cgp
 ```
-Monthly summary by hour-of-day
