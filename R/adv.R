@@ -23,8 +23,8 @@ load_and_bin_adv <- function(adv_raw_file, moves_file, min_correlation = NULL) {
     )
 
   lander_moves <- read_csv(moves_file) |>
-    rename(change_timestamp = timestamp) |>
-    mutate(lander_position = row_number())
+    dplyr::rename(change_timestamp = timestamp) |>
+    dplyr::mutate(lander_position = dplyr::row_number())
 
   df_binned_mv <- df_binned |>
     arrange(bin_time) |>

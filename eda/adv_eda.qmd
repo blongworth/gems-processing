@@ -9,38 +9,9 @@ library(arrow)
 library(gemstools)
 library(plotly)
 
-source("./bin_timeseries.R")
 ```
 
-```{r}
-ds <- open_dataset("data/processed/lander/adv_data_.parquet")
-bad_times <- read_csv("data/2025_Hadleys_Harbor/gems_2025_bad_data_periods.csv")
-```
-
-```{r}
-names(ds)
-```
-
-```{r}
-df_binned <- ds |> 
-  filter(corr1 > 60,
-         corr2 > 60,
-         corr3 > 60) |> 
-  select(timestamp, pressure, u, v, w) |> 
-  collect() |> 
-  bin_timeseries(
-    datetime_col = "timestamp",
-    value_cols = c("pressure",
-                   "u",
-                   "v",
-                   "w"
-    )
-  ) |> 
-  mutate(
-    cur_speed = sqrt(v^2 + u^2),
-    cur_dir = atan2(u, v) * (180 / pi)
-  )
-```
+# Initial plots of ADV data
 
 ```{r}
 p <- ggplot(df_binned, aes(bin_time, pressure)) +
@@ -70,20 +41,7 @@ p <- ggplot(df_binned, aes(bin_time, w)) +
 ggplotly(p, dynamicTicks = TRUE)
 ```
 
-```{r}
-lander_moves <- read_csv("data/2025_Hadleys_Harbor/gems_lander_move_times.csv") |> 
-  rename(change_timestamp = timestamp) |> 
-  mutate(lander_position = row_number())
-
-df_binned_mv <- df_binned |> 
-  arrange(bin_time) |> 
-  left_join(lander_moves,
-            by = join_by(closest(bin_time > change_timestamp))) |> 
-  fill(lander_position, .direction = "down") |> 
-  mutate(lander_position = replace_na(lander_position, 1)) |> 
-  select(-change_timestamp)
-```
-
+# Determine ADV rotations by lander position
 
 ```{r}
 df_bin_rot <- df_binned_mv |> 
@@ -105,6 +63,9 @@ df_binned_mv |>
   unnest(data) %>%
   ungroup()
 ```
+
+Rotated w (compare with unrotated)
+
 ```{r}
 p <- ggplot(df_bin_rot, aes(bin_time, w_rot)) +
   geom_line()
@@ -117,10 +78,3 @@ p <- ggplot(df_bin_rot, aes(pressure, cur_speed)) +
   geom_point()
 p
 ```
-
-write output
-
-```{r}
-write_parquet(df_bin_rot, "data/processed/lander/adv_bin_rot.parquet")
-```
-
