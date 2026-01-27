@@ -1,0 +1,93 @@
+---
+title: "Eelgrass"
+format: html
+---
+
+```{r}
+library(tidyverse)
+library(targets)
+
+theme_set(theme_classic())
+
+tar_load(eelgrass)
+```
+
+
+```{r}
+eelgrass <- eelgrass |>
+  mutate(
+    day_of_year = yday(date),
+    year = factor(year(date)),
+    month = month(date),
+    month_name = factor(month.abb[month], levels = month.abb),
+    season = case_when(
+      month %in% 9:11 ~ "SON",
+      month %in% c(12, 1, 2) ~ "DJF",
+      month %in% 3:5 ~ "MAM",
+      TRUE ~ "JJA"
+    )
+  )
+```
+
+```{r}
+ggplot(eelgrass, aes(day_of_year, density_g_m2, color = year)) +
+  geom_smooth(inherit.aes = FALSE, aes(day_of_year, density_g_m2)) +
+  geom_line() +
+  geom_pointrange(aes(
+    ymin = density_g_m2 - density_g_m2_sd,
+    ymax = density_g_m2 + density_g_m2_sd
+  )) +
+  scale_x_continuous(
+    breaks = c(1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335),
+    labels = month.abb
+  ) +
+  labs(title = "Eelgrass Shoot Density", x = NULL, y = "Density [g/m2]")
+```
+
+```{r}
+ggplot(eelgrass, aes(day_of_year, length_cm, color = year)) +
+  geom_smooth(inherit.aes = FALSE, aes(day_of_year, length_cm)) +
+  geom_line() +
+  geom_line() +
+  geom_pointrange(aes(
+    ymin = length_cm - length_cm_sd,
+    ymax = length_cm + length_cm_sd
+  )) +
+  scale_x_continuous(
+    breaks = c(1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335),
+    labels = month.abb
+  ) +
+  labs(title = "Eelgrass Shoot length", x = NULL, y = "Length [cm]")
+```
+
+```{r}
+ggplot(eelgrass, aes(day_of_year, shoot_density_m2, color = year)) +
+  geom_smooth(inherit.aes = FALSE, aes(day_of_year, shoot_density_m2)) +
+  geom_line() +
+  geom_line() +
+  geom_pointrange(aes(
+    ymin = shoot_density_m2 - shoot_density_m2_sd,
+    ymax = shoot_density_m2 + shoot_density_m2_sd
+  )) +
+  scale_x_continuous(
+    breaks = c(1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335),
+    labels = month.abb
+  ) +
+  labs(title = "Eelgrass Shoots per meter", x = NULL, y = "Density [shoots/m2]")
+```
+
+```{r}
+ggplot(eelgrass, aes(day_of_year, biomass_per_shoot_g, color = year)) +
+  geom_smooth(inherit.aes = FALSE, aes(day_of_year, biomass_per_shoot_g)) +
+  geom_line() +
+  geom_line() +
+  geom_pointrange(aes(
+    ymin = biomass_per_shoot_g - biomass_per_shoot_g_sd,
+    ymax = biomass_per_shoot_g + biomass_per_shoot_g_sd
+  )) +
+  scale_x_continuous(
+    breaks = c(1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335),
+    labels = month.abb
+  ) +
+  labs(title = "Eelgrass biomass per shoot", x = NULL, y = "Mass per shoot [g]")
+```

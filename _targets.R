@@ -33,6 +33,7 @@ source("R/calibration.R")
 source("R/par.R")
 source("R/flux.R")
 source("R/analyse.R")
+source("R/eelgrass.R")
 
 # config variables
 data_dir_path <- "data/processed/lander"
@@ -51,6 +52,11 @@ list(
   tar_target(
     bad_times_file,
     "data/2025_Hadleys_Harbor/gems_2025_bad_data_periods.csv",
+    format = "file"
+  ),
+  tar_target(
+    eelgrass_file,
+    "data/eelgrass/Naushon_eelgrass_sampling.xlsx",
     format = "file"
   ),
 
@@ -242,7 +248,14 @@ list(
     calculate_monthly_statistics(hourly_flux)
   ),
 
+  # load eelgrass data
+  tar_target(
+    eelgrass,
+    get_eelgrass_data(eelgrass_file)
+  ),
+
   # Visualizations
   tar_quarto(co2_report, "reports/gems_co2_issue.qmd"),
+  tar_quarto(eelgrass_report, "reports/eelgrass.qmd"),
   tar_quarto(flux_report, "reports/gems_flux_report.qmd")
 )

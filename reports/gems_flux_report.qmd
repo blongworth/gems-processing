@@ -3,6 +3,8 @@ title: "GEMS Flux Report"
 format: html
 ---
 
+Figures for general GEMS reporting and GEMS final report.
+
 ```{r}
 #| echo: false
 #| message: false
@@ -27,6 +29,19 @@ tar_load(seaphox_df_jul)
 tar_load(proco2_df_jul)
 ```
 
+# RGA timeseries
+
+## Intensity
+
+O2, CO2, N2, H2S, CH4.
+15min average for top and bottom inlet
+gradient
+normalized/unnormalized difference
+
+# Calibration
+
+1:1 plots of fit
+fits over cal time
 
 # Flux
 
@@ -209,3 +224,20 @@ cgp <- hourly_stats |>
 
 hgp / cgp
 ```
+
+# Flux barplots
+
+monthly NEM of diel curves
+Include light, temp
+
+# Eelgrass growth figures
+
+## mass
+
+## count
+
+## length
+
+# Synthesis figures
+
+flux vs light, growth, temp
