@@ -14,7 +14,9 @@ load_and_bin_adv <- function(adv_raw_file, moves_file, min_correlation = NULL) {
     select(timestamp, pressure, u, v, w) |>
     collect() |>
     bin_timeseries(
-      datetime_col = "timestamp",
+      datetime_col = "timestamp"
+    ) |>
+    summarize_binned_timeseries(
       value_cols = c("pressure", "u", "v", "w")
     ) |>
     mutate(

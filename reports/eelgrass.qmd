@@ -1,9 +1,12 @@
 ---
 title: "Eelgrass"
-format: html
+format: 
+  html:
+    embed-resources: true
 ---
 
 ```{r}
+#| message: false
 library(tidyverse)
 library(targets)
 
@@ -29,9 +32,11 @@ eelgrass <- eelgrass |>
   )
 ```
 
+Plots below are Naushon eelgrass quadrat data plotted by year. Point error bars are SD of quadrats for mass and count, SD of all blade lengths for length. Fit line is a loess fit through all data.
+
 ```{r}
 ggplot(eelgrass, aes(day_of_year, density_g_m2, color = year)) +
-  geom_smooth(inherit.aes = FALSE, aes(day_of_year, density_g_m2)) +
+  geom_smooth(inherit.aes = FALSE, aes(day_of_year, density_g_m2), se = FALSE) +
   geom_line() +
   geom_pointrange(aes(
     ymin = density_g_m2 - density_g_m2_sd,
@@ -46,7 +51,7 @@ ggplot(eelgrass, aes(day_of_year, density_g_m2, color = year)) +
 
 ```{r}
 ggplot(eelgrass, aes(day_of_year, length_cm, color = year)) +
-  geom_smooth(inherit.aes = FALSE, aes(day_of_year, length_cm)) +
+  geom_smooth(inherit.aes = FALSE, aes(day_of_year, length_cm), se = FALSE) +
   geom_line() +
   geom_line() +
   geom_pointrange(aes(
@@ -62,7 +67,11 @@ ggplot(eelgrass, aes(day_of_year, length_cm, color = year)) +
 
 ```{r}
 ggplot(eelgrass, aes(day_of_year, shoot_density_m2, color = year)) +
-  geom_smooth(inherit.aes = FALSE, aes(day_of_year, shoot_density_m2)) +
+  geom_smooth(
+    inherit.aes = FALSE,
+    aes(day_of_year, shoot_density_m2),
+    se = FALSE
+  ) +
   geom_line() +
   geom_line() +
   geom_pointrange(aes(
@@ -78,7 +87,11 @@ ggplot(eelgrass, aes(day_of_year, shoot_density_m2, color = year)) +
 
 ```{r}
 ggplot(eelgrass, aes(day_of_year, biomass_per_shoot_g, color = year)) +
-  geom_smooth(inherit.aes = FALSE, aes(day_of_year, biomass_per_shoot_g)) +
+  geom_smooth(
+    inherit.aes = FALSE,
+    aes(day_of_year, biomass_per_shoot_g),
+    se = FALSE
+  ) +
   geom_line() +
   geom_line() +
   geom_pointrange(aes(

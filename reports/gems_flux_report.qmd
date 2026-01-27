@@ -18,33 +18,66 @@ library(plotly)
 library(patchwork)
 library(here)
 
+theme_set(theme_classic())
+
 # Configure targets to look in parent directory
 tar_config_set(store = here("_targets"))
 
-tar_load(hourly_flux)
-tar_load(hourly_stats)
-tar_load(monthly_stats)
-tar_load(rga_oxygen)
-tar_load(seaphox_df_jul)
-tar_load(proco2_df_jul)
+tar_load(c(
+  rga_binned,
+  hourly_flux,
+  hourly_stats,
+  monthly_stats,
+  rga_oxygen,
+  seaphox_df_jul,
+  proco2_df_jul
+))
 ```
 
 # RGA timeseries
 
-## Intensity
+Oxygen/Argon, colored by inlet
 
-O2, CO2, N2, H2S, CH4.
-15min average for top and bottom inlet
-gradient
-normalized/unnormalized difference
+```{r}
+e <- ggplot(rga_binned, aes(timestamp, mass_32_40, color = inlet)) +
+  geom_line()
 
-# Calibration
+p <- ggplotly(e, dynamicTicks = TRUE)
+p
+```
 
-1:1 plots of fit
-fits over cal time
+O2/Ar representative plot
+```{r}
+rga_binned |>
+  filter(
+    timestamp > as.POSIXct("2025-07-15 00:00:00"),
+    timestamp < as.POSIXct("2025-07-20 00:00:00")
+  ) |>
+  ggplot(aes(timestamp, mass_32_40, color = inlet)) +
+  geom_line() +
+  labs(
+    title = "Oxygen/Argon ratio at high and low inlets",
+    x = NULL,
+    y = "Mass 32:40"
+  )
+```
 
-# Flux
+  ## Intensity
+  
+  O2, CO2, N2, H2S, CH4.
+  15min average for top and bottom inlet
+  gradient
+  normalized/unnormalized difference
+  
+  # Calibration
+  
+  Oxygen
 
+  1:1 plots of fit
+  fits over cal time
+  
+  # Flux
+  
 ```{r}
 gop = ggplot(hourly_flux, aes(timestamp, ox_flux)) +
   geom_line()

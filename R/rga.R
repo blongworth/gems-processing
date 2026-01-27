@@ -65,6 +65,7 @@ pair_gradient_measurements <- function(rga_binned) {
     select(-grp) |>
     mutate(
       timestamp = lubridate::round_date(mean_timestamp, unit = "15 minutes"),
+      # TODO: rename "high_mean" to just "mean"
       across(
         ends_with("_high"),
         \(x) (x + get(sub("_high$", "_low", cur_column()))) / 2,

@@ -142,6 +142,12 @@ list(
     bin_timeseries(
       rga_normalized,
       datetime_col = "timestamp",
+    )
+  ),
+  tar_target(
+    rga_binned_summarized,
+    summarize_binned_timeseries(
+      rga_binned,
       value_cols = c(
         "mass_15_40",
         "mass_28_40",
@@ -152,7 +158,10 @@ list(
   ),
 
   # Make one row for each high-low pair and widen
-  tar_target(rga_binned_wide, pair_gradient_measurements(rga_binned)),
+  tar_target(
+    rga_binned_wide,
+    pair_gradient_measurements(rga_binned_summarized)
+  ),
   tar_target(rga_with_par, add_par(rga_binned_wide, crds)),
 
   # Add temperature and remove bad times
@@ -160,6 +169,8 @@ list(
     rga_temp,
     add_status_temp(rga_with_par, status_file, bad_times)
   ),
+
+  # Add oxygen calibration
   tar_target(
     seaphox_df_jul,
     load_seaphox_oxygen(
@@ -168,15 +179,20 @@ list(
       "2025-07-16 14:00:00"
     )
   ),
-
-  # Add oxygen calibration
+  tar_target(
+    ox_model,
+    fit_oxygen(rga_binned, seaphox_df_jul)
+  ),
   tar_target(
     rga_oxygen,
     add_oxygen(
       rga_temp,
-      seaphox_df_jul
+      ox_model,
+      sensor_separation = 1.02
     )
   ),
+
+  # Add CO2 calibration
   tar_target(
     proco2_df_jul,
     load_prooceanus_co2(

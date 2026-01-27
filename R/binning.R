@@ -17,9 +17,8 @@
 bin_timeseries <- function(
   data,
   datetime_col,
-  value_cols,
-  avg_start = 2,
-  avg_end = 7
+  avg_start = 1,
+  avg_end = 6
 ) {
   data %>%
     # Calculate minutes within the hour
@@ -32,7 +31,8 @@ bin_timeseries <- function(
     # Bins: 0:00-7:29, 7:30-14:59, 15:00-22:29, 22:30-29:59, 30:00-37:29, etc.
     mutate(
       bin_index = floor(minute_of_hour / 7.5),
-      bin_start_minute = bin_index * 7.5
+      bin_start_minute = bin_index * 7.5,
+      inlet = ifelse(bin_index %% 2 == 0, "low", "high")
     ) %>%
     # Filter to only include minutes avg_start through avg_end of each chunk
     filter(
@@ -42,20 +42,34 @@ bin_timeseries <- function(
     # Create bin identifier
     mutate(
       bin_id = paste0(date_part, "_", hour, "_", bin_index)
-    ) %>%
+    )
+}
+
+#' Summarize binned timeseries by bin
+#'
+#' summarizes by averaging a specified range of minutes in each chunk, and adds alternating inlet labels.
+#'
+#' @param data A tibble with bin id fields from `bin_timeseries()`
+#' @param value_cols Names of numeric columns to average (character vector)
+#'
+#' @return A tibble with binned data, averaged values, bin times, and inlet labels
+#'
+#' @export
+summarize_binned_timeseries <- function(
+  data,
+  value_cols
+) {
+  data %>%
     # Group and summarize
     group_by(bin_id, date_part, hour, bin_index) %>%
     summarise(
       across(all_of(value_cols), \(x) mean(x, na.rm = TRUE)),
+      inlet = first(inlet),
       bin_start_minute = first(bin_start_minute),
       .groups = "drop"
     ) %>%
     # Arrange chronologically
     arrange(date_part, hour, bin_index) %>%
-    # Add alternating inlet labels
-    mutate(
-      inlet = ifelse(bin_index %% 2 == 0, "low", "high")
-    ) %>%
     # Reconstruct approximate bin start time (top of hour + bin offset)
     mutate(
       bin_time = as_datetime(paste0(

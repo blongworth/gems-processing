@@ -24,6 +24,37 @@ load_seaphox_oxygen <- function(seaphox_path, start_time, end_time) {
     filter(timestamp >= start_time, timestamp <= end_time)
 }
 
+#' Fit oxygen data to RGA data
+#'
+#' @param seaphox_df Data frame with timestamp and oxygen columns
+#' @param rga_df RGA data to join with
+#'
+#' @return A linear model fitting oxygen to RGA mass ratio
+#'
+#' @export
+fit_oxygen <- function(
+  rga_df,
+  seaphox_df
+) {
+  seaphox_df <- seaphox_df |>
+    mutate(timestamp = lubridate::floor_date(timestamp, "minute"))
+
+  rga_df <- rga_df |>
+    filter(inlet == "high") |>
+    mutate(timestamp = lubridate::floor_date(timestamp, "minute")) |>
+    group_by(timestamp) |>
+    summarize(mass_32_40 = mean(mass_32_40, na.rm = TRUE))
+
+  ox_cal_df <- dplyr::left_join(
+    seaphox_df,
+    rga_df,
+    by = dplyr::join_by(timestamp)
+  )
+
+  ox_model <- lm(seaphox_oxygen_ml_l ~ mass_32_40, data = ox_cal_df)
+  return(ox_model)
+}
+
 #' Add oxygen data to RGA data
 #'
 #' @param seaphox_df Data frame with timestamp and oxygen columns
@@ -34,21 +65,9 @@ load_seaphox_oxygen <- function(seaphox_path, start_time, end_time) {
 #' @export
 add_oxygen <- function(
   rga_df,
-  seaphox_df,
+  ox_model,
   sensor_separation = 1.02
 ) {
-  seaphox_15min <- seaphox_df |>
-    mutate(timestamp = lubridate::floor_date(timestamp, "15 minute")) |>
-    dplyr::group_by(timestamp) |>
-    summarize(across(where(is.numeric), \(x) mean(x, na.rm = TRUE)))
-
-  ox_cal_df <- dplyr::left_join(
-    seaphox_15min,
-    rga_df,
-    by = dplyr::join_by(timestamp)
-  )
-
-  ox_model <- lm(seaphox_oxygen_ml_l ~ mass_32_40_high_mean, data = ox_cal_df)
   ox_i <- coef(ox_model)[1]
   ox_m <- coef(ox_model)[2]
 
