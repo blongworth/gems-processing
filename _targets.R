@@ -175,13 +175,17 @@ list(
     seaphox_df_jul,
     load_seaphox_oxygen(
       seaphox_file,
-      "2025-07-12 00:00:00",
+      "2025-06-26 00:00:00",
       "2025-07-16 14:00:00"
     )
   ),
   tar_target(
+    ox_cal_df,
+    make_ox_cal_df(rga_binned, seaphox_df_jul)
+  ),
+  tar_target(
     ox_model,
-    fit_oxygen(rga_binned, seaphox_df_jul)
+    fit_oxygen(ox_cal_df)
   ),
   tar_target(
     rga_oxygen,

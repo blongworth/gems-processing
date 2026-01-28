@@ -4,6 +4,7 @@
 #| warning: false
 library(targets)
 library(dplyr)
+library(tidyr)
 library(lubridate)
 library(gemstools)
 library(ggplot2)
@@ -19,6 +20,8 @@ tar_load(hourly_stats)
 tar_load(rga_oxygen)
 tar_load(seaphox_df_jul)
 tar_load(proco2_df_jul)
+tar_load(ox_cal_df)
+tar_load(ox_model)
 ```
 
 
@@ -107,37 +110,32 @@ Compare to Ox
 
 
 ```{r}
-seaphox_15min <- seaphox_df_jul |>
-  mutate(timestamp = lubridate::floor_date(timestamp, "15 minute")) |>
-  dplyr::group_by(timestamp) |>
-  summarize(across(where(is.numeric), \(x) mean(x, na.rm = TRUE)))
-
-ox_cal_df <- dplyr::left_join(
-  seaphox_15min,
-  rga_oxygen,
-  by = dplyr::join_by(timestamp)
-)
-
-ox_model <- lm(seaphox_oxygen_ml_l ~ mass_32_40_high_mean, data = ox_cal_df)
-ox_i <- coef(ox_model)[1]
-ox_m <- coef(ox_model)[2]
-
-ox_cal_df |>
-  mutate(
-    oxygen_high = ox_i + ox_m * mass_32_40_high,
-    oxygen_low = ox_i + ox_m * mass_32_40_low,
-    ox_high_umol_l = o2_ml_l_to_umol_l(oxygen_high, adv_temp)
-  )
-
 summary(ox_model)
 ```
 
 ```{r}
-ggplot(ox_cal_df, aes(seaphox_oxygen_ml_l, mass_32_40_high_mean, color = par)) +
-  geom_point()
+ox_cal_df <- ox_cal_df |>
+  mutate(
+    rga_ox = mass_32_40 * ox_model$coefficients[2] + ox_model$coefficients[1]
+  )
 ```
 
 ```{r}
-ggplot(ox_cal_df, aes(seaphox_oxygen_ml_l, oxygen_high, color = par)) +
+g <- ox_cal_df |>
+  pivot_longer(
+    cols = c(seaphox_oxygen_ml_l, rga_ox),
+    names_to = "source",
+    values_to = "oxygen_ml_l"
+  ) |>
+  ggplot(aes(timestamp, oxygen_ml_l, color = source)) +
+  geom_line()
+
+ggplotly(g)
+```
+
+```{r}
+ggplot(ox_cal_df, aes(seaphox_oxygen_ml_l, rga_ox)) +
+  geom_abline(slope = 1, intercept = 0) +
   geom_point()
 ```
+

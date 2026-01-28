@@ -32,7 +32,7 @@ load_seaphox_oxygen <- function(seaphox_path, start_time, end_time) {
 #' @return A linear model fitting oxygen to RGA mass ratio
 #'
 #' @export
-fit_oxygen <- function(
+make_ox_cal_df <- function(
   rga_df,
   seaphox_df
 ) {
@@ -50,7 +50,9 @@ fit_oxygen <- function(
     rga_df,
     by = dplyr::join_by(timestamp)
   )
+}
 
+fit_oxygen <- function(ox_cal_df) {
   ox_model <- lm(seaphox_oxygen_ml_l ~ mass_32_40, data = ox_cal_df)
   return(ox_model)
 }
