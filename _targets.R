@@ -258,14 +258,24 @@ list(
     }
   ),
 
+  # Filtered hourly flux to remove June and October
+  tar_target(
+    filtered_hourly_flux,
+    filter(
+      hourly_flux,
+      timestamp >= as.POSIXct("2025-07-01") &
+        timestamp < as.POSIXct("2025-09-24")
+    )
+  ),
+
   # Calculate statistics
   tar_target(
     hourly_stats,
-    calculate_hourly_statistics(hourly_flux)
+    calculate_hourly_statistics(filtered_hourly_flux)
   ),
   tar_target(
     monthly_stats,
-    calculate_monthly_statistics(hourly_flux)
+    calculate_monthly_statistics(filtered_hourly_flux)
   ),
 
   # load eelgrass data
