@@ -277,6 +277,14 @@ list(
     monthly_stats,
     calculate_monthly_statistics(filtered_hourly_flux)
   ),
+  tar_target(
+    monthly_nem,
+    calculate_nem_monthly(monthly_stats)
+  ),
+  tar_target(
+    daily_nem,
+    calculate_nem_daily(filtered_hourly_flux)
+  ),
 
   # load eelgrass data
   tar_target(
@@ -284,8 +292,19 @@ list(
     get_eelgrass_data(eelgrass_file)
   ),
 
+  # make PAR model df
+  tar_target(
+    par_model_df,
+    make_dli_df(
+      start_date = "2025-06-01",
+      end_date = "2025-10-31",
+      crds = crds
+    )
+  ),
+
   # Visualizations
   tar_quarto(co2_report, "reports/gems_co2_issue.qmd"),
   tar_quarto(eelgrass_report, "reports/eelgrass.qmd"),
+  tar_quarto(gems_report, "reports/gems_report_plots.qmd"),
   tar_quarto(flux_report, "reports/gems_flux_report.qmd")
 )

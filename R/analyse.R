@@ -92,12 +92,21 @@ calculate_seasonal_statistics <- function(flux_data, coordinates) {
     )
 }
 
-# summarize(
-#   ox_mean_umol_l_hourly = mean(ox_mean_umol_l, na.rm = TRUE),
-#   ox_mean_umol_l_hourly_sd = sd(ox_mean_umol_l, na.rm = TRUE),
-#   ox_gradient_umol_l_m_hourly = mean(ox_gradient_umol_l_m, na.rm = TRUE),
-#   ox_gradient_umol_l_m_hourly_sd = sd(ox_gradient_umol_l_m, na.rm = TRUE),
-#   co2_gradient_umol_l_m_hourly = mean(co2_gradient_umol_l_m, na.rm = TRUE),
-#   co2_gradient_umol_l_m_hourly_sd = sd(co2_gradient_umol_l_m, na.rm = TRUE),
-#   ox_flux_hourly = mean(ox_flux, na.rm = TRUE),
-#   ox_flux_hourly_sd = sd(ox_flux, na.rm = TRUE),
+#' @title Calculate daily Net Ecosystem Metabolism (NEM)
+calculate_nem_daily <- function(hourly_flux) {
+  hourly_flux |>
+    mutate(day = as.Date(timestamp)) |>
+    group_by(day) |>
+    summarise(
+      nem_mmol_m2_h = sum(ox_flux) / 24
+    )
+}
+
+#' @title Calculate Monthly Net Ecosystem Metabolism (NEM)
+calculate_nem_monthly <- function(monthly_stats) {
+  monthly_stats |>
+    group_by(month) |>
+    summarise(
+      nem_mmol_m2_day = sum(ox_flux_mean)
+    )
+}

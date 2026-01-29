@@ -17,27 +17,30 @@
 bin_timeseries <- function(
   data,
   datetime_col,
-  avg_start = 1,
-  avg_end = 6
+  value_cols,
+  avg_start = 60,
+  avg_end = 360
 ) {
   data %>%
-    # Calculate minutes within the hour
+    # Calculate seconds within the hour
     mutate(
-      minute_of_hour = minute(!!sym(datetime_col)),
+      second_of_hour = minute(!!sym(datetime_col)) *
+        60 +
+        second(!!sym(datetime_col)),
       hour = hour(!!sym(datetime_col)),
       date_part = as_date(!!sym(datetime_col))
     ) %>%
     # Assign to 7.5-minute bins based on clock time
-    # Bins: 0:00-7:29, 7:30-14:59, 15:00-22:29, 22:30-29:59, 30:00-37:29, etc.
+    # Bins: 0-449s, 450-899s, 900-1349s, etc. (7.5 min = 450 seconds)
     mutate(
-      bin_index = floor(minute_of_hour / 7.5),
-      bin_start_minute = bin_index * 7.5,
+      bin_index = floor(second_of_hour / 450),
+      bin_start_second = bin_index * 450,
       inlet = ifelse(bin_index %% 2 == 0, "low", "high")
     ) %>%
-    # Filter to only include minutes avg_start through avg_end of each chunk
+    # Filter to only include seconds avg_start through avg_end of each chunk
     filter(
-      minute_of_hour >= bin_start_minute + avg_start &
-        minute_of_hour < bin_start_minute + avg_end
+      second_of_hour >= bin_start_second + avg_start &
+        second_of_hour < bin_start_second + avg_end
     ) %>%
     # Create bin identifier
     mutate(
@@ -65,7 +68,7 @@ summarize_binned_timeseries <- function(
     summarise(
       across(all_of(value_cols), \(x) mean(x, na.rm = TRUE)),
       inlet = first(inlet),
-      bin_start_minute = first(bin_start_minute),
+      bin_start_second = first(bin_start_second),
       .groups = "drop"
     ) %>%
     # Arrange chronologically
@@ -77,8 +80,9 @@ summarize_binned_timeseries <- function(
         " ",
         sprintf("%02d", hour),
         ":",
-        sprintf("%02.0f", bin_start_minute),
-        ":00"
+        sprintf("%02.0f", bin_start_second %/% 60),
+        ":",
+        sprintf("%02.0f", bin_start_second %% 60)
       ))
     ) %>%
     # Clean up temporary columns and reorder

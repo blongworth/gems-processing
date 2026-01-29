@@ -11,6 +11,7 @@ Figures for general GEMS reporting and GEMS final report.
 #| warning: false
 library(targets)
 library(dplyr)
+library(tidyr)
 library(lubridate)
 library(gemstools)
 library(ggplot2)
@@ -25,6 +26,7 @@ tar_config_set(store = here("_targets"))
 
 tar_load(c(
   rga_binned,
+  rga_binned_wide,
   hourly_flux,
   hourly_stats,
   monthly_stats,
@@ -36,15 +38,6 @@ tar_load(c(
 
 # RGA timeseries
 
-Oxygen/Argon, colored by inlet
-
-```{r}
-e <- ggplot(rga_binned, aes(timestamp, mass_32_40, color = inlet)) +
-  geom_line()
-
-p <- ggplotly(e, dynamicTicks = TRUE)
-p
-```
 
 O2/Ar representative plot
 ```{r}
@@ -62,21 +55,46 @@ rga_binned |>
   )
 ```
 
-  ## Intensity
+Oxygen/Argon, resampled to bins, colored by inlet
+
+```{r}
+rga_binned_wide |>
+  arrange(timestamp) |>
+  select(timestamp, mass_32_40_high, mass_32_40_low) |>
+  mutate(
+    time_diff = as.numeric(difftime(
+      timestamp,
+      lag(timestamp),
+      units = "hours"
+    )),
+    mass_32_40_high = ifelse(time_diff > 1, NA, mass_32_40_high),
+    mass_32_40_low = ifelse(time_diff > 1, NA, mass_32_40_low)
+  ) |>
+  pivot_longer(
+    cols = c(mass_32_40_low, mass_32_40_high),
+    names_to = "inlet",
+    names_prefix = "mass_32_40_",
+    values_to = "mass_32_40"
+  ) |>
+  ggplot(aes(timestamp, mass_32_40, color = inlet)) +
+  geom_line(na.rm = TRUE)
+```
+
+## Intensity
   
   O2, CO2, N2, H2S, CH4.
   15min average for top and bottom inlet
   gradient
   normalized/unnormalized difference
   
-  # Calibration
+# Calibration
   
   Oxygen
 
   1:1 plots of fit
   fits over cal time
   
-  # Flux
+# Flux
   
 ```{r}
 gop = ggplot(hourly_flux, aes(timestamp, ox_flux)) +

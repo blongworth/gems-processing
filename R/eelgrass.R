@@ -33,6 +33,8 @@ combine_eelgrass_data <- function(density_df, length_df) {
         dplyr::select(-type) |>
         dplyr::inner_join(length_df, by = "date") |>
         dplyr::mutate(
+            day_of_year = yday(date),
+            year = as.factor(lubridate::year(date)),
             biomass_per_shoot_g = density_g_m2 / shoot_density_m2,
             biomass_per_shoot_g_sd = sqrt(
                 (density_g_m2_sd / shoot_density_m2)^2 +

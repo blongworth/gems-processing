@@ -28,3 +28,25 @@ add_par <- function(rga_df, crds) {
   rga_df |>
     mutate(par = calculate_par(crds, timestamp))
 }
+
+#' Generate DLI for a range of dates
+make_dli_df <- function(start_date, end_date, crds) {
+  date_seq <- seq.Date(as.Date(start_date), as.Date(end_date), by = "day")
+  dli_df <- data.frame(date = date_seq) |>
+    rowwise() |>
+    mutate(
+      par_values = list(
+        calculate_par(
+          crds,
+          seq.POSIXt(
+            as.POSIXct(date),
+            as.POSIXct(date + 1) - 3600,
+            by = "hour"
+          )
+        )
+      ),
+      dli_mol_m2_day = sum(unlist(par_values) * 0.0036) # 3600 / 1e6
+    ) |>
+    select(date, dli_mol_m2_day)
+  return(dli_df)
+}

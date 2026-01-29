@@ -1,0 +1,467 @@
+---
+title: "GEMS Flux Report"
+format: 
+  html:
+    embed-resources: true
+echo: false
+---
+
+Figures for general GEMS reporting and GEMS final report.
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+library(targets)
+library(dplyr)
+library(tidyr)
+library(lubridate)
+library(gemstools)
+library(ggplot2)
+library(plotly)
+library(patchwork)
+library(here)
+
+theme_set(theme_classic())
+
+# Configure targets to look in parent directory
+tar_config_set(store = here("_targets"))
+
+tar_load(c(
+  rga_binned,
+  rga_binned_wide,
+  hourly_flux,
+  hourly_stats,
+  monthly_stats,
+  monthly_nem,
+  daily_nem,
+  rga_oxygen,
+  seaphox_df_jul,
+  proco2_df_jul,
+  ox_model,
+  ox_cal_df,
+  eelgrass,
+  par_model_df
+))
+```
+
+# RGA timeseries
+
+
+O2/Ar representative plot
+
+```{r}
+oxp <- rga_binned |>
+  filter(
+    timestamp > as.POSIXct("2025-07-15 00:00:00"),
+    timestamp < as.POSIXct("2025-07-20 00:00:00")
+  ) |>
+  ggplot(aes(timestamp, mass_32_40, color = inlet)) +
+  geom_line() +
+  labs(
+    title = "Oxygen/Argon ratio at high and low inlets",
+    x = NULL,
+    y = "Mass 32:40"
+  )
+
+oxp
+```
+
+Oxygen/Argon timeseries
+
+```{r}
+rga_binned_wide |>
+  arrange(timestamp) |>
+  select(timestamp, mass_32_40_high, mass_32_40_low) |>
+  mutate(
+    time_diff = as.numeric(difftime(
+      timestamp,
+      lag(timestamp),
+      units = "hours"
+    )),
+    mass_32_40_high = ifelse(time_diff > 1, NA, mass_32_40_high),
+    mass_32_40_low = ifelse(time_diff > 1, NA, mass_32_40_low)
+  ) |>
+  pivot_longer(
+    cols = c(mass_32_40_low, mass_32_40_high),
+    names_to = "inlet",
+    names_prefix = "mass_32_40_",
+    values_to = "mass_32_40"
+  ) |>
+  ggplot(aes(timestamp, mass_32_40, color = inlet)) +
+  geom_line(na.rm = TRUE)
+```
+
+## Intensity
+  
+```{r}
+jul_rga <- rga_binned |>
+  filter(
+    timestamp > as.POSIXct("2025-07-15 00:00:00"),
+    timestamp < as.POSIXct("2025-07-20 00:00:00")
+  )
+
+mep <- jul_rga |>
+  ggplot(aes(timestamp, mass_15_40, color = inlet)) +
+  geom_line() +
+  labs(
+    title = "Methane (mass 15)",
+    x = NULL,
+    y = "Mass 15:40"
+  )
+
+nip <- jul_rga |>
+  ggplot(aes(timestamp, mass_28_40, color = inlet)) +
+  geom_line() +
+  labs(
+    title = "Nitrogen (mass 28)",
+    x = NULL,
+    y = "Mass 28:40"
+  ) +
+  theme(legend.position = "none")
+
+sup <- jul_rga |>
+  ggplot(aes(timestamp, mass_34_40, color = inlet)) +
+  geom_line() +
+  labs(
+    title = "Hydrogen Sulfide (mass 34)",
+    x = NULL,
+    y = "Mass 34:40"
+  ) +
+  theme(legend.position = "none")
+
+
+cop <- jul_rga |>
+  ggplot(aes(timestamp, mass_44_40, color = inlet)) +
+  geom_line() +
+  labs(
+    title = "Carbon Dioxide (mass 44)",
+    x = NULL,
+    y = "Mass 44:40"
+  ) +
+  theme(legend.position = "none")
+
+
+oxp <- oxp +
+  ggtitle("Oxygen (mass 32)") +
+  theme(legend.position = "none")
+
+
+mep / nip / oxp / sup / cop
+```
+
+  O2, CO2, N2, H2S, CH4.
+  15min average for top and bottom inlet
+  gradient
+  normalized/unnormalized difference
+  
+# Calibration
+  
+  Oxygen
+
+  fits over cal time
+  
+```{r}
+ox_cal_df <- ox_cal_df |>
+  mutate(
+    rga_ox = mass_32_40 * ox_model$coefficients[2] + ox_model$coefficients[1]
+  )
+```
+
+```{r}
+cal_plot_df <- ox_cal_df |>
+  filter(timestamp > "2025-07-11 10:00:00")
+
+cal_plot_df |>
+  pivot_longer(
+    cols = c(seaphox_oxygen_ml_l, rga_ox),
+    names_to = "source",
+    values_to = "oxygen_ml_l"
+  ) |>
+  ggplot(aes(timestamp, oxygen_ml_l, color = source)) +
+  geom_line() +
+  labs(title = "Calibration timeseries", x = NULL, y = "Oxygen [ml/l]")
+```
+
+  1:1 plots of fit
+
+```{r}
+ggplot(cal_plot_df, aes(seaphox_oxygen_ml_l, rga_ox)) +
+  geom_abline(slope = 1, intercept = 0) +
+  geom_point(
+    shape = 1,
+    color = "blue",
+    size = 2,
+    stroke = 0.5,
+    alpha = 0.5
+  ) +
+  xlim(3, 9) +
+  ylim(3, 9) +
+  labs(
+    title = "Calibration fit",
+    x = "Optode oxygen [ml/l]",
+    y = "GEMS oxygen [ml/l]"
+  )
+```
+
+# Flux
+  
+## Hourly oxygen flux timeseries
+
+Not showing CO2 flux for now.
+
+```{r}
+gop <- hourly_flux |>
+  mutate(
+    time_diff = as.numeric(difftime(
+      timestamp,
+      lag(timestamp),
+      units = "hours"
+    )),
+    ox_flux = ifelse(time_diff > 1, NA, ox_flux),
+  ) |>
+  ggplot(aes(timestamp, ox_flux)) +
+  geom_hline(yintercept = 0) +
+  geom_line(na.rm = TRUE) +
+  labs(title = "Hourly Oxygen Flux", x = NULL, y = "Oxygen flux [mmol/m²/h]")
+
+gcp = ggplot(hourly_flux, aes(timestamp, co2_flux)) +
+  geom_line()
+
+gpp = ggplot(hourly_flux, aes(timestamp, par_mean)) +
+  geom_line() +
+  labs(title = "Predicted PAR", x = NULL, y = "Predicted PAR [µmol/m²/s¹]")
+
+# DLI daily PAR
+min_flux_ts <- as.Date(min(hourly_flux[["timestamp"]]))
+max_flux_ts <- as.Date(max(hourly_flux[["timestamp"]]))
+
+par_model_df <- par_model_df |>
+  filter(date >= min_flux_ts, date <= max_flux_ts)
+
+dpp <- ggplot(par_model_df, aes(date, dli_mol_m2_day)) +
+  geom_line() +
+  labs(
+    title = "Predicted Daily PAR",
+    x = NULL,
+    y = "Predicted DLI [mol/m²/day¹]"
+  )
+
+gop / dpp
+```
+
+Representative daily flux? July 16-19?
+
+```{r}
+hourly_flux |>
+  filter(
+    timestamp > as.POSIXct("2025-07-15 00:00:00"),
+    timestamp < as.POSIXct("2025-07-19 12:00:00")
+  ) |>
+  ggplot(aes(timestamp, ox_flux)) +
+  geom_hline(yintercept = 0) +
+  geom_line() +
+  labs(
+    title = "July Hourly Oxygen Flux",
+    x = NULL,
+    y = "Oxygen flux [mmol/m²/h]"
+  )
+```
+
+## Diel Plots
+
+```{r}
+hmp <- hourly_stats |>
+  ggplot(aes(solar_hour, ox_mean_umol_l_mean_mean)) +
+  geom_line() +
+  geom_pointrange(
+    aes(
+      ymin = ox_mean_umol_l_mean_mean - ox_mean_umol_l_mean_se,
+      ymax = ox_mean_umol_l_mean_mean + ox_mean_umol_l_mean_se
+    ),
+    size = 0.1,
+    # position = position_dodge(width = 0.5)
+  ) +
+  labs(x = NULL, y = "Oxygen Conc. [mmol/m3]")
+
+hgp <- hourly_stats |>
+  ggplot(aes(solar_hour, ox_gradient_umol_l_m_mean_mean)) +
+  geom_line() +
+  geom_pointrange(
+    aes(
+      ymin = ox_gradient_umol_l_m_mean_mean - ox_gradient_umol_l_m_mean_se,
+      ymax = ox_gradient_umol_l_m_mean_mean + ox_gradient_umol_l_m_mean_se
+    ),
+    size = 0.1,
+    # position = position_dodge(width = 0.5)
+  ) +
+  geom_hline(yintercept = 0) +
+  labs(x = "Hour of Day", y = "Oxygen Gradient [mmol/m4]")
+
+flp <- hourly_stats |>
+  ggplot(aes(solar_hour, ox_flux_mean)) +
+  geom_line() +
+  geom_pointrange(
+    aes(
+      ymin = ox_flux_mean - ox_flux_se,
+      ymax = ox_flux_mean + ox_flux_se
+    ),
+    size = 0.1,
+    # position = position_dodge(width = 0.5)
+  ) +
+  geom_hline(yintercept = 0) +
+  labs(x = NULL, y = "Oxygen Flux [mmol/m2/h]")
+
+parp <- hourly_stats |>
+  ggplot(aes(solar_hour, par_mean_mean)) +
+  geom_line() +
+  labs(x = "Hour of Day", y = "Predicted PAR [mmol/m2]")
+```
+
+### Concentration, gradient
+
+```{r}
+hmp / hgp
+
+# hm_ply <- ggplotly(hmp, dynamicTicks = TRUE)
+# hg_ply <- ggplotly(hgp, dynamicTicks = TRUE)
+# subplot(hm_ply, hg_ply, nrows = 2, shareX = TRUE, titleY = TRUE)
+```
+
+### Oxygen flux and predicted par
+
+```{r}
+flp / parp
+```
+
+### Monthly variability
+
+Same as above but plotted by month
+
+June removed due to incomplete data
+
+Oct removed for now due to inlet issue
+
+```{r}
+
+monthly_stats <- mutate(monthly_stats, month = as.factor(month))
+
+hmp <- monthly_stats |>
+  ggplot(aes(solar_hour, ox_mean_umol_l_mean_mean, color = month)) +
+  geom_line() +
+  geom_pointrange(
+    aes(
+      ymin = ox_mean_umol_l_mean_mean - ox_mean_umol_l_mean_se,
+      ymax = ox_mean_umol_l_mean_mean + ox_mean_umol_l_mean_se
+    ),
+    size = 0.1,
+    # position = position_dodge(width = 0.5)
+  ) +
+  geom_hline(yintercept = 0) +
+  labs(x = NULL, y = "Oxygen Conc. [mmol/m3]")
+
+hgp <- monthly_stats |>
+  ggplot(aes(solar_hour, ox_gradient_umol_l_m_mean_mean, color = month)) +
+  geom_line() +
+  geom_pointrange(
+    aes(
+      ymin = ox_gradient_umol_l_m_mean_mean - ox_gradient_umol_l_m_mean_se,
+      ymax = ox_gradient_umol_l_m_mean_mean + ox_gradient_umol_l_m_mean_se
+    ),
+    size = 0.1,
+    # position = position_dodge(width = 0.5)
+  ) +
+  geom_hline(yintercept = 0) +
+  labs(x = "Hour of Day", y = "Oxygen Gradient [mmol/m4]")
+
+flp <- monthly_stats |>
+  ggplot(aes(solar_hour, ox_flux_mean, color = month)) +
+  geom_line() +
+  geom_pointrange(
+    aes(
+      ymin = ox_flux_mean - ox_flux_se,
+      ymax = ox_flux_mean + ox_flux_se
+    ),
+    size = 0.1,
+    # position = position_dodge(width = 0.5)
+  ) +
+  geom_hline(yintercept = 0) +
+  labs(x = NULL, y = "Oxygen Flux [mmol/m2/h]")
+
+parp <- monthly_stats |>
+  ggplot(aes(solar_hour, par_mean_mean, color = month)) +
+  geom_line() +
+  labs(x = "Hour of Day", y = "Predicted PAR [mmol/m2]")
+
+flp / parp
+
+# hm_ply <- ggplotly(hmp, dynamicTicks = TRUE)
+# hg_ply <- ggplotly(hgp, dynamicTicks = TRUE)
+# subplot(hm_ply, hg_ply, nrows = 2, shareX = TRUE, titleY = TRUE)
+```
+
+
+# Flux barplots
+
+monthly NEM of diel curves
+Include light, temp
+
+```{r}
+ggplot(monthly_nem, aes(month, nem_mmol_m2_day)) +
+  geom_col() +
+  geom_hline(yintercept = 0) +
+  labs(title = "Monthly Net Ecosystem Metabolism", y = "NEM [mmol m2 day]")
+```
+
+```{r}
+ggplot(daily_nem, aes(day, nem_mmol_m2_h)) +
+  geom_col() +
+  geom_hline(yintercept = 0) +
+  labs(title = "Daily Net Ecosystem Metabolism", y = "NEM [mmol m2 h]")
+```
+
+# Eelgrass growth figures
+
+Plots below are Naushon eelgrass quadrat data plotted by year. Point error bars are SD of quadrats for mass and count, SD of all blade lengths for length. Fit line is a loess fit through all data.
+
+```{r}
+bmp <- ggplot(eelgrass, aes(day_of_year, density_g_m2, color = year)) +
+  geom_smooth(inherit.aes = FALSE, aes(day_of_year, density_g_m2), se = FALSE) +
+  geom_line() +
+  geom_pointrange(aes(
+    ymin = density_g_m2 - density_g_m2_sd,
+    ymax = density_g_m2 + density_g_m2_sd
+  )) +
+  scale_x_continuous(
+    breaks = c(1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335),
+    labels = month.abb
+  ) +
+  labs(title = "Eelgrass Shoot Biomass", x = NULL, y = "Density [g/m2]")
+
+blp <- ggplot(eelgrass, aes(day_of_year, length_cm, color = year)) +
+  geom_smooth(inherit.aes = FALSE, aes(day_of_year, length_cm), se = FALSE) +
+  geom_line() +
+  geom_line() +
+  geom_pointrange(aes(
+    ymin = length_cm - length_cm_sd,
+    ymax = length_cm + length_cm_sd
+  )) +
+  scale_x_continuous(
+    breaks = c(1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335),
+    labels = month.abb
+  ) +
+  labs(title = "Eelgrass Shoot length", x = NULL, y = "Length [cm]")
+
+bmp / blp
+```
+
+
+## mass
+
+## count
+
+## length
+
+# Synthesis figures
+
+flux vs light, growth, temp
