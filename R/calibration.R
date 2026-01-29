@@ -50,6 +50,7 @@ make_ox_cal_df <- function(
     rga_df,
     by = dplyr::join_by(timestamp)
   )
+  ox_cal_df
 }
 
 fit_oxygen <- function(ox_cal_df) {
@@ -85,6 +86,8 @@ add_oxygen <- function(
     )
 }
 
+### CO2 CALIBRATION ###
+
 #' Load and process ProOceanus CO2 data
 #'
 #' @param file_path Path to ProOceanus data file
@@ -96,33 +99,52 @@ add_oxygen <- function(
 #' @export
 load_prooceanus_co2 <- function(file_path, start_time, end_time) {
   read_prooceanus(file_path) |>
-    filter(ts >= as.Date(start_time), ts <= as.Date(end_time))
+    filter(ts >= as.Date(start_time), ts <= as.Date(end_time)) |>
+    select(timestamp = ts, prooceanus_co2_ppm = co2, cell_pressure)
 }
 
-
-#' Add CO2 data to RGA data
+#' Make CO2 calibration data frame
 #'
-#' @param co2_raw Raw CO2 data from ProOceanus
-#' @param rga_data RGA data with oxygen
+#' @param prooceanus_df Data frame with timestamp and CO2 columns
+#' @param rga_df RGA data to join with
 #'
-#' @return Joined data frame ready for linear regression
+#' @return A combined data frame ready for linear regression
 #'
 #' @export
-add_co2 <- function(
+make_co2_cal_df <- function(
   rga_df,
-  co2_raw,
-  sensor_separation = 1.02
+  prooceanus_df,
+  status_file
 ) {
-  co2_df <- co2_raw |>
-    mutate(ts = floor_date(ts, unit = "15 mins")) |>
-    group_by(ts) |>
-    select(timestamp = ts, prooceanus_co2_ppm = co2, cell_pressure) |>
-    summarize(across(where(is.numeric), \(x) mean(x, na.rm = TRUE)))
-  co2_cal_df <- dplyr::inner_join(
-    co2_df,
+  prooceanus_df <- prooceanus_df |>
+    mutate(timestamp = lubridate::floor_date(timestamp, "minute")) |>
+    group_by(timestamp) |>
+    summarize(
+      prooceanus_co2_ppm = mean(prooceanus_co2_ppm, na.rm = TRUE),
+      cell_pressure = mean(cell_pressure, na.rm = TRUE)
+    )
+
+  rga_df <- rga_df |>
+    filter(inlet == "high") |>
+    mutate(timestamp = lubridate::floor_date(timestamp, "minute")) |>
+    group_by(timestamp) |>
+    summarize(mass_44_40 = mean(mass_44_40, na.rm = TRUE))
+
+  status_temp_df <- open_dataset(status_file) |>
+    select(timestamp, adv_temp = temp) |>
+    collect() |>
+    mutate(
+      timestamp = lubridate::floor_date(timestamp, unit = "minute")
+    ) |>
+    group_by(timestamp) |>
+    summarize(adv_temp = mean(adv_temp, na.rm = TRUE))
+
+  co2_cal_df <- dplyr::left_join(
+    prooceanus_df,
     rga_df,
     by = dplyr::join_by(timestamp)
   ) |>
+    left_join(status_temp_df) |>
     mutate(
       prooceanus_co2_umol_l = co2_ppm_to_umol_per_l(
         xco2_ppm = prooceanus_co2_ppm,
@@ -132,10 +154,45 @@ add_co2 <- function(
       )
     )
 
-  co2_model <- lm(
-    prooceanus_co2_umol_l ~ mass_44_40_high_mean,
-    data = co2_cal_df
-  )
+  co2_cal_df
+}
+
+add_status_temp <- function(rga_df, status_file, bad_times) {
+  status_temp_df <- open_dataset(status_file) |>
+    select(timestamp, adv_temp = temp) |>
+    collect() |>
+    mutate(
+      timestamp = lubridate::floor_date(timestamp, unit = "15 minutes")
+    ) |>
+    group_by(timestamp) |>
+    summarize(adv_temp = mean(adv_temp, na.rm = TRUE))
+
+  rga_df |>
+    left_join(status_temp_df, by = join_by(timestamp)) |>
+    anti_join(
+      bad_times,
+      by = join_by(timestamp >= start_time, timestamp <= end_time)
+    )
+}
+#' Fit CO2 data to RGA data
+fit_co2 <- function(co2_cal_df) {
+  co2_model <- lm(prooceanus_co2_umol_l ~ mass_44_40, data = co2_cal_df)
+  return(co2_model)
+}
+
+#' Add oxygen data to RGA data
+#'
+#' @param seaphox_df Data frame with timestamp and oxygen columns
+#' @param rga_df RGA data to join with
+#'
+#' @return Joined data frame ready for linear regression
+#'
+#' @export
+add_co2 <- function(
+  rga_df,
+  co2_model,
+  sensor_separation = 1.02
+) {
   co2_i <- coef(co2_model)[1]
   co2_m <- coef(co2_model)[2]
 
@@ -146,24 +203,6 @@ add_co2 <- function(
       co2_mean_umol_l = (co2_low_umol_l + co2_high_umol_l) / 2,
       co2_gradient_umol_l_m = (co2_high_umol_l - co2_low_umol_l) /
         sensor_separation
-    )
-}
-
-
-#' Apply CO2 calibration coefficients to RGA data
-#'
-#' @param rga_data RGA data with raw mass ratios
-#' @param intercept Calibration intercept
-#' @param slope Calibration slope
-#'
-#' @return Data frame with co2_high and co2_low columns
-#'
-#' @export
-apply_co2_calibration <- function(rga_data, intercept, slope) {
-  rga_data |>
-    mutate(
-      co2_high = intercept + slope * mass_44_40_high,
-      co2_low = intercept + slope * mass_44_40_low
     )
 }
 

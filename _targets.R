@@ -205,13 +205,20 @@ list(
       "2025-07-29 00:00:00"
     )
   ),
-
-  # Add calibrated CO2 to RGA data
+  tar_target(
+    co2_cal_df,
+    make_co2_cal_df(rga_binned, proco2_df_jul, status_file)
+  ),
+  tar_target(
+    co2_model,
+    fit_co2(co2_cal_df)
+  ),
   tar_target(
     rga_calibrated,
     add_co2(
       rga_oxygen,
-      proco2_df_jul
+      ox_model,
+      sensor_separation = 1.02
     )
   ),
 
@@ -302,8 +309,11 @@ list(
     )
   ),
 
-  # Visualizations
-  tar_quarto(co2_report, "reports/gems_co2_issue.qmd"),
+  # EDA
+  tar_quarto(calibration_eda, "eda/calibration_eda.qmd"),
+
+  # Reports
+  #tar_quarto(co2_report, "reports/gems_co2_issue.qmd"),
   tar_quarto(eelgrass_report, "reports/eelgrass.qmd"),
   tar_quarto(gems_report, "reports/gems_report_plots.qmd"),
   tar_quarto(flux_report, "reports/gems_flux_report.qmd")

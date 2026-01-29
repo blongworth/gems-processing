@@ -10,13 +10,15 @@ library(plotly)
 library(gemstools)
 library(suntools)
 library(patchwork)
+library(targets)
 
+tar_load(c(rga_binned, rga_oxygen))
 ```
 
 Oxygen/Argon, colored by inlet
 
 ```{r}
-e <- ggplot(df_binned, aes(bin_time, mass_32_40, color = inlet)) +
+e <- ggplot(rga_binned, aes(timestamp, mass_32_40, color = inlet)) +
   geom_line()
 
 p <- ggplotly(e, dynamicTicks = TRUE)
@@ -28,17 +30,24 @@ p
 TODO: check for gradient in CH4 and H2S (None seen initially)
 
 ```{r}
-e <- ggplot(df_binned_wide, aes(timestamp, mass_32_40_high_diff)) +
+e <- ggplot(rga_oxygen, aes(timestamp, mass_32_40_high_diff)) +
   geom_line()
 
-f <- ggplot(df_binned_wide, aes(timestamp, par)) +
+f <- ggplot(rga_oxygen, aes(timestamp, par)) +
   geom_line()
 
 # Convert to interactive plotly
 p1_pl <- ggplotly(e, dynamicTicks = TRUE)
 p2_pl <- ggplotly(f, dynamicTicks = TRUE)
 
-subplot(p1_pl, p2_pl, nrows = 2, shareX = TRUE, titleY = TRUE, heights = c(0.5, 0.5))
+subplot(
+  p1_pl,
+  p2_pl,
+  nrows = 2,
+  shareX = TRUE,
+  titleY = TRUE,
+  heights = c(0.5, 0.5)
+)
 ```
 
 ```{r}
@@ -83,7 +92,8 @@ joined_data |>
     cols = c(seaphox_oxy, mass_32_40_high_mean),
     names_to = "source",
     values_to = "value"
-  ) |>  ggplot(aes(timestamp, value, color = source)) +
+  ) |>
+  ggplot(aes(timestamp, value, color = source)) +
   geom_line()
 
 ```
@@ -91,12 +101,13 @@ joined_data |>
 
 ```{r}
 e <- df_binned_wide |>
-  select(timestamp, oxygen_high, oxygen_low) |> 
+  select(timestamp, oxygen_high, oxygen_low) |>
   pivot_longer(
     cols = c(oxygen_high, oxygen_low),
     names_to = "inlet",
-    values_to = "oxygen") |> 
-    ggplot(aes(timestamp, oxygen, color = inlet)) +
+    values_to = "oxygen"
+  ) |>
+  ggplot(aes(timestamp, oxygen, color = inlet)) +
   geom_line()
 
 p <- ggplotly(e, dynamicTicks = TRUE)
@@ -108,7 +119,7 @@ p
 
 ```{r}
 tar_load(proco2_df_jul)
-co2p <- ggplot(proco2_df_jul, aes(x =ts, y = co2)) +
+co2p <- ggplot(proco2_df_jul, aes(x = ts, y = co2)) +
   #geom_point() +
   geom_line() +
   labs(
@@ -124,12 +135,13 @@ ggplotly(co2p)
 
 ```{r}
 e <- df_binned_wide |>
-  select(timestamp, co2_high, co2_low) |> 
+  select(timestamp, co2_high, co2_low) |>
   pivot_longer(
     cols = c(co2_high, co2_low),
     names_to = "inlet",
-    values_to = "co2") |> 
-    ggplot(aes(timestamp, co2, color = inlet)) +
+    values_to = "co2"
+  ) |>
+  ggplot(aes(timestamp, co2, color = inlet)) +
   geom_line()
 
 p <- ggplotly(e, dynamicTicks = TRUE)
@@ -139,10 +151,11 @@ p
 Compare O2 and CO2 differences
 
 ```{r}
-df_p <- df_binned_wide |> 
+df_p <- df_binned_wide |>
   mutate(
     ox = oxygen_low - oxygen_high,
-    co2 = co2_low - co2_high) |> 
+    co2 = co2_low - co2_high
+  ) |>
   select(timestamp, ox, co2)
 
 ox_p <- ggplot(df_p, aes(timestamp, ox)) +
@@ -176,14 +189,23 @@ ox_ply <- ggplotly(ox_p, dynamicTicks = TRUE)
 co2_ply <- ggplotly(co2_p, dynamicTicks = TRUE)
 par_ply <- ggplotly(par_p, dynamicTicks = TRUE)
 
-subplot(ox_ply, co2_ply, par_ply, nrows = 3, shareX = TRUE, titleY = TRUE, heights = c(0.4, 0.4, 0.2))
+subplot(
+  ox_ply,
+  co2_ply,
+  par_ply,
+  nrows = 3,
+  shareX = TRUE,
+  titleY = TRUE,
+  heights = c(0.4, 0.4, 0.2)
+)
 ```
 
 ```{r}
-df_p <- df_all |> 
+df_p <- df_all |>
   mutate(
     ox = oxygen_low - oxygen_high,
-    co2 = co2_low - co2_high) |> 
+    co2 = co2_low - co2_high
+  ) |>
   select(timestamp, ox, co2, par, cur_speed, cur_dir, w)
 
 ox_p <- ggplot(df_p, aes(timestamp, ox)) +
@@ -237,8 +259,15 @@ cur_ply <- ggplotly(cur_p, dynamicTicks = TRUE)
 dir_ply <- ggplotly(dir_p, dynamicTicks = TRUE)
 par_ply <- ggplotly(par_p, dynamicTicks = TRUE)
 
-subplot(ox_ply, co2_ply, cur_ply, dir_ply, par_ply,
-        nrows = 5, shareX = TRUE, titleY = TRUE
+subplot(
+  ox_ply,
+  co2_ply,
+  cur_ply,
+  dir_ply,
+  par_ply,
+  nrows = 5,
+  shareX = TRUE,
+  titleY = TRUE
 )
 ```
 

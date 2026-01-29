@@ -8,34 +8,36 @@ library(tidyverse)
 library(arrow)
 library(gemstools)
 library(plotly)
+library(targets)
 
+tar_load(c(adv_file, adv_bin_rot_df))
 ```
 
 # Initial plots of ADV data
 
 ```{r}
-p <- ggplot(df_binned, aes(bin_time, pressure)) +
+p <- ggplot(adv_bin_rot_df, aes(bin_time, pressure)) +
   geom_line()
 
 ggplotly(p, dynamicTicks = TRUE)
 ```
 
 ```{r}
-p <- ggplot(df_binned, aes(bin_time, cur_speed)) +
+p <- ggplot(adv_bin_rot_df, aes(bin_time, cur_speed)) +
   geom_line()
 
 ggplotly(p, dynamicTicks = TRUE)
 ```
 
 ```{r}
-p <- ggplot(df_binned, aes(bin_time, cur_dir)) +
+p <- ggplot(adv_bin_rot_df, aes(bin_time, cur_dir)) +
   geom_line()
 
 ggplotly(p, dynamicTicks = TRUE)
 ```
 
 ```{r}
-p <- ggplot(df_binned, aes(bin_time, w)) +
+p <- ggplot(adv_bin_rot_df, aes(bin_time, w_rot)) +
   geom_line()
 
 ggplotly(p, dynamicTicks = TRUE)
@@ -44,10 +46,12 @@ ggplotly(p, dynamicTicks = TRUE)
 # Determine ADV rotations by lander position
 
 ```{r}
-df_bin_rot <- df_binned_mv |> 
+df_bin_rot <- df_binned_mv |>
   group_by(lander_position) |>
   nest() %>%
-  mutate(data = map(data, \(x) rotate_to_minimize_z(x, "u", "v", "w")$rotated_data)) %>%
+  mutate(
+    data = map(data, \(x) rotate_to_minimize_z(x, "u", "v", "w")$rotated_data)
+  ) %>%
   unnest(data) %>%
   ungroup()
 ```
@@ -56,7 +60,7 @@ Rotation angles for each lander position.
 These are needed in eddyflux_batch.m
 
 ```{r}
-df_binned_mv |> 
+df_binned_mv |>
   group_by(lander_position) |>
   nest() %>%
   mutate(data = map(data, \(x) rotate_to_minimize_z(x, "u", "v", "w")$phi)) %>%
