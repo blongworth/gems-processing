@@ -80,7 +80,7 @@ list(
   tar_target(crds, matrix(c(-70.7003, 41.51875), nrow = 1)),
 
   # length scale in meters for flux calculation
-  tar_target(length_scale, 0.3),
+  tar_target(length_scale, 0.4),
 
   # minimum correlation for ADV data filtering
   tar_target(min_correlation, 50),
@@ -270,8 +270,8 @@ list(
     filtered_hourly_flux,
     filter(
       hourly_flux,
-      timestamp >= as.POSIXct("2025-07-01") &
-        timestamp < as.POSIXct("2025-09-24")
+      timestamp >= as.POSIXct("2025-07-01") # &
+      #  timestamp < as.POSIXct("2025-09-24")
     )
   ),
 

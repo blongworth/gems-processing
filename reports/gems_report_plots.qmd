@@ -92,9 +92,24 @@ rga_binned_wide |>
   geom_line(na.rm = TRUE)
 ```
 
-## Intensity
+## RGA 
+
+### Mass traces
+
+RGA signals for masses of interest.
+Each mass is measured approximately every 10 s.
+A five day period of the deployment was chosen
+to highlight diel cycles. Each signal is normalized
+to mass 40 (Argon) to control for effects
+of temperature, pressure, and biofouling.
+The mass 34 signal is likely an interference
+with Oxygen, rather than a true hydrogen sufide signal.
+
+TODO: mass units
+TODO: use 15 min averages?
   
 ```{r}
+#| fig-height: 8
 jul_rga <- rga_binned |>
   filter(
     timestamp > as.POSIXct("2025-07-15 00:00:00"),
@@ -150,59 +165,120 @@ oxp <- oxp +
 mep / nip / oxp / sup / cop
 ```
 
-  O2, CO2, N2, H2S, CH4.
-  15min average for top and bottom inlet
-  gradient
-  normalized/unnormalized difference
-  
-# Calibration
-  
-  Oxygen
+### Effect of Argon normalization
 
-  fits over cal time
-  
+Normalizing measured masses to Argon (mass 40)
+controls for physical effects on gas solubility and membrane transport.
+Gas transport is affected by temperature, pressure and water flow rate.
+This figure shows normalized and un-normalized Nitrogen (mass 28)
+across a period of increasing biofouling at the high inlet,
+followed by cleaning the inlets on Sept. 11.
+
 ```{r}
-ox_cal_df <- ox_cal_df |>
+sep_rga <- rga_binned |>
+  filter(
+    timestamp > as.POSIXct("2025-09-04 00:00:00"),
+    timestamp < as.POSIXct("2025-09-14 00:00:00")
+  )
+
+nup <- sep_rga |>
+  ggplot(aes(timestamp, mass_28, color = inlet)) +
+  geom_line() +
+  labs(
+    title = "Nitrogen (mass 28, unnormalized)",
+    x = NULL,
+    y = "Mass 28"
+  )
+
+
+nnp <- sep_rga |>
+  ggplot(aes(timestamp, mass_28_40, color = inlet)) +
+  geom_line() +
+  labs(
+    title = "Nitrogen (normalized to Argon)",
+    x = NULL,
+    y = "Mass 28:40"
+  ) +
+  theme(legend.position = "none")
+
+nup / nnp
+```
+
+# Calibration
+
+TODO: calibration in umol/l
+
+```{r}
+om <- ox_model$coefficients[2]
+oi <- ox_model$coefficients[1]
+r2 <- summary(ox_model)$r.squared
+
+cal_plot_df <- ox_cal_df |>
+  filter(timestamp > "2025-07-11 10:00:00") |>
   mutate(
-    rga_ox = mass_32_40 * ox_model$coefficients[2] + ox_model$coefficients[1]
+    rga_ox = mass_32_40 * om + oi
   )
 ```
 
-```{r}
-cal_plot_df <- ox_cal_df |>
-  filter(timestamp > "2025-07-11 10:00:00")
+### SeapHOx vs calibrated GEMS Oxygen
 
+```{r}
+#| warning: false
+
+eq_label <- paste0(
+  "y = ",
+  round(oi, 2),
+  " + ",
+  round(om, 2),
+  "x\n",
+  "R² = ",
+  round(r2, 3)
+)
+
+ggplot(cal_plot_df, aes(mass_32_40, seaphox_oxygen_ml_l)) +
+  geom_smooth(method = "lm", se = FALSE, color = "darkgrey") +
+  annotate(
+    "text",
+    x = Inf,
+    y = -Inf,
+    label = eq_label,
+    hjust = 1.1,
+    vjust = -1
+  ) +
+  geom_point(
+    shape = 1,
+    color = "blue",
+    size = 2,
+    stroke = 0.5,
+    alpha = 0.2
+  ) +
+  #xlim(3, 9) +
+  #ylim(3, 9) +
+  labs(
+    #title = "Calibration fit",
+    y = "Optode oxygen [ml/l]",
+    x = "GEMS mass 32:40"
+  )
+```
+
+### Fitted Oxygen
+
+```{r}
 cal_plot_df |>
   pivot_longer(
     cols = c(seaphox_oxygen_ml_l, rga_ox),
     names_to = "source",
     values_to = "oxygen_ml_l"
   ) |>
+  mutate(source = ifelse(source == "rga_ox", "GEMS", "Optode")) |>
   ggplot(aes(timestamp, oxygen_ml_l, color = source)) +
   geom_line() +
   labs(title = "Calibration timeseries", x = NULL, y = "Oxygen [ml/l]")
 ```
 
-  1:1 plots of fit
+# Gradient
 
-```{r}
-ggplot(cal_plot_df, aes(seaphox_oxygen_ml_l, rga_ox)) +
-  geom_abline(slope = 1, intercept = 0) +
-  geom_point(
-    shape = 1,
-    color = "blue",
-    size = 2,
-    stroke = 0.5,
-    alpha = 0.5
-  ) +
-  xlim(3, 9) +
-  ylim(3, 9) +
-  labs(
-    title = "Calibration fit",
-    x = "Optode oxygen [ml/l]",
-    y = "GEMS oxygen [ml/l]"
-  )
-```
+Gradient plots
 
 # Flux
   
@@ -228,6 +304,19 @@ gop <- hourly_flux |>
 gcp = ggplot(hourly_flux, aes(timestamp, co2_flux)) +
   geom_line()
 
+tp <- hourly_flux |>
+  mutate(
+    time_diff = as.numeric(difftime(
+      timestamp,
+      lag(timestamp),
+      units = "hours"
+    )),
+    adv_temp_mean = ifelse(time_diff > 1, NA, adv_temp_mean),
+  ) |>
+  ggplot(aes(timestamp, adv_temp_mean)) +
+  geom_line() +
+  labs(title = "Temperature", x = NULL, y = "Temp [C]")
+
 gpp = ggplot(hourly_flux, aes(timestamp, par_mean)) +
   geom_line() +
   labs(title = "Predicted PAR", x = NULL, y = "Predicted PAR [µmol/m²/s¹]")
@@ -247,17 +336,18 @@ dpp <- ggplot(par_model_df, aes(date, dli_mol_m2_day)) +
     y = "Predicted DLI [mol/m²/day¹]"
   )
 
-gop / dpp
+gop / dpp / tp
 ```
 
 Representative daily flux? July 16-19?
 
 ```{r}
-hourly_flux |>
+jul_flux <- hourly_flux |>
   filter(
     timestamp > as.POSIXct("2025-07-15 00:00:00"),
     timestamp < as.POSIXct("2025-07-19 12:00:00")
-  ) |>
+  )
+jfp <- jul_flux |>
   ggplot(aes(timestamp, ox_flux)) +
   geom_hline(yintercept = 0) +
   geom_line() +
@@ -266,6 +356,13 @@ hourly_flux |>
     x = NULL,
     y = "Oxygen flux [mmol/m²/h]"
   )
+
+jpp <- jul_flux |>
+  ggplot(aes(timestamp, par_mean)) +
+  geom_line() +
+  labs(title = "Predicted PAR", x = NULL, y = "Predicted PAR [µmol/m²/s¹]")
+
+jfp / jpp
 ```
 
 ## Diel Plots
