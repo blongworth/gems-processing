@@ -11,21 +11,14 @@
 calculate_hourly_statistics <- function(flux_data) {
   flux_data |>
     mutate(
-      hour = hour(timestamp),
       diff_noon = timestamp - 16800,
-      solar_hour = hour(diff_noon),
-      month = as.integer(month(timestamp)),
-      season = case_when(
-        month %in% 10:12 ~ "Fall",
-        month %in% 1:3 ~ "Winter",
-        month %in% 4:6 ~ "Spring",
-        TRUE ~ "Summer"
-      )
+      solar_hour = hour(diff_noon)
     ) |>
+    select(-timestamp, -diff_noon) |>
     group_by(solar_hour) |>
     summarise(
       across(
-        c(-timestamp),
+        everything(),
         c(
           mean = \(x) mean(x, na.rm = TRUE),
           sd = \(x) sd(x, na.rm = TRUE),
@@ -39,21 +32,15 @@ calculate_hourly_statistics <- function(flux_data) {
 calculate_monthly_statistics <- function(flux_data) {
   flux_data |>
     mutate(
-      hour = hour(timestamp),
       diff_noon = timestamp - 16800,
       solar_hour = hour(diff_noon),
-      month = month(timestamp),
-      season = case_when(
-        month %in% 10:12 ~ "Fall",
-        month %in% 1:3 ~ "Winter",
-        month %in% 4:6 ~ "Spring",
-        TRUE ~ "Summer"
-      )
+      month = month(timestamp)
     ) |>
+    select(-timestamp, -diff_noon) |>
     group_by(solar_hour, month) |>
     summarise(
       across(
-        c(-timestamp),
+        everything(),
         c(
           mean = \(x) mean(x, na.rm = TRUE),
           sd = \(x) sd(x, na.rm = TRUE),
@@ -67,10 +54,8 @@ calculate_monthly_statistics <- function(flux_data) {
 calculate_seasonal_statistics <- function(flux_data, coordinates) {
   flux_data |>
     mutate(
-      hour = hour(timestamp),
       diff_noon = timestamp - 16800,
       solar_hour = hour(diff_noon),
-      month = month(timestamp),
       season = case_when(
         month %in% 10:12 ~ "Fall",
         month %in% 1:3 ~ "Winter",
@@ -78,10 +63,11 @@ calculate_seasonal_statistics <- function(flux_data, coordinates) {
         TRUE ~ "Summer"
       )
     ) |>
+    select(-timestamp, -diff_noon) |>
     group_by(solar_hour, season) |>
     summarise(
       across(
-        c(-timestamp),
+        everything(),
         c(
           mean = \(x) mean(x, na.rm = TRUE),
           sd = \(x) sd(x, na.rm = TRUE),
