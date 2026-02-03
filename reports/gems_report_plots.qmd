@@ -28,6 +28,8 @@ library(here)
 
 theme_set(theme_classic(base_size = 8))
 
+update_geom_defaults("line", list(linewidth = 0.3))
+
 cb_print_4 <- c(
   "#0072B2", # blue
   "#009E73", # bluish green
@@ -95,7 +97,9 @@ jul_rga <- rga_binned |>
 
 mep <- jul_rga |>
   ggplot(aes(timestamp, mass_15_40, color = inlet)) +
-  geom_line() +
+  geom_line(
+    alpha = 0.6
+  ) +
   labs(
     title = "Methane (mass 15)",
     x = NULL,
@@ -104,7 +108,9 @@ mep <- jul_rga |>
 
 nip <- jul_rga |>
   ggplot(aes(timestamp, mass_28_40, color = inlet)) +
-  geom_line() +
+  geom_line(
+    alpha = 0.6
+  ) +
   labs(
     title = "Nitrogen (mass 28)",
     x = NULL,
@@ -114,7 +120,9 @@ nip <- jul_rga |>
 
 sup <- jul_rga |>
   ggplot(aes(timestamp, mass_34_40, color = inlet)) +
-  geom_line() +
+  geom_line(
+    alpha = 0.6
+  ) +
   labs(
     title = "Hydrogen Sulfide (mass 34)",
     x = NULL,
@@ -125,7 +133,9 @@ sup <- jul_rga |>
 
 cop <- jul_rga |>
   ggplot(aes(timestamp, mass_44_40, color = inlet)) +
-  geom_line() +
+  geom_line(
+    alpha = 0.6
+  ) +
   labs(
     title = "Carbon Dioxide (mass 44)",
     x = NULL,
@@ -140,7 +150,9 @@ oxp <- rga_binned |>
     timestamp < as.POSIXct("2025-07-20 00:00:00")
   ) |>
   ggplot(aes(timestamp, mass_32_40, color = inlet)) +
-  geom_line() +
+  geom_line(
+    alpha = 0.6
+  ) +
   labs(
     title = "Oxygen/Argon ratio at high and low inlets",
     x = NULL,
@@ -177,7 +189,9 @@ sep_rga <- rga_binned |>
 
 nup <- sep_rga |>
   ggplot(aes(timestamp, mass_28, color = inlet)) +
-  geom_line() +
+  geom_line(
+    alpha = 0.6
+  ) +
   labs(
     x = NULL,
     y = "Mass 28 [Torr]"
@@ -186,7 +200,9 @@ nup <- sep_rga |>
 
 nnp <- sep_rga |>
   ggplot(aes(timestamp, mass_28_40, color = inlet)) +
-  geom_line() +
+  geom_line(
+    alpha = 0.6
+  ) +
   labs(
     x = NULL,
     y = "Mass 28:40"
@@ -222,7 +238,7 @@ rga_binned_wide |>
     values_to = "mass_32_40"
   ) |>
   ggplot(aes(timestamp, mass_32_40, color = inlet)) +
-  geom_line(na.rm = TRUE) +
+  geom_line(na.rm = TRUE, alpha = 0.6) +
   labs(x = NULL, y = "Mass 32:40")
 ```
 
@@ -275,7 +291,7 @@ ggplot(cal_plot_df, aes(mass_32_40, seaphox_oxygen_ml_l)) +
   geom_smooth(method = "lm", se = FALSE, color = "darkgrey") +
   annotate(
     "text",
-    size = 4,
+    size = 3,
     x = Inf,
     y = -Inf,
     label = eq_label,
@@ -315,7 +331,9 @@ cal_plot_df |>
   ) |>
   mutate(source = ifelse(source == "rga_ox", "GEMS", "Optode")) |>
   ggplot(aes(timestamp, oxygen_ml_l, color = source)) +
-  geom_line() +
+  geom_line(
+    alpha = 0.6
+  ) +
   labs(x = NULL, y = "Oxygen [ml/l]")
 ```
 
@@ -412,7 +430,7 @@ dpp <- ggplot(par_model_df, aes(date, dli_mol_m2_day)) +
     )
   )
 
-gop / dpp / tp
+(gop / dpp / tp) + plot_layout(heights = c(3, 2, 2))
 ```
 
 ### Representative daily flux
@@ -459,7 +477,7 @@ jpp <- jul_flux |>
         "]"
     )
   )
-jfp / jpp
+(jfp / jpp) + plot_layout(heights = c(3, 1))
 ```
 
 {{< pagebreak >}}
@@ -554,7 +572,7 @@ hmp / hgp
 #| fig-cap: >
 #|   GEMS oxygen flux and predicted par aggregated hourly for the duration of the deployment. Hour is adjusted to the mean solar noon for the deployment.
 #| fig-height: 5
-flp / parp
+(flp / parp) + plot_layout(heights = c(3, 1))
 ```
 
 ### Monthly variability
@@ -632,7 +650,7 @@ parp <- monthly_stats |>
     )
   )
 
-flp / parp
+(flp / parp) + plot_layout(heights = c(3, 1))
 
 # hm_ply <- ggplotly(hmp, dynamicTicks = TRUE)
 # hg_ply <- ggplotly(hgp, dynamicTicks = TRUE)

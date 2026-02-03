@@ -265,7 +265,7 @@ list(
     }
   ),
 
-  # Filtered hourly flux to remove June and October
+  # Filtered hourly flux to remove June
   tar_target(
     filtered_hourly_flux,
     filter(
