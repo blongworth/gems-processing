@@ -25,6 +25,7 @@ library(ggplot2)
 library(plotly)
 library(patchwork)
 library(here)
+library(R.matlab)
 
 theme_set(theme_classic(base_size = 8))
 
@@ -167,6 +168,82 @@ mep / nip / op / sup / cop
 ```
 
 {{< pagebreak >}}
+
+### 2022-2025 noise comparison
+
+```{r}
+# Jeff's processed 2022 data. Unclear what inlet this is from.
+mat <- readMat(here::here("data/2022_Hadleys_Harbor/gems_rga_2022_jeff.mat"))
+
+# Adjust these names to match your .mat structure:
+# e.g. mat$date, mat$data_D, etc.
+date_matlab <- as.vector(mat$date) # numeric MATLAB datenums
+data_D <- as.matrix(mat$data.D) # numeric matrix
+
+# Helper: convert MATLAB datenum -> POSIXct (UTC)
+matlab_to_posix <- function(datenum) {
+  # MATLAB datenum origin: 0000-01-01, R: 1970-01-01
+  # Difference in days:
+  # as.numeric(as.Date("1970-01-01") - as.Date("0000-01-01")) == 719529
+  origin_shift <- 719529
+  as.POSIXct(
+    (datenum - origin_shift) * 86400,
+    origin = "1970-01-01",
+    tz = "UTC"
+  )
+}
+
+date <- matlab_to_posix(date_matlab)
+
+# Apply the MATLAB filters:
+
+# 1) id=find(data_D(:,10)<1.2*10^7);
+keep_idx1 <- data_D[, 10] >= 1.2 * 10^7
+data_D <- data_D[keep_idx1, ]
+date <- date[keep_idx1]
+
+# 2) id=find(date<datenum(2022,8,10,14,30,0) | date>datenum(2022,8,31,7,0,0));
+
+start_matlab <- as.numeric(as.POSIXct("2022-08-10 14:30:00", tz = "UTC")) /
+  86400 +
+  719529
+end_matlab <- as.numeric(as.POSIXct("2022-08-31 07:00:00", tz = "UTC")) /
+  86400 +
+  719529
+
+start_r <- matlab_to_posix(start_matlab)
+end_r <- matlab_to_posix(end_matlab)
+
+keep_idx2 <- date >= start_r & date <= end_r
+data_D <- data_D[keep_idx2, ]
+date <- date[keep_idx2]
+
+# Build a data.frame for ggplot
+df <- data.frame(
+  date = date,
+  ratio_O2_Ar = data_D[, 3] / data_D[, 5] # data_D(:,3)./data_D(:,5)
+)
+```
+
+```{r}
+#| label: fig-noise-comparison
+#| fig-cap: Comparison of QMS signal noise for argon-normalized oxygen between 2022 (A) and 2025 (B) deployments.Signal noise was greatly reduced for the 2025 deployment, improving the accuracy and limit of detection for gradient determination.
+
+jp <- df |>
+  filter(date > "2022-08-14", date < "2022-08-18") |>
+  ggplot(aes(date, ratio_O2_Ar)) +
+  geom_line() +
+  labs(x = "Date (2022)", y = "Mass 32:40")
+
+bp <- rga_binned |>
+  filter(inlet == "high", timestamp > "2025-08-14", timestamp < "2025-08-18") |>
+  ggplot(aes(timestamp, mass_32_40)) +
+  geom_line() +
+  labs(x = "Date (2025)", y = "Mass 32:40")
+
+(jp / bp) + plot_annotation(tag_levels = 'A')
+```
+
 
 ### Effect of Argon normalization
 

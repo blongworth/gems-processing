@@ -25,3 +25,5 @@ __pycache__/
 *.pyc
 reports/gems_flux_report_files/libs/jquery-3.5.1/jquery-AUTHORS.txt
 _targets/
+/.quarto/
+**/*.quarto_ipynb
