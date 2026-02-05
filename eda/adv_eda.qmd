@@ -45,40 +45,44 @@ ggplotly(p, dynamicTicks = TRUE)
 
 # Determine ADV rotations by lander position
 
-```{r}
-df_bin_rot <- df_binned_mv |>
-  group_by(lander_position) |>
-  nest() %>%
-  mutate(
-    data = map(data, \(x) rotate_to_minimize_z(x, "u", "v", "w")$rotated_data)
-  ) %>%
-  unnest(data) %>%
-  ungroup()
-```
-
 Rotation angles for each lander position. 
-These are needed in eddyflux_batch.m
+These must be added manually in eddyflux_batch.m.
 
 ```{r}
-df_binned_mv |>
-  group_by(lander_position) |>
-  nest() %>%
-  mutate(data = map(data, \(x) rotate_to_minimize_z(x, "u", "v", "w")$phi)) %>%
-  unnest(data) %>%
-  ungroup()
+# TODO: generated non-averaged ADV dataset from raw file here
+# df_binned_mv |>
+#   group_by(lander_position) |>
+#   nest() %>%
+#   mutate(data = map(data, \(x) rotate_to_minimize_z(x, "u", "v", "w")$phi)) %>%
+#   unnest(data) %>%
+#   ungroup()
 ```
 
-Rotated w (compare with unrotated)
+# Velocities
+
+Horizontal current speed
 
 ```{r}
-p <- ggplot(df_bin_rot, aes(bin_time, w_rot)) +
+p <- ggplot(adv_bin_rot_df, aes(bin_time, cur_speed)) +
   geom_line()
 
 ggplotly(p, dynamicTicks = TRUE)
 ```
 
+Vertical current speed
+
 ```{r}
-p <- ggplot(df_bin_rot, aes(pressure, cur_speed)) +
-  geom_point()
+p <- ggplot(adv_bin_rot_df, aes(bin_time, w_rot)) +
+  geom_line()
+
+ggplotly(p, dynamicTicks = TRUE)
+```
+
+tide height vs horizontal velocity
+
+```{r}
+p <- ggplot(adv_bin_rot_df, aes(pressure, cur_speed)) +
+  geom_smooth() +
+  geom_point(alpha = 0.1)
 p
 ```

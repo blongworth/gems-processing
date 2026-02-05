@@ -427,7 +427,7 @@ cal_plot_df |>
 #|   Flux decreases with decreasing light and temperature.
 #|   No light sensor was codeployed with GEMS,
 #|   therefore photosynthetically active radiation (PAR) and DLI
-#|   are estimated from modeled, cloud-free insolation.
+#|   are estimated from modeled, cloud-free insolation. A high flux outlier on July 19 believed to be caused by fouling was removed from the plot.
 #| warning: false
 #| fig-height: 5.5
 
@@ -443,6 +443,7 @@ gop <- hourly_flux |>
   ggplot(aes(timestamp, ox_flux)) +
   geom_hline(yintercept = 0) +
   geom_line(color = cb_print_4[1], na.rm = TRUE) +
+  ylim(-15, 15) +
   labs(
     x = NULL,
     y = expression("Oxygen flux [" * mmol ~ m^-2 ~ h^-1 * "]")

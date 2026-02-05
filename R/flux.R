@@ -268,12 +268,12 @@ process_flux_data <- function(
 #' Calculate flux from concentration gradient and velocity
 #'
 #' @param data Data frame with oxygen gradient and Ustar values
-#' @param length_scale Turbulent length scale parameter (default: 0.3)
+#' @param length_scale Turbulent length scale parameter
 #'
 #' @return Data frame with ox_flux column added
 #'
 #' @export
-calculate_grad_flux <- function(data, grad_var, length_scale = 0.3) {
+calculate_grad_flux <- function(data, grad_var, length_scale) {
   data |>
     mutate(
       lscale = length_scale,

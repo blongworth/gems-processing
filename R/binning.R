@@ -89,3 +89,184 @@ summarize_binned_timeseries <- function(
     select(bin_time, inlet, all_of(value_cols)) %>%
     as_tibble()
 }
+
+
+#' Interpolate cyclic inlet data on a 15-minute grid
+#'
+#' @param df Data frame with a POSIXct-compatible \code{timestamp} column.
+#' @param cols_to_interp Character vector of numeric column names to interpolate;
+#'   if \code{NULL}, all numeric columns except \code{timestamp} and \code{inlet} are used.
+#' @param block_start_sec Numeric. Start (in seconds from block start) of the
+#'   sub-window within each 7.5-minute block used for interpolation.
+#' @param block_end_sec Numeric. End (in seconds from block start) of the
+#'   sub-window within each 7.5-minute block used for interpolation.
+#'
+#' @return A data frame with one row per 15-minute grid time and columns:
+#'   \code{time_grid}, \code{timestamp_low}, \code{<var>_low},
+#'   \code{timestamp_high}, \code{<var>_high}.
+#'
+#' @details
+#'   Assumes a repeating 15-minute cycle starting at the top of the hour, with
+#'   7.5 minutes at inlet \code{"low"} followed by 7.5 minutes at inlet \code{"high"}.
+#'   Data are first restricted to the given sub-window within each block, then
+#'   piecewise-linear interpolation is performed at the midpoints of each
+#'   low/high block for each 15-minute cycle.
+#'
+#' @examples
+#' \dontrun{
+#' res <- interpolate_inlets(
+#'   df,
+#'   cols_to_interp = c("temp", "pressure"),
+#'   block_start_sec = 60,
+#'   block_end_sec = 420
+#' )
+#' }
+interpolate_inlets <- function(
+  df,
+  cols_to_interp = NULL,
+  block_start_sec = 60,
+  block_end_sec = 420
+) {
+  cycle_length_min <- 15
+  half_cycle_min <- 7.5
+  cycle_length_sec <- cycle_length_min * 60
+  half_cycle_sec <- half_cycle_min * 60
+
+  df <- df %>%
+    mutate(
+      timestamp = as.POSIXct(timestamp, tz = "UTC")
+    ) %>%
+    arrange(timestamp)
+
+  # auto-detect columns to interpolate if not provided
+  if (is.null(cols_to_interp)) {
+    cols_to_interp <- df %>%
+      select(-timestamp, -any_of("inlet")) %>%
+      select(where(is.numeric)) %>%
+      names()
+  }
+
+  # origin time: floor to hour
+  origin_time <- floor_date(min(df$timestamp), unit = "hour")
+
+  # assign inlet (low first half, high second half) and block_index/start
+  df <- df %>%
+    mutate(
+      offset_sec = as.numeric(difftime(timestamp, origin_time, units = "secs")),
+      cycle_pos = offset_sec %% cycle_length_sec,
+      inlet = if_else(cycle_pos < half_cycle_sec, "low", "high"),
+      block_index = floor(offset_sec / half_cycle_sec),
+      block_start = origin_time + block_index * half_cycle_sec,
+      time_in_block_sec = as.numeric(difftime(
+        timestamp,
+        block_start,
+        units = "secs"
+      ))
+    )
+
+  # enforce sensible bounds on block window
+  if (block_start_sec < 0) {
+    warning("block_start_sec < 0; clamping to 0.")
+    block_start_sec <- 0
+  }
+  if (block_end_sec > half_cycle_sec) {
+    warning("block_end_sec > half block length; clamping to half_cycle_sec.")
+    block_end_sec <- half_cycle_sec
+  }
+  if (block_start_sec >= block_end_sec) {
+    stop("block_start_sec must be < block_end_sec.")
+  }
+
+  # keep only the middle part of each block as defined by [block_start_sec, block_end_sec]
+  df_mid <- df %>%
+    filter(
+      time_in_block_sec >= block_start_sec,
+      time_in_block_sec <= block_end_sec
+    )
+
+  if (nrow(df_mid) == 0) {
+    stop(
+      "No data remaining after applying block_start_sec and block_end_sec filters."
+    )
+  }
+
+  # 15-minute grid aligned with origin_time
+  grid_15min <- seq(
+    from = origin_time,
+    to = ceiling_date(max(df$timestamp), unit = "hour"),
+    by = "15 min"
+  )
+
+  # midpoint times inside low and high windows (same as before)
+  half_window_sec <- half_cycle_sec / 2 # 3.75 min
+  times_low <- grid_15min + half_window_sec
+  times_high <- grid_15min + (half_cycle_sec + half_window_sec)
+
+  # helper: interpolate many columns at specified target_times using df_mid
+  interp_many_cols <- function(df_sub, target_times, cols) {
+    x <- as.numeric(df_sub$timestamp)
+    xout <- as.numeric(target_times)
+
+    interpolated_list <- map(cols, function(col_name) {
+      y <- df_sub[[col_name]]
+
+      out <- approx(
+        x = x,
+        y = y,
+        xout = xout,
+        method = "linear",
+        rule = 2
+      )
+
+      tibble(
+        timestamp = as.POSIXct(
+          out$x,
+          origin = "1970-01-01",
+          tz = attr(df_sub$timestamp, "tzone")
+        ),
+        !!col_name := out$y
+      )
+    })
+
+    reduce(interpolated_list, full_join, by = "timestamp") %>%
+      arrange(timestamp)
+  }
+
+  # split the middle-of-block data by inlet
+  df_low_mid <- df_mid %>% filter(inlet == "low")
+  df_high_mid <- df_mid %>% filter(inlet == "high")
+
+  if (nrow(df_low_mid) == 0) {
+    stop("No 'low' inlet data remaining after block filtering.")
+  }
+  if (nrow(df_high_mid) == 0) {
+    stop("No 'high' inlet data remaining after block filtering.")
+  }
+
+  interp_low <- interp_many_cols(df_low_mid, times_low, cols_to_interp) %>%
+    rename(timestamp_low = timestamp)
+
+  interp_high <- interp_many_cols(df_high_mid, times_high, cols_to_interp) %>%
+    rename(timestamp_high = timestamp)
+
+  result <- tibble(time_grid = grid_15min) %>%
+    bind_cols(
+      tibble(timestamp_low = interp_low$timestamp_low),
+      interp_low %>%
+        select(-timestamp_low) %>%
+        rename_with(~ paste0(.x, "_low"), all_of(cols_to_interp)),
+      tibble(timestamp_high = interp_high$timestamp_high),
+      interp_high %>%
+        select(-timestamp_high) %>%
+        rename_with(~ paste0(.x, "_high"), all_of(cols_to_interp))
+    ) %>%
+    select(
+      time_grid,
+      timestamp_low,
+      ends_with("_low"),
+      timestamp_high,
+      ends_with("_high")
+    )
+
+  result
+}

@@ -12,13 +12,29 @@ library(suntools)
 library(patchwork)
 library(targets)
 
-tar_load(c(rga_binned, rga_oxygen))
+tar_load(c(rga_binned, rga_interp_test, rga_oxygen))
 ```
 
 Oxygen/Argon, colored by inlet
 
 ```{r}
 e <- ggplot(rga_binned, aes(timestamp, mass_32_40, color = inlet)) +
+  geom_line()
+
+p <- ggplotly(e, dynamicTicks = TRUE)
+p
+```
+
+```{r}
+e <- rga_interp_test |>
+  select(time_grid, mass_32_40_low, mass_32_40_high) |>
+  pivot_longer(
+    cols = c(mass_32_40_low, mass_32_40_high),
+    names_to = "inlet",
+    names_pattern = ".*_(low|high)$",
+    values_to = "mass_32_40",
+  ) |>
+ggplot(aes(time_grid, mass_32_40, color = inlet)) +
   geom_line()
 
 p <- ggplotly(e, dynamicTicks = TRUE)

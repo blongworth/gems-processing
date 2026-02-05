@@ -136,6 +136,20 @@ list(
   tar_target(rga_clean, remove_bad_rga_periods(rga_wide, bad_times)),
   tar_target(rga_normalized, normalize_rga_by_argon(rga_clean)),
 
+  # Test new binning
+  tar_target(
+    rga_interp_test,
+    interpolate_inlets(
+      rga_normalized,
+      cols_to_interp = c(
+        "mass_15_40",
+        "mass_28_40",
+        "mass_32_40",
+        "mass_44_40"
+      )
+    )
+  ),
+
   # Bin timeseries data
   tar_target(
     rga_binned,
@@ -310,6 +324,7 @@ list(
   ),
 
   # EDA
+  tar_quarto(adv_eda, "eda/adv_eda.qmd"),
   tar_quarto(calibration_eda, "eda/calibration_eda.qmd"),
 
   # Reports
