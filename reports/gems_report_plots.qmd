@@ -88,7 +88,7 @@ tar_load(c(
 ```{r}
 #| label: fig-mass-trace
 #| fig-height: 5.5
-#| fig-cap: RGA signals for masses of interest.  Each mass is measured approximately every 10 s.  A five day period of the deployment was chosen to highlight diel cycles. Each signal is normalized to mass 40 (Argon) to control for effects of temperature, pressure, and biofouling.  The mass 34 signal is likely an interference with Oxygen, rather than a true hydrogen sufide signal.
+#| fig-cap: RGA signals for masses of interest. Each mass is measured approximately every 10 s. Mass traces are colored by the selected inlet; blue indicates the upper or "high" inlet, and green indicates the bottom or "low" inlet. A five day period of the deployment was chosen to highlight diel cycles. Each signal is normalized to mass 40 (Argon) to control for effects of temperature, pressure, and biofouling. The mass 34 signal is likely an interference with Oxygen, rather than a true hydrogen sufide signal.
 
 jul_rga <- rga_binned |>
   filter(
@@ -227,18 +227,18 @@ df <- data.frame(
 
 ```{r}
 #| label: fig-noise-comparison
-#| fig-cap: Comparison of QMS signal noise for argon-normalized oxygen between 2022 (A) and 2025 (B) deployments.Signal noise was greatly reduced for the 2025 deployment, improving the accuracy and limit of detection for gradient determination.
+#| fig-cap: Comparison of QMS signal noise for argon-normalized oxygen at the high inlet between 2022 (A) and 2025 (B) deployments. Signal noise was greatly reduced for the 2025 deployment, improving the accuracy and limit of detection for gradient determination.
 
 jp <- df |>
   filter(date > "2022-08-14", date < "2022-08-18") |>
   ggplot(aes(date, ratio_O2_Ar)) +
-  geom_line() +
+  geom_line(color = cb_print_4[1], linewidth = 0.2, alpha = 0.6) +
   labs(x = "Date (2022)", y = "Mass 32:40")
 
 bp <- rga_binned |>
   filter(inlet == "high", timestamp > "2025-08-14", timestamp < "2025-08-18") |>
   ggplot(aes(timestamp, mass_32_40)) +
-  geom_line() +
+  geom_line(color = cb_print_4[1], linewidth = 0.2, alpha = 0.6) +
   labs(x = "Date (2025)", y = "Mass 32:40")
 
 (jp / bp) + plot_annotation(tag_levels = 'A')
@@ -251,12 +251,13 @@ bp <- rga_binned |>
 ```{r}
 #| label: fig-argon-norm
 #| fig-cap: >
-#|   Normalizing measured masses to Argon (mass 40)
-#|   controls for physical effects on gas solubility and membrane transport.
-#|   Gas transport is affected by temperature, pressure and water flow rate.
-#|   This figure shows un-normalized (top) and normalized (bottom) Nitrogen (mass 28)
-#|   across a period of increasing biofouling at the high inlet,
+#|   This figure shows Nitrogen (mass 28) un-normalized (A) and normalized (B)
+#|   using concurrent Argon (mass 40) measurements
+#|   across a period of increasing biofouling at the high inlet (blue),
 #|   followed by cleaning the inlets on Sept. 11.
+#|   Normalizing measured masses to Argon
+#|   controls for physical effects on gas solubility and membrane transport.
+#|   Gas transport across the membrane is affected by temperature, pressure and water flow rate.
 
 sep_rga <- rga_binned |>
   filter(
@@ -286,7 +287,7 @@ nnp <- sep_rga |>
   ) +
   theme(legend.position = "none")
 
-nup / nnp
+(nup / nnp) + plot_annotation(tag_levels = 'A')
 ```
 
 {{< pagebreak >}}
@@ -295,7 +296,7 @@ nup / nnp
 
 ```{r}
 #| label: fig-oxygen-long
-#| fig-cap: A record of the argon-normalized oxygen signal for the duration of the deployment.
+#| fig-cap: A record of the argon-normalized oxygen signal at the high (blue) and low (green) inlets for the duration of the deployment. Maintenance periods and times when the data were known to be poor due to system issues have been removed.
 rga_binned_wide |>
   arrange(timestamp) |>
   select(timestamp, mass_32_40_high, mass_32_40_low) |>
@@ -323,7 +324,7 @@ rga_binned_wide |>
 #| label: fig-oxygen-short
 #| fig-cap: >
 #|   The argon-normalized oxygen signal for July 16-20,
-#|   showing a clear gradient between the high and low inlets.
+#|   showing a clear gradient between the high (blue) and low (green) inlets.
 #|   The diel variability of oxygen at the low inlet is higher
 #|   due to proximity to the eelgrass and seabed.
 oxp
@@ -351,7 +352,7 @@ cal_plot_df <- ox_cal_df |>
 
 ```{r}
 #| label: fig-cal
-#| fig-cap: Oxygen calibration data for the SeapHOx codeployment. SeapHOx optode data is compared to GEMS mass 32:40. The line shows linear model fit.
+#| fig-cap: Oxygen calibration data for the SeapHOx codeployment. SeapHOx optode data is compared to GEMS mass 32:40 at the high inlet, which is nearer in height to the SeapHOx inlet (80cm). The line shows linear model fit.
 #| warning: false
 
 eq_label <- paste0(
@@ -397,7 +398,7 @@ ggplot(cal_plot_df, aes(mass_32_40, seaphox_oxygen_ml_l)) +
 
 ```{r}
 #| label: fig-cal-timeseries
-#| fig-cap: SeapHOx optode and fitted GEMS oxygen over the codeployment time period. Fitted RGA Oxygen data shows a reasonable match to the SeapHOx optode data for the codeployment period.
+#| fig-cap: SeapHOx optode (green) and fitted GEMS oxygen at the high inlet (blue) over the codeployment time period. Fitted RGA Oxygen data shows a reasonable match to the SeapHOx optode data for the codeployment period. The peak attenuation in the GEMS signal is likely due to the intermittent signal from inlet switching.
 #| warning: false
 #|
 cal_plot_df |>
@@ -421,8 +422,8 @@ cal_plot_df |>
 ```{r}
 #| label: fig-flux-timeseries
 #| fig-cap: >
-#|   Hourly oxygen flux for the duration of the deployment.
-#|   estimated daily light integral (DLI) and measured seawater temperature for comparison.
+#|   Hourly oxygen flux (A) for the duration of the deployment.
+#|   estimated daily light integral (DLI, B) and seawater temperature at mid height (C) for comparison.
 #|   Flux decreases with decreasing light and temperature.
 #|   No light sensor was codeployed with GEMS,
 #|   therefore photosynthetically active radiation (PAR) and DLI
@@ -441,7 +442,7 @@ gop <- hourly_flux |>
   ) |>
   ggplot(aes(timestamp, ox_flux)) +
   geom_hline(yintercept = 0) +
-  geom_line(na.rm = TRUE) +
+  geom_line(color = cb_print_4[1], na.rm = TRUE) +
   labs(
     x = NULL,
     y = expression("Oxygen flux [" * mmol ~ m^-2 ~ h^-1 * "]")
@@ -460,7 +461,7 @@ tp <- hourly_flux |>
     adv_temp_mean = ifelse(time_diff > 1, NA, adv_temp_mean),
   ) |>
   ggplot(aes(timestamp, adv_temp_mean)) +
-  geom_line() +
+  geom_line(color = cb_print_4[1]) +
   labs(x = NULL, y = "Temp [C]")
 
 gpp = ggplot(hourly_flux, aes(timestamp, par_mean)) +
@@ -489,7 +490,7 @@ par_model_df <- par_model_df |>
   filter(date >= min_flux_ts, date <= max_flux_ts)
 
 dpp <- ggplot(par_model_df, aes(date, dli_mol_m2_day)) +
-  geom_line() +
+  geom_line(color = cb_print_4[1]) +
   labs(
     x = NULL,
     y = expression(
@@ -507,7 +508,9 @@ dpp <- ggplot(par_model_df, aes(date, dli_mol_m2_day)) +
     )
   )
 
-(gop / dpp / tp) + plot_layout(heights = c(3, 2, 2))
+(gop / dpp / tp) +
+  plot_layout(heights = c(3, 2, 2)) +
+  plot_annotation(tag_levels = 'A')
 ```
 
 ### Representative daily flux
@@ -516,7 +519,7 @@ dpp <- ggplot(par_model_df, aes(date, dli_mol_m2_day)) +
 ```{r}
 #| label: fig-flux-zoom
 #| fig-cap: >
-#|   Oxygen flux with predicted PAR for comparison
+#|   Oxygen flux (A) with predicted PAR (B) for comparison
 #|   for the period July 15-20.
 #|   Upward flux aligns with peak daily light.
 #|   Respiration flux increases through the dark hours.
@@ -529,7 +532,7 @@ jul_flux <- hourly_flux |>
 jfp <- jul_flux |>
   ggplot(aes(timestamp, ox_flux)) +
   geom_hline(yintercept = 0) +
-  geom_line() +
+  geom_line(color = cb_print_4[1]) +
   labs(
     x = NULL,
     y = expression("Oxygen flux [" * mmol ~ m^-2 ~ h^-1 * "]")
@@ -537,7 +540,7 @@ jfp <- jul_flux |>
 
 jpp <- jul_flux |>
   ggplot(aes(timestamp, par_mean)) +
-  geom_line() +
+  geom_line(color = cb_print_4[1]) +
   labs(
     x = NULL,
     y = expression(
@@ -554,7 +557,7 @@ jpp <- jul_flux |>
         "]"
     )
   )
-(jfp / jpp) + plot_layout(heights = c(3, 1))
+(jfp / jpp) + plot_layout(heights = c(3, 1)) + plot_annotation(tag_levels = 'A')
 ```
 
 {{< pagebreak >}}
@@ -573,7 +576,7 @@ hmp <- hourly_stats |>
       ymax = ox_mean_umol_l_mean_mean + ox_mean_umol_l_mean_se
     ),
     size = 0.1,
-    # position = position_dodge(width = 0.5)
+    color = cb_print_4[1]
   ) +
   labs(x = NULL, y = expression("Oxygen [" * mmol ~ m^-3 * "]"))
 
@@ -586,7 +589,7 @@ hgp <- hourly_stats |>
       ymax = ox_gradient_umol_l_m_mean_mean + ox_gradient_umol_l_m_mean_se
     ),
     size = 0.1,
-    # position = position_dodge(width = 0.5)
+    color = cb_print_4[1]
   ) +
   geom_hline(yintercept = 0) +
   labs(
@@ -603,14 +606,14 @@ flp <- hourly_stats |>
       ymax = ox_flux_mean + ox_flux_se
     ),
     size = 0.1,
-    # position = position_dodge(width = 0.5)
+    color = cb_print_4[1]
   ) +
   geom_hline(yintercept = 0) +
   labs(x = NULL, y = expression("Oxygen flux [" * mmol ~ m^-2 ~ h^-1 * "]"))
 
 parp <- hourly_stats |>
   ggplot(aes(solar_hour, par_mean_mean)) +
-  geom_line() +
+  geom_line(color = cb_print_4[1]) +
   labs(
     x = "Hour of Day",
     y = expression(
@@ -633,11 +636,11 @@ parp <- hourly_stats |>
 ```{r}
 #| label: fig-gradient-diel
 #| fig-cap: >
-#|   GEMS oxygen concentration and gradient aggregated across the deployment by hour of day. Hour is adjusted to the mean solar noon for the deployment. Mean oxygen concentration across both inlets.
+#|   GEMS oxygen concentration (A) and gradient (B) aggregated across the deployment by hour of day. Hour is adjusted to the mean solar noon for the deployment. Oxygen concentration is the mean across both inlets.
 #|   Gradient is estimated using the difference between high and low inlets
 #|   over the difference in inlet height.
 #| fig-height: 5
-hmp / hgp
+(hmp / hgp) + plot_annotation(tag_levels = 'A')
 ```
 
 {{< pagebreak >}}
@@ -647,9 +650,11 @@ hmp / hgp
 ```{r}
 #| label: fig-flux-diel
 #| fig-cap: >
-#|   GEMS oxygen flux and predicted par aggregated hourly for the duration of the deployment. Hour is adjusted to the mean solar noon for the deployment.
+#|   GEMS oxygen flux (A) and predicted PAR (B) aggregated hourly for the duration of the deployment. Hour is adjusted to the mean solar noon for the deployment.
 #| fig-height: 5
-(flp / parp) + plot_layout(heights = c(3, 1))
+(flp / parp) +
+  plot_layout(heights = c(3, 1)) +
+  plot_annotation(tag_levels = 'A')
 ```
 
 ### Monthly variability
@@ -657,7 +662,7 @@ hmp / hgp
 ```{r}
 #| label: fig-flux-diel-monthly
 #| fig-cap: >
-#|   GEMS oxygen flux and predicted par aggregated hourly and separated by month. Hour is adjusted to the mean solar noon for the deployment. June data is not shown due to bias from only 3 days of data acquisition.
+#|   GEMS oxygen flux (A) and predicted PAR (B) aggregated hourly and separated by month. Hour is adjusted to the mean solar noon for the deployment. June data is not shown due to bias from only 3 days of data acquisition.
 #| fig-height: 5
 
 monthly_stats <- mutate(monthly_stats, month = as.factor(month))
@@ -727,7 +732,9 @@ parp <- monthly_stats |>
     )
   )
 
-(flp / parp) + plot_layout(heights = c(3, 1))
+(flp / parp) +
+  plot_layout(heights = c(3, 1)) +
+  plot_annotation(tag_levels = 'A')
 
 # hm_ply <- ggplotly(hmp, dynamicTicks = TRUE)
 # hg_ply <- ggplotly(hgp, dynamicTicks = TRUE)
@@ -752,7 +759,7 @@ monthly_nem$month_factor <- factor(
   labels = month.abb # or month.abb
 )
 ggplot(monthly_nem, aes(month_factor, nem_mmol_m2_day)) +
-  geom_col() +
+  geom_col(fill = cb_print_4[1]) +
   geom_hline(yintercept = 0) +
   labs(
     x = NULL,
@@ -766,7 +773,7 @@ ggplot(monthly_nem, aes(month_factor, nem_mmol_m2_day)) +
 #| fig-cap: Daily-integrated NEM for the deployment period. Daily NEM is variable, but is close to net-neutral over time.
 #| fig-height: 2.75
 ggplot(daily_nem, aes(day, nem_mmol_m2_h)) +
-  geom_col() +
+  geom_col(fill = cb_print_4[1]) +
   geom_hline(yintercept = 0) +
 
   labs(
@@ -781,7 +788,7 @@ ggplot(daily_nem, aes(day, nem_mmol_m2_h)) +
 ```{r}
 #| label: fig-eelgrass
 #| fig-cap: >
-#|   Naushon eelgrass shoot biomass (top) and shoot length (bottom) data by year.
+#|   Naushon eelgrass shoot biomass (A) and shoot length (B) data by year.
 #|   Eelgrass was sampled from 3-5 20 cm² quadrats.
 #|   Point error bars are the standard deviation of quadrats for mass and count
 #|   and the standard deviation of all blade lengths for length.
@@ -818,5 +825,5 @@ blp <- ggplot(eelgrass, aes(day_of_year, length_cm, color = year)) +
   ) +
   labs(x = NULL, y = "Length [cm]")
 
-bmp / blp
+(bmp / blp) + plot_annotation(tag_levels = 'A')
 ```
