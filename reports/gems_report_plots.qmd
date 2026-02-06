@@ -1,5 +1,5 @@
 ---
-title: "GEMS Report Figures"
+title: "GEMS NSF Final Report Plots"
 format:
   html:
     embed-resources: true
@@ -9,9 +9,6 @@ format:
   # pdf: default
 echo: false
 ---
-
-Figures for general GEMS reporting and GEMS final report.
-
 ```{r}
 #| echo: false
 #| message: false
@@ -83,7 +80,7 @@ tar_load(c(
 
 {{< pagebreak >}}
 
-## RGA 
+## Quadrupole mass spectrometer signals
 
 ```{r}
 #| label: fig-mass-trace
@@ -169,7 +166,7 @@ mep / nip / op / sup / cop
 
 {{< pagebreak >}}
 
-### 2022-2025 noise comparison
+### QMS system noise
 
 ```{r}
 # Jeff's processed 2022 data. Unclear what inlet this is from.
@@ -244,9 +241,7 @@ bp <- rga_binned |>
 (jp / bp) + plot_annotation(tag_levels = 'A')
 ```
 
-
 ### Effect of Argon normalization
-
 
 ```{r}
 #| label: fig-argon-norm
@@ -274,7 +269,6 @@ nup <- sep_rga |>
     x = NULL,
     y = "Mass 28 [Torr]"
   )
-
 
 nnp <- sep_rga |>
   ggplot(aes(timestamp, mass_28_40, color = inlet)) +
@@ -333,7 +327,6 @@ oxp
 {{< pagebreak >}}
 
 ## Calibration
-
 
 ```{r}
 # TODO: calibration in umol/l
@@ -394,7 +387,6 @@ ggplot(cal_plot_df, aes(mass_32_40, seaphox_oxygen_ml_l)) +
 {{< pagebreak >}}
 
 ### Fitted Oxygen
-
 
 ```{r}
 #| label: fig-cal-timeseries
@@ -516,7 +508,6 @@ dpp <- ggplot(par_model_df, aes(date, dli_mol_m2_day)) +
 
 ### Representative daily flux
 
-
 ```{r}
 #| label: fig-flux-zoom
 #| fig-cap: >
@@ -563,9 +554,9 @@ jpp <- jul_flux |>
 
 {{< pagebreak >}}
 
-### Diel Plots
+## Diel Plots
 
-#### Concentration and gradient
+### Concentration and gradient
 
 ```{r}
 #| label: fig-gradient-diel
@@ -803,7 +794,7 @@ parp <- monthly_stats |>
 
 {{< pagebreak >}}
 
-# Net ecosystem metabolism
+## Net ecosystem metabolism
 
 ```{r}
 #| label: fig-flux-nem-hourly
@@ -843,7 +834,7 @@ ggplot(daily_nem, aes(day, nem_mmol_m2_h)) +
 
 {{< pagebreak >}}
 
-# Eelgrass growth
+## Eelgrass growth
 
 ```{r}
 #| label: fig-eelgrass
