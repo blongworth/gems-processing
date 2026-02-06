@@ -568,6 +568,13 @@ jpp <- jul_flux |>
 #### Concentration and gradient
 
 ```{r}
+#| label: fig-gradient-diel
+#| fig-cap: >
+#|   GEMS oxygen concentration (A) and gradient (B) aggregated across the deployment by hour of day. Hour is adjusted to the mean solar noon for the deployment. Oxygen concentration is the mean across both inlets.
+#|   Gradient is estimated using the difference between high and low inlets
+#|   over the difference in inlet height.
+#| fig-height: 5
+
 hmp <- hourly_stats |>
   ggplot(aes(solar_hour, ox_mean_umol_l_mean_mean)) +
   geom_line() +
@@ -597,6 +604,19 @@ hgp <- hourly_stats |>
     x = "Hour of Day",
     y = expression("Oxygen Gradient [" * mmol ~ m^-4 * "]")
   )
+
+(hmp / hgp) + plot_annotation(tag_levels = 'A')
+```
+
+{{< pagebreak >}}
+
+### Oxygen flux and predicted par
+
+```{r}
+#| label: fig-flux-diel
+#| fig-cap: >
+#|   GEMS oxygen flux (A) and predicted PAR (B) aggregated hourly for the duration of the deployment. Hour is adjusted to the mean solar noon for the deployment.
+#| fig-height: 5
 
 flp <- hourly_stats |>
   ggplot(aes(solar_hour, ox_flux_mean)) +
@@ -631,32 +651,71 @@ parp <- hourly_stats |>
         "]"
     )
   )
-```
 
-
-```{r}
-#| label: fig-gradient-diel
-#| fig-cap: >
-#|   GEMS oxygen concentration (A) and gradient (B) aggregated across the deployment by hour of day. Hour is adjusted to the mean solar noon for the deployment. Oxygen concentration is the mean across both inlets.
-#|   Gradient is estimated using the difference between high and low inlets
-#|   over the difference in inlet height.
-#| fig-height: 5
-(hmp / hgp) + plot_annotation(tag_levels = 'A')
-```
-
-{{< pagebreak >}}
-
-### Oxygen flux and predicted par
-
-```{r}
-#| label: fig-flux-diel
-#| fig-cap: >
-#|   GEMS oxygen flux (A) and predicted PAR (B) aggregated hourly for the duration of the deployment. Hour is adjusted to the mean solar noon for the deployment.
-#| fig-height: 5
 (flp / parp) +
   plot_layout(heights = c(3, 1)) +
   plot_annotation(tag_levels = 'A')
 ```
+
+### CO2 concentration, gradient and flux
+
+```{r}
+#| label: fig-co2-diel
+#| fig-cap: >
+#|   GEMS carbon dioxide concentration (A) and gradient (B) and flux (C) aggregated across the deployment by hour of day. Hour is adjusted to the mean solar noon for the deployment, and predicted PAR is shown in (D). CO₂ concentration is the mean across both inlets.
+#|   Gradient is estimated using the difference between high and low inlets
+#|   over the difference in inlet height.
+#| fig-height: 5.5
+
+hmp <- hourly_stats |>
+  ggplot(aes(solar_hour, co2_mean_umol_l_mean_mean)) +
+  geom_line() +
+  geom_pointrange(
+    aes(
+      ymin = co2_mean_umol_l_mean_mean - co2_mean_umol_l_mean_se,
+      ymax = co2_mean_umol_l_mean_mean + co2_mean_umol_l_mean_se
+    ),
+    size = 0.1,
+    color = cb_print_4[1]
+  ) +
+  labs(x = NULL, y = expression("CO"[2] ~ "[" * mmol ~ m^-3 * "]"))
+
+hgp <- hourly_stats |>
+  ggplot(aes(solar_hour, co2_gradient_umol_l_m_mean_mean)) +
+  geom_line() +
+  geom_pointrange(
+    aes(
+      ymin = co2_gradient_umol_l_m_mean_mean - co2_gradient_umol_l_m_mean_se,
+      ymax = co2_gradient_umol_l_m_mean_mean + co2_gradient_umol_l_m_mean_se
+    ),
+    size = 0.1,
+    color = cb_print_4[1]
+  ) +
+  geom_hline(yintercept = 0) +
+  labs(
+    x = NULL,
+    y = expression("CO"[2] ~ "Gradient [" * mmol ~ m^-4 * "]")
+  )
+
+flp <- hourly_stats |>
+  ggplot(aes(solar_hour, co2_flux_mean)) +
+  geom_line() +
+  geom_pointrange(
+    aes(
+      ymin = co2_flux_mean - co2_flux_se,
+      ymax = co2_flux_mean + co2_flux_se
+    ),
+    size = 0.1,
+    color = cb_print_4[1]
+  ) +
+  geom_hline(yintercept = 0) +
+  labs(x = NULL, y = expression("CO"[2] ~ "flux [" * mmol ~ m^-2 ~ h^-1 * "]"))
+
+(hmp / hgp / flp / parp) +
+  plot_layout(heights = c(3, 3, 3, 1)) +
+  plot_annotation(tag_levels = 'A')
+```
+
 
 ### Monthly variability
 

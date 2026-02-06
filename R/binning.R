@@ -270,3 +270,164 @@ interpolate_inlets <- function(
 
   result
 }
+
+# Functions for processing alternating inlet timeseries data
+# Data alternates between two inlets every 7.5 minutes starting at the top of the hour
+
+#' Assign inlet labels to timeseries data
+#'
+#' @param df Data frame with a POSIXct "timestamp" column
+#' @return Data frame with added 'inlet' and 'period_start' columns
+#' @export
+assign_inlets <- function(df) {
+  df %>%
+    mutate(
+      seconds_in_hour = as.numeric(difftime(
+        timestamp,
+        floor_date(timestamp, "hour"),
+        units = "secs"
+      )),
+      period_index = floor(seconds_in_hour / 450),
+      inlet = if_else(period_index %% 2 == 0, "low", "high"),
+      period_start = floor_date(timestamp, "hour") + seconds(period_index * 450)
+    ) %>%
+    select(-seconds_in_hour, -period_index)
+}
+
+
+#' Calculate mean within a window for each period
+#'
+#' @param df Data frame with inlet assignments (output from assign_inlets)
+#' @param window_start Start of window in seconds from period start (default: 0)
+#' @param window_end End of window in seconds from period start (default: 450)
+#' @return Data frame with period means and mean time for all numeric columns
+#' @export
+calculate_period_means <- function(df, window_start = 0, window_end = 450) {
+  # Identify numeric columns to average
+  exclude_cols <- c("timestamp", "inlet", "period_start")
+  numeric_cols <- names(df)[
+    sapply(df, is.numeric) & !names(df) %in% exclude_cols
+  ]
+
+  if (length(numeric_cols) == 0) {
+    stop("No numeric columns found to calculate means")
+  }
+
+  df %>%
+    mutate(
+      seconds_in_period = as.numeric(difftime(
+        timestamp,
+        period_start,
+        units = "secs"
+      ))
+    ) %>%
+    filter(
+      seconds_in_period >= window_start,
+      seconds_in_period < window_end
+    ) %>%
+    group_by(inlet, period_start) %>%
+    summarise(
+      mean_time = mean(timestamp),
+      n_samples = n(),
+      across(
+        all_of(numeric_cols),
+        \(.x) mean(.x, na.rm = TRUE),
+        .names = "{.col}_mean"
+      ),
+      .groups = "drop"
+    ) %>%
+    mutate(
+      mean_time = as.POSIXct(
+        mean_time,
+        origin = "1970-01-01",
+        tz = attr(df$timestamp, "tzone")
+      )
+    )
+}
+
+
+#' Interpolate inlet data to regular 15-minute grid
+#'
+#' @param period_means Data frame with period means (output from calculate_period_means)
+#' @param method Interpolation method: "linear" or "nearest" (default: "linear")
+#' @return Data frame with interpolated values on 15-minute grid for each inlet
+#' @export
+interpolate_to_grid <- function(period_means) {
+  # Create 15-minute grid from data extent
+  time_grid <- seq(
+    from = floor_date(min(period_means$mean_time), "15 min"),
+    to = ceiling_date(max(period_means$mean_time), "15 min"),
+    by = "15 min"
+  )
+
+  # Identify columns to interpolate
+  mean_cols <- names(period_means)[grepl("_mean$", names(period_means))]
+
+  # Interpolate each inlet separately
+  period_means %>%
+    group_by(inlet) %>%
+    arrange(mean_time) %>%
+    group_modify(\(.x, .y) {
+      # Create data frame with interpolated values for all columns
+      result <- tibble(timestamp = time_grid)
+
+      for (col in mean_cols) {
+        output_col <- str_remove(col, "_mean$")
+        interp <- approx(
+          x = .x$mean_time,
+          y = .x[[col]],
+          xout = time_grid,
+          method = "linear",
+          rule = 2
+        )
+        result[[output_col]] <- interp$y
+      }
+      result
+    }) %>%
+    ungroup()
+}
+
+
+#' Complete pipeline: process raw data to interpolated grid
+#'
+#' @param df Data frame with raw timeseries data (must have "timestamp" column)
+#' @param window_start Start of averaging window in seconds (default: 0)
+#' @param window_end End of averaging window in seconds (default: 450)
+#' @param interp_method Interpolation method: "linear" or "nearest" (default: "linear")
+#' @return Data frame with interpolated values on 15-minute grid for all numeric columns
+#' @export
+interpolate_rga <- function(
+  df,
+  window_start = 0,
+  window_end = 450
+) {
+  df %>%
+    assign_inlets() %>%
+    calculate_period_means(window_start, window_end) %>%
+    interpolate_to_grid()
+}
+
+# Example usage:
+#
+# # Create sample data with multiple numeric columns
+# set.seed(123)
+#
+#  df <- tibble(
+#    timestamp = seq(from = ymd_hms("2024-01-01 00:00:00", tz = "UTC"),
+#                    to = ymd_hms("2024-01-01 02:00:00", tz = "UTC"),
+#                    by = "30 sec"),
+#    temperature = rnorm(length(timestamp), mean = 20, sd = 2),
+#    pressure = rnorm(length(timestamp), mean = 1013, sd = 5),
+#    humidity = rnorm(length(timestamp), mean = 60, sd = 10)
+#  )
+#
+# # Process all numeric columns (using seconds 60-420 of each period for averaging)
+# result <- process_inlet_data(df, window_start = 60, window_end = 420)
+#
+# # View results
+# print(result)
+#
+# # Or step by step:
+# df_inlets <- assign_inlets(df)
+# period_means <- calculate_period_means(df_inlets, window_start = 60, window_end = 420)
+# interpolated <- interpolate_to_grid(period_means)

@@ -150,6 +150,20 @@ list(
     )
   ),
 
+  tar_target(
+    rga_interp_test2,
+    interpolate_rga(
+      rga_normalized,
+      window_start = 30,
+      window_end = 420
+    )
+  ),
+
+  tar_target(
+    rga_int2_clean,
+    remove_bad_rga_periods(rga_interp_test2, bad_times)
+  ),
+
   # Bin timeseries data
   tar_target(
     rga_binned,
@@ -231,7 +245,7 @@ list(
     rga_calibrated,
     add_co2(
       rga_oxygen,
-      ox_model,
+      co2_model,
       sensor_separation = 1.02
     )
   ),
