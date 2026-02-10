@@ -195,7 +195,11 @@ list(
   # Add temperature and remove bad times
   tar_target(
     rga_temp,
-    add_status_temp(rga_with_par, status_file, bad_times)
+    add_status_temp(rga_with_par, status_file)
+  ),
+  tar_target(
+    rga_temp_clean,
+    remove_bad_rga_periods(rga_temp, bad_times)
   ),
 
   # Add oxygen calibration
@@ -218,7 +222,7 @@ list(
   tar_target(
     rga_oxygen,
     add_oxygen(
-      rga_temp,
+      rga_temp_clean,
       ox_model,
       sensor_separation = 1.02
     )

@@ -81,20 +81,16 @@ pair_gradient_measurements <- function(rga_binned) {
 }
 
 # add status temperature
-add_status_temp <- function(rga_df, status_file, bad_times) {
+add_status_temp <- function(rga_df, status_file) {
   status_temp_df <- open_dataset(status_file) |>
     select(timestamp, adv_temp = temp) |>
     collect() |>
     mutate(
-      timestamp = lubridate::floor_date(timestamp, unit = "15 minutes")
+      timestamp = lubridate::round_date(timestamp, unit = "15 minutes")
     ) |>
     group_by(timestamp) |>
     summarize(adv_temp = mean(adv_temp, na.rm = TRUE))
 
   rga_df |>
-    left_join(status_temp_df, by = join_by(timestamp)) |>
-    anti_join(
-      bad_times,
-      by = join_by(timestamp >= start_time, timestamp <= end_time)
-    )
+    left_join(status_temp_df, by = join_by(timestamp))
 }
