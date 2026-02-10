@@ -40,13 +40,17 @@ make_ox_cal_df <- function(
   seaphox_df
 ) {
   seaphox_df <- seaphox_df |>
-    mutate(timestamp = lubridate::floor_date(timestamp, "minute"))
+    assign_inlets() |>
+    filter_inlet_window(window_start = 30, window_end = 420) |>
+    calculate_period_means() |>
+    filter(inlet == "high") |>
+    select(timestamp, seaphox_oxygen_ml_l)
+  # TODO: calculate umol/l here with seaphox temp
 
   rga_df <- rga_df |>
+    calculate_period_means() |>
     filter(inlet == "high") |>
-    mutate(timestamp = lubridate::floor_date(timestamp, "minute")) |>
-    group_by(timestamp) |>
-    summarize(mass_32_40 = mean(mass_32_40, na.rm = TRUE))
+    select(timestamp, mass_32_40)
 
   ox_cal_df <- dplyr::left_join(
     seaphox_df,
@@ -79,6 +83,7 @@ add_oxygen <- function(
 
   rga_df |>
     mutate(
+      # TODO: should umol conversion be done here or in seaphox data?
       oxygen_high = ox_i + ox_m * mass_32_40_high,
       oxygen_low = ox_i + ox_m * mass_32_40_low,
       ox_high_umol_l = o2_ml_l_to_umol_l(oxygen_high, adv_temp),
@@ -120,27 +125,25 @@ make_co2_cal_df <- function(
   status_file
 ) {
   prooceanus_df <- prooceanus_df |>
-    mutate(timestamp = lubridate::floor_date(timestamp, "minute")) |>
-    group_by(timestamp) |>
-    summarize(
-      prooceanus_co2_ppm = mean(prooceanus_co2_ppm, na.rm = TRUE),
-      cell_pressure = mean(cell_pressure, na.rm = TRUE)
-    )
+    assign_inlets() |>
+    filter_inlet_window(window_start = 30, window_end = 420) |>
+    calculate_period_means() |>
+    filter(inlet == "high") |>
+    select(timestamp, prooceanus_co2_ppm, cell_pressure)
 
   rga_df <- rga_df |>
+    calculate_period_means() |>
     filter(inlet == "high") |>
-    mutate(timestamp = lubridate::floor_date(timestamp, "minute")) |>
-    group_by(timestamp) |>
-    summarize(mass_44_40 = mean(mass_44_40, na.rm = TRUE))
+    select(timestamp, mass_44_40)
 
   status_temp_df <- open_dataset(status_file) |>
     select(timestamp, adv_temp = temp) |>
     collect() |>
-    mutate(
-      timestamp = lubridate::floor_date(timestamp, unit = "minute")
-    ) |>
-    group_by(timestamp) |>
-    summarize(adv_temp = mean(adv_temp, na.rm = TRUE))
+    assign_inlets() |>
+    filter_inlet_window(window_start = 30, window_end = 420) |>
+    calculate_period_means() |>
+    filter(inlet == "high") |>
+    select(timestamp, adv_temp)
 
   co2_cal_df <- dplyr::left_join(
     prooceanus_df,

@@ -63,7 +63,8 @@ calculate_period_means <- function(df) {
       across(
         all_of(numeric_cols),
         \(.x) mean(.x, na.rm = TRUE),
-        .names = "{.col}_mean"
+        # .names = "{.col}_mean"
+        .names = "{.col}"
       ),
       .groups = "drop"
     ) %>%
@@ -73,14 +74,14 @@ calculate_period_means <- function(df) {
         origin = "1970-01-01",
         tz = attr(df$timestamp, "tzone")
       )
-    )
+    ) |>
+    rename(timestamp = period_start)
 }
 
 
 #' Interpolate inlet data to regular 15-minute grid
 #'
 #' @param period_means Data frame with period means (output from calculate_period_means)
-#' @param method Interpolation method: "linear" or "nearest" (default: "linear")
 #' @return Data frame with interpolated values on 15-minute grid for each inlet
 #' @export
 interpolate_to_grid <- function(period_means) {
@@ -92,10 +93,14 @@ interpolate_to_grid <- function(period_means) {
   )
 
   # Identify columns to interpolate
-  mean_cols <- names(period_means)[grepl("_mean$", names(period_means))]
+  mean_cols <- names(period_means)[
+    !names(period_means) %in%
+      c("inlet", "timestamp", "mean_time", "n_samples", "seconds_in_period")
+  ]
 
   # Interpolate each inlet separately
   period_means %>%
+    select(-timestamp) %>%
     group_by(inlet) %>%
     arrange(mean_time) %>%
     group_modify(\(.x, .y) {
@@ -103,7 +108,6 @@ interpolate_to_grid <- function(period_means) {
       result <- tibble(timestamp = time_grid)
 
       for (col in mean_cols) {
-        output_col <- str_remove(col, "_mean$")
         interp <- approx(
           x = .x$mean_time,
           y = .x[[col]],
@@ -111,7 +115,7 @@ interpolate_to_grid <- function(period_means) {
           method = "linear",
           rule = 2
         )
-        result[[output_col]] <- interp$y
+        result[[col]] <- interp$y
       }
       result
     }) %>%
