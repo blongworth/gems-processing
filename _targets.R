@@ -135,62 +135,20 @@ list(
   tar_target(rga_wide, load_and_widen_rga(rga_file)),
   tar_target(rga_clean, remove_bad_rga_periods(rga_wide, bad_times)),
   tar_target(rga_normalized, normalize_rga_by_argon(rga_clean)),
-
-  # Test new binning
-  tar_target(
-    rga_interp_test,
-    interpolate_inlets(
-      rga_normalized,
-      cols_to_interp = c(
-        "mass_15_40",
-        "mass_28_40",
-        "mass_32_40",
-        "mass_44_40"
-      )
-    )
-  ),
-
-  tar_target(
-    rga_interp_test2,
-    interpolate_rga(
-      rga_normalized,
-      window_start = 30,
-      window_end = 420
-    )
-  ),
-
-  tar_target(
-    rga_int2_clean,
-    remove_bad_rga_periods(rga_interp_test2, bad_times)
-  ),
-
-  # Bin timeseries data
   tar_target(
     rga_binned,
-    bin_timeseries(
-      rga_normalized,
-      datetime_col = "timestamp",
-    )
+    assign_inlets(rga_normalized) %>%
+      filter_inlet_window(window_start = 30, window_end = 420) |>
+      remove_bad_rga_periods(bad_times)
   ),
   tar_target(
-    rga_binned_summarized,
-    summarize_binned_timeseries(
-      rga_binned,
-      value_cols = c(
-        "mass_15_40",
-        "mass_28_40",
-        "mass_32_40",
-        "mass_44_40"
-      )
-    )
+    rga_interpolated,
+    calculate_period_means(rga_binned) %>%
+      interpolate_to_grid() |>
+      widen_binned_rga() |>
+      remove_bad_rga_periods(bad_times)
   ),
-
-  # Make one row for each high-low pair and widen
-  tar_target(
-    rga_binned_wide,
-    pair_gradient_measurements(rga_binned_summarized)
-  ),
-  tar_target(rga_with_par, add_par(rga_binned_wide, crds)),
+  tar_target(rga_with_par, add_par(rga_interpolated, crds)),
 
   # Add temperature and remove bad times
   tar_target(
@@ -256,12 +214,14 @@ list(
 
   ### ADV data processing ###
 
+  # TODO: provide rotations for matlab
+
   # Load and bin ADV data
-  tar_target(
-    adv_bin_rot_df,
-    load_and_bin_adv(adv_file, moves_file, min_correlation)
-  ),
-  tar_target(rga_adv_joined, add_adv(rga_calibrated, adv_bin_rot_df)),
+  # tar_target(
+  #   adv_bin_rot_df,
+  #   load_and_bin_adv(adv_file, moves_file, min_correlation)
+  # ),
+  # tar_target(rga_adv_joined, add_adv(rga_calibrated, adv_bin_rot_df)),
 
   ### Flux calculation ###
 
@@ -279,9 +239,10 @@ list(
   tar_target(flux_dataset, process_flux_data(matlab_eddyflux, pos = pos_df)),
 
   # Join with Ustar and calculate flux
+  # TODO: final fields, need velocity from matlab
   tar_target(
     rga_adv_flux,
-    add_grad_flux(rga_adv_joined, flux_dataset, length_scale)
+    add_grad_flux(rga_calibrated, flux_dataset, length_scale)
   ),
   tar_target(
     hourly_flux,

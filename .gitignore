@@ -12,6 +12,7 @@ rga_eda_files/*
 *.dat
 *.csv
 
+*.docx
 *.css
 *.scss
 *.js
@@ -23,7 +24,9 @@ rga_eda_files/*
 
 __pycache__/
 *.pyc
-reports/gems_flux_report_files/libs/jquery-3.5.1/jquery-AUTHORS.txt
+jquery-AUTHORS.txt
+
+
 _targets/
 /.quarto/
 **/*.quarto_ipynb

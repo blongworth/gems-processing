@@ -310,7 +310,7 @@ add_grad_flux <- function(rga_adv_processed, flux_dataset, length_scale) {
 calc_hourly_flux <- function(rga_adv_flux) {
   rga_adv_flux |>
     select(
-      !c(mean_timestamp, oxygen_high, oxygen_low, u, v, starts_with("mass_"))
+      !c(oxygen_high, oxygen_low, starts_with("mass_"))
     ) |>
     mutate(
       timestamp = lubridate::floor_date(timestamp, unit = "hour")
