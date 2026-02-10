@@ -303,7 +303,7 @@ list(
   ),
 
   # EDA
-  tar_quarto(adv_eda, "eda/adv_eda.qmd"),
+  #tar_quarto(adv_eda, "eda/adv_eda.qmd"),
   tar_quarto(calibration_eda, "eda/calibration_eda.qmd"),
 
   # Reports

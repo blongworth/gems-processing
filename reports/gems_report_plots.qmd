@@ -62,7 +62,7 @@ tar_config_set(store = here("_targets"))
 
 tar_load(c(
   rga_binned,
-  rga_binned_wide,
+  rga_calibrated,
   hourly_flux,
   hourly_stats,
   monthly_stats,
@@ -291,7 +291,7 @@ nnp <- sep_rga |>
 ```{r}
 #| label: fig-oxygen-long
 #| fig-cap: A record of the argon-normalized oxygen signal at the high (blue) and low (green) inlets for the duration of the deployment. Maintenance periods and times when the data were known to be poor due to system issues have been removed.
-rga_binned_wide |>
+rga_calibrated |>
   arrange(timestamp) |>
   select(timestamp, mass_32_40_high, mass_32_40_low) |>
   mutate(

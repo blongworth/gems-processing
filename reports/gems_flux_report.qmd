@@ -26,13 +26,10 @@ tar_config_set(store = here("_targets"))
 
 tar_load(c(
   rga_binned,
-  rga_binned_wide,
+  rga_calibrated,
   hourly_flux,
   hourly_stats,
-  monthly_stats,
-  rga_oxygen,
-  seaphox_df_jul,
-  proco2_df_jul
+  monthly_stats
 ))
 ```
 
@@ -58,7 +55,7 @@ rga_binned |>
 Oxygen/Argon, resampled to bins, colored by inlet
 
 ```{r}
-rga_binned_wide |>
+rga_calibrated |>
   arrange(timestamp) |>
   select(timestamp, mass_32_40_high, mass_32_40_low) |>
   mutate(
