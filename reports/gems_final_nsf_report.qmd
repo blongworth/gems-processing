@@ -83,10 +83,18 @@ Flux was integrated to provide an hourly flux (mmol m^-2^ h^-1^).
 
 ![For the 2025 deployment, we created a publicly accessible website summarizing all telemetry data (https://blongworth.github.io/GEMS_status/). The site was mostly used to monitor the system and troubleshoot issues. The site uses a simple API to collect data from a WHOI-hosted server, which in turn communicates directly with GEMS and stores telemetry data.](report_photos/gems_status.png){#fig-status}
 
-![The GEMS lander, redesigned for the 2025 deployment. The central housing (A) contains the QMS, power handling and system microcontroller. The ADV transducer (D) and housing (B) collect velocity data at mid-height. The valve housing (C) contains control and power electronics for the system pump and servo controlled valve for switching between high (E) and low inlets.](report_photos/gems_lander.jpg){#fig-lander}
+![The GEMS lander, redesigned for the 2025 deployment. The central housing (A) contains the QMS, power handling and system microcontroller. The ADV transducer (D) and housing (B) collect velocity data at mid-height. The valve housing (C) contains control and power electronics for the system pump and servo controlled valve for switching between high (E) and low inlets.](report_photos/gems_lander.jpg){#fig-lander width=80%}
 
 ![The GEMS power, data and telemetry platform (top left) and GEMS lander (bottom right). A 10m cable providing 24V power and ethernet-based data runs between the platform and lander.](report_photos/gems_deployment.jpg){#fig-deployment}
 
-![The GEMS platform during the 2025 deployment. Samuel Koeck (MIT/WHOI PhD student) is over the lander deployment location.](report_photos/gems_deployment_2025.jpg){#fig-deployment-2025}
+![The GEMS platform during the 2025 deployment. Samuel Koeck (MIT/WHOI PhD student) is above the lander deployment location.](report_photos/gems_deployment_2025.jpg){#fig-deployment-2025}
+
+![The GEMS set up for measurment of denitrification in eelgrass (*Zostera marina*) mesocosms. The evolution of ^15^N-labeled nitrate to labeled nitrogen gas was measured using the GEMS spectrometer in small, open bottom chambers. Argon was added to track loss of the label and nitrogen from the chamber system.](report_photos/gems_dn_chamber.png){#fig-label-setup width=70%}
+
+![Evolution through time of single- and doubly-labelled nitrogen and argon tracers during a denitrification experiment in an eelgrass mesocosm.](report_photos/n15_label_evolution.png){#fig-label-evolution}
+
+![Denitrification rates for three replicates of 4 experimental treatments at different timepoints during the experiments. Open crates have 4 cm open mesh sides and bottom and are lined with coir to prevent sediment loss. Closed crates have solid sides and bottom. Grass crates have healthy seagrass. Sediment crates have identical substrates with no seagrass. Rates from top to bottom are determined 2.5 hours after label injection, at 0.2 of the time of maximum ^15^N~2~ concentration, and at the time anoxia is reached.](report_photos/crate_dn_comparison.png){#fig-dn-rates}
+
+![The initial gradients measured by the prototype GEMS system during the 2021 deployment. Blue traces are the upper (1.1 m) height, red are the lower (0.2 m) height (left axis), and the yellow bars indicate the magnitude of the gradient through time (right axis). Notice the opposite magnitudes of the carbon dioxide (CO~2~, middle) and oxygen (O~2~, top) gradients consistent with diel rates of photosynthesis and respiration. The hydrogen sulfide (H~2~S, bottom) gradients appear to co-vary with the oxygen gradients. We now belive this indicates mass interference with oxygen in the QMS.](report_photos/gradients_2021.png){#fig-2021-gradients}
 
 {{< include gems_report_plots.qmd >}}
