@@ -59,6 +59,16 @@ list(
     "data/eelgrass/Naushon_eelgrass_sampling.xlsx",
     format = "file"
   ),
+  tar_target(
+    sg_length_2021_file,
+    "data/eelgrass/Seagrass_Lengths.txt",
+    format = "file"
+  ),
+  tar_target(
+    sg_weight_2021_file,
+    "data/eelgrass/Seagrass_Weights.txt",
+    format = "file"
+  ),
 
   ### intermediate file targets ###
 
@@ -289,7 +299,7 @@ list(
   # load eelgrass data
   tar_target(
     eelgrass,
-    get_eelgrass_data(eelgrass_file)
+    get_eelgrass_data(eelgrass_file, sg_length_2021_file, sg_weight_2021_file)
   ),
 
   # make PAR model df
