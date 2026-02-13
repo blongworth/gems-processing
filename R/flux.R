@@ -140,9 +140,9 @@ lecs_to_ml <- function(
     # NA's crash Matlab. These should be taken care of better and earlier
     drop_na()
 
-  df_ml_ts <- df %>%
-    group_by(block) %>%
-    summarise(start = min(time), end = max(time)) %>%
+  df_ml_ts <- df |>
+    group_by(block) |>
+    summarise(start = min(time), end = max(time)) |>
     ungroup()
 
   # remove last row of times to make shift indexing work
@@ -156,8 +156,8 @@ lecs_to_ml <- function(
     write_delim(df_ml, data_file)
   }
   if (!is.null(timestamp_file)) {
-    df_ml_ts %>%
-      select(start, end) %>%
+    df_ml_ts |>
+      select(start, end) |>
       write_delim(timestamp_file, col_names = FALSE)
   }
   list(df_ml, df_ml_ts)

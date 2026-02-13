@@ -35,7 +35,7 @@ process_file <- function(file_path) {
       current = col_double(),
       valve_position = col_double()
     )
-  ) %>%
+  ) |>
     mutate(
       source_file = basename(file_path),
       reboot_info = paste(reboot_lines, collapse = "; ")
@@ -45,7 +45,7 @@ process_file <- function(file_path) {
 }
 
 # Read and combine all CSV files
-combined_data <- csv_files %>%
+combined_data <- csv_files |>
   map_dfr(process_file)
 
 # View the combined data

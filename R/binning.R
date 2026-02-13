@@ -8,7 +8,7 @@
 #' @return Data frame with added 'inlet' and 'period_start' columns
 #' @export
 assign_inlets <- function(df) {
-  df %>%
+  df |>
     mutate(
       seconds_in_hour = as.numeric(difftime(
         timestamp,
@@ -18,19 +18,19 @@ assign_inlets <- function(df) {
       period_index = floor(seconds_in_hour / 450),
       inlet = if_else(period_index %% 2 == 0, "low", "high"),
       period_start = floor_date(timestamp, "hour") + seconds(period_index * 450)
-    ) %>%
+    ) |>
     select(-seconds_in_hour, -period_index)
 }
 
 filter_inlet_window <- function(df, window_start = 0, window_end = 450) {
-  df %>%
+  df |>
     mutate(
       seconds_in_period = as.numeric(difftime(
         timestamp,
         period_start,
         units = "secs"
       ))
-    ) %>%
+    ) |>
     filter(
       seconds_in_period >= window_start,
       seconds_in_period < window_end
@@ -55,8 +55,8 @@ calculate_period_means <- function(df) {
     stop("No numeric columns found to calculate means")
   }
 
-  df %>%
-    group_by(inlet, period_start) %>%
+  df |>
+    group_by(inlet, period_start) |>
     summarise(
       mean_time = mean(timestamp),
       n_samples = n(),
@@ -67,7 +67,7 @@ calculate_period_means <- function(df) {
         .names = "{.col}"
       ),
       .groups = "drop"
-    ) %>%
+    ) |>
     mutate(
       mean_time = as.POSIXct(
         mean_time,
@@ -99,10 +99,10 @@ interpolate_to_grid <- function(period_means) {
   ]
 
   # Interpolate each inlet separately
-  period_means %>%
-    select(-timestamp) %>%
-    group_by(inlet) %>%
-    arrange(mean_time) %>%
+  period_means |>
+    select(-timestamp) |>
+    group_by(inlet) |>
+    arrange(mean_time) |>
     group_modify(\(.x, .y) {
       # Create data frame with interpolated values for all columns
       result <- tibble(timestamp = time_grid)
@@ -118,7 +118,7 @@ interpolate_to_grid <- function(period_means) {
         result[[col]] <- interp$y
       }
       result
-    }) %>%
+    }) |>
     ungroup()
 }
 
@@ -137,14 +137,14 @@ interpolate_rga <- function(
   window_start = 0,
   window_end = 450
 ) {
-  df <- df %>%
-    assign_inlets() %>%
-    filter_inlet_window(window_start, window_end) %>%
-    calculate_period_means() %>%
+  df <- df |>
+    assign_inlets() |>
+    filter_inlet_window(window_start, window_end) |>
+    calculate_period_means() |>
     interpolate_to_grid()
 
   if (!is.null(value_cols)) {
-    df <- df %>%
+    df <- df |>
       select(timestamp, inlet, all_of(value_cols))
   }
 
@@ -162,6 +162,6 @@ widen_binned_rga <- function(rga_binned, value_cols = NULL) {
       names_from = inlet,
       values_from = all_of(value_cols),
       names_glue = "{.value}_{inlet}"
-    ) %>%
+    ) |>
     arrange(timestamp)
 }

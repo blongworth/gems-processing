@@ -147,13 +147,13 @@ list(
   tar_target(rga_normalized, normalize_rga_by_argon(rga_clean)),
   tar_target(
     rga_binned,
-    assign_inlets(rga_normalized) %>%
+    assign_inlets(rga_normalized) |>
       filter_inlet_window(window_start = 30, window_end = 420) |>
       remove_bad_rga_periods(bad_times)
   ),
   tar_target(
     rga_interpolated,
-    calculate_period_means(rga_binned) %>%
+    calculate_period_means(rga_binned) |>
       interpolate_to_grid() |>
       widen_binned_rga() |>
       remove_bad_rga_periods(bad_times)

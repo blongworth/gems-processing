@@ -12,7 +12,7 @@ library(plotly)
 ```{r}
 df <- read_parquet("data/processed/valve_combined.parquet")
 
-df <- df %>%
+df <- df |>
   filter(timestamp > "2025-01-01")
 ```
 

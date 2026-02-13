@@ -29,7 +29,7 @@ keywords:
 bibliography: gems_report.bib
 ---
 
-# Project history
+# Project History
 
 During the first year of this project, we conducted several laboratory and field tests as outlined in our proposal. Significant developments included the testing of response time and power-saving strategies, development of the GEMS underwater mass spectrometer and pumping systems and an initial short field deployment, resulting in initial gradient estimates (@fig-2021-gradients).
 
@@ -37,13 +37,13 @@ Developments in 2022 included a long-term deployment of the GEMS system includin
 
 During the third year of this project, we continued development and conducted laboratory tests to resolve issues and improve the GEMS system. Unanticipated departures from PI Long’s lab in 2023 included an engineer, a WHOI JP student, a research assistant, and a postdoc that led to substantial delays and loss of knowledge for this project. Work on signal to noise ratios in the mass spectrometer output led to a complete redesign of the GEMS lander electronics and extensive revision of the control software. We also redesigned and tested a new valve configuration to address issues during the 2022 deployment.
 
-In 2024, new personnel (a technician, now WHOI/MIT JP PhD student, and a research associate) were trained and continued development of the GEMS system, and a no-cost extension was used to move the long-term field deployment to the summer of 2025. Continued development led to completion of the project objective to use GEMS to investigate nitrogen cycling in eelgrass systems. This also allowed us to test and refine hardware and firmware developed after the 2022 field season. We built a small chamber which which could be installed in eelgrass mesocosms (@fig-label-setup) to monitor the evolution of a pulse-label of ^15^N labeled nitrate to labeled nitrogen gas (@fig-label-evolution). recirculated water past the GEMS inlet membrane for continuous measurement of masses 28, 29, 30, and 40 (unlabeled, singly, and doubly labeled N2, and Argon, respectively). We used this system for a series of replicate experiments among eelgrass mesocosm treatments, allowing us to compare denitrification rates (@fig-dn-rates). This development may lead to direct, automated measurements of denitrification in the field during future GEMS deployments.
+In 2024, new personnel (a technician, now WHOI/MIT JP PhD student, and a research associate) were trained and continued development of the GEMS system. A no-cost extension was used to move the long-term field deployment to the summer of 2025. Continued development led to completion of the project objective to use GEMS to investigate nitrogen cycling in eelgrass systems. This also allowed us to test and refine hardware and firmware developed after the 2022 field season. We built a small chamber that could be installed in eelgrass mesocosms (@fig-label-setup) to monitor the evolution of a pulse-label of ^15^N labeled nitrate to labeled nitrogen gas (@fig-label-evolution). recirculated water past the GEMS inlet membrane for continuous measurement of masses 28, 29, 30, and 40 (unlabeled, singly, and doubly labeled N2, and Argon, respectively). We used this system for a series of replicate experiments among eelgrass mesocosm treatments, allowing us to compare denitrification rates (@fig-dn-rates). This development may lead to direct, automated measurements of denitrification in the field during future GEMS deployments.
 
-The final deployment in the summer of 2025 was 4 months in duration and tested a new lander platform (@fig-lander), improved control and data acquisition systems, a new pump and gradient valve system, a new telemetry data system and accompanying web dashboard (@fig-status), and a new data reduction pipeline to handle more data from longer deployments reproducibly. The methods and results below cover the system as used in 2025.
+The final deployment in the summer of 2025 was 4 months in duration. This deployment tested a new lander platform (@fig-lander), improved control and data acquisition systems, a new pump and gradient valve system, a new telemetry data system and accompanying web dashboard (@fig-status), and a new data reduction pipeline to handle more data from longer deployments reproducibly. The methods and results below cover the system as used in 2025.
 
 # GEMS Methods
 
-## System overview
+## System Overview
 
 The gradient exchange mass spectrometry (GEMS) system combines a quadrupole mass spectrometer (QMS) sampling seawater from vertically spaced high and low inlets with an acoustic doppler velocimeter (ADV) to measure the current velocity between the inlets. The measurement system is deployed as a benthic lander. A surface barge provides power and data connections via a tether. Telemetry is provided via a GSM cellular data connection. Data acquisition, system control, and telemetry are handled by microcontrollers in the lander and barge and data is duplicated at both locations. The barge uses a wind turbine and solar panels for power generation.
 
@@ -59,7 +59,7 @@ Velocity is sampled at 8 Hz using a Nortek Vector ADV. The adv was mounted at 60
 
 The QMS system is a Stanford Research Systems RGA-100, configured as a Membrane Inlet Mass Spectrometer (MIMS). The system is based on an underwater quadrupole mass spectrometer design developed in part by Co-PI Wankel [@wankel_new_2010; @wankel_influence_2011]. A vacuum chamber containing the QMS is maintained at roughly 1E^-6^ Torr using a small turbomolecular pump (Pfeiffer HiPace 30) with a miniature scroll pump (Scroll Labs SVF-2) for rough vacuum. Seawater dissolved gas is introduced to the system via a flat, gas-permeable, Teflon AF2400 membrane mounted on PVDF. Seawater is continuously pushed across the membrane surface using a seabird SBE-5T pump with a flow rate of approximately 3 L min^-1^. The QMS is set to sample a range of masses with a long dwell time per mass to increase accuracy and reduce noise, resulting in an acquisition rate of approximately 1 second per mass. Masses measured were 14, 15, 18, 28, 32, 33, 34, 40, and 44, meaning each mass was sampled every 10 seconds.
 
-## Description of the deployment
+## Description of the Deployment
 
 The system was deployed from June to October 2025. Initial deployment was planned for early June, but was delayed by an intermittent issue with cooling in the surface electronics enclosure, which was solved by a combination of solar reflective paint and addition of a sunshade. The system was deployed at 41.517 N, 70.701 W in a healthy eelgrass bed along the East shore of Uncatena Island in Hadleys Harbor. The harbor opens to the Northeast, facing Woods Hole, a passage with strong (\> 2 m s^-1^) tidal currents. Prevailing wind direction during the deployment was Southwest. The lander was placed in 2 m depth at mean low water (@fig-deployment) and the tidal range is roughly 1.5 m. The lander was oriented such that the intakes and ADV transceiver were exposed to the mean current direction and not occluded by the lander systems. The barge was moored 4 m West of the lander (@fig-deployment-2025) using two anchors in opposition to limit movement due to tide and current, and to maintain Southerly orientation of the solar panels. The site was visited roughly weekly during the deployment for cleaning, sampling, and maintenance.
 
@@ -67,13 +67,13 @@ Co-deployments of calibrated sensors and discrete sampling were used for calibra
 
 Eelgrass growth samples were taken at the site roughly monthly during the deployment period, continuing a sampling series started at the site in 2021. Eelgrass shoots, epiphites, and algae were sampled from 3-5 20 cm square quadrats, randomly distributed within 15 m of the GEMS lander. Shoots were counted and measured, then shoots, algae, and epiphytes were dried at 60 C and weighed for biomass assessment.
 
-The deployment was generally successful, but several issues resulted in planned and unplanned maintenance. In the coastal environment, fouling was a constant concern. Growth of algae on the upper and lower inlet screens and on the QMS inlet membrane altered the flow and pressure of water across the inlet, which in turn affected gas transport across the membrane. This was visible in QMS telemetry data as a reduction in partial pressure of gas species; this reduction was used as a diagnostic for site visits to clean the system. The QMS was generally reliable, but the system did shut down unexpectedly 24 h after a lander maintenance due to high QMS filament current triggering an interlock. This was likely due to the release of a small pocket of gas within the system after the initial evacuation and restart of the system after maintenance. After the event, the system was restarted remotely using the GSM communication system. Another unplanned breakdown was caused by the failure of an undersized DC-DC converter which supplied 12 V power to the valve and ADV modules. High current loads during valve movement caused the converter to fail to a state where 24 V was passed to the ADV and valve, resulting in issues with the valve and ADV. The inlet selector valve had several failures due to repeated actuations causing fatigue in a splined joint in the valve body. The valve was an off-the-shelf commercial 3-way fluid handling unit made from PVC. No test data were available from the manufacturer, but the valve was clearly not designed for continuous use. The valve failed repeatedly after roughly 5000 actuations. Our solution was to treat it as a field-replaceable part for the duration of the deployment, but a more durable valve and a gentle acceleration profile for the servo actuator are necessary to avoid future valve failures.
+The deployment was generally successful, but several issues resulted in planned and unplanned maintenance. In the coastal environment, fouling was a constant concern. Growth of algae on the upper and lower inlet screens and on the QMS inlet membrane altered the flow and pressure of water across the inlet, which in turn affected gas transport across the membrane. This was visible in QMS telemetry data as a reduction in partial pressure of gas species; this reduction was used as a diagnostic for site visits to clean the system. The QMS was generally reliable, but the system did shut down unexpectedly 24 h after a lander maintenance due to high QMS filament current triggering an interlock. This was likely due to the release of a small pocket of gas within the system after the initial evacuation and restart of the system after maintenance. After the event, the system was restarted remotely using the GSM communication system. Another unplanned breakdown was caused by the failure of an undersized DC-DC converter which supplied 12 V power to the valve and ADV modules. High current loads during valve movement caused the converter to fail to a state where 24 V was passed to the ADV and valve, resulting in issues with the valve and ADV. The inlet selector valve had several failures due to repeated actuation causing fatigue in a splined joint in the valve body. The valve was an off-the-shelf commercial 3-way fluid handling unit made from PVC. No test data were available from the manufacturer, but the valve was clearly not designed for continuous use. The valve failed repeatedly after roughly 5000 actuations. Our solution was to treat it as a field-replaceable part for the duration of the deployment, but a more durable valve and a gentle acceleration profile for the servo actuator are necessary to avoid future valve failures.
 
-## Data reduction
+## Data Reduction
 
 Mass spectrometry, velocity, and ancillary data are stored in a single file, rotated every 6 hours. A data reduction package was developed in the R language to validate and parse GEMS file data, normalize and calibrate QMS mass data, use velocity data to model eddy transport, and calculate fluxes using the gradient method.
 
-QMS mass data was normalized to Argon (mass 40) to reduce the effects of flow, pressure and temperature on gas solubility and QMS signal. A pronounced effect due to inlet biofouling was observed in raw mass signals; this was greatly reduced by normalizing the signals to Argon. Argon normalization also removes physical effects on gas concentration (temperature, air-sea exchange), leaving only biological signals.
+QMS mass data was normalized to Argon (mass 40) to reduce the effects of flow, pressure, and temperature on gas solubility and QMS signal. A pronounced effect due to inlet biofouling was observed in raw mass signals; this was greatly reduced by normalizing the signals to Argon. Argon normalization also removes physical effects on gas concentration (temperature, air-sea exchange), leaving only biological signals.
 
 Data from co-deployed sensors and concurrent sampling were used for calibration of the QMS signals. A linear model between the Argon-normalized oxygen and CO~2~ signals (mass 32:40, mass 44:40, respectively) from the top inlet and the concentration data from the respective sensor (O~2~, CO~2~) was used to calibrate QMS signals to units of Oxygen and CO~2~ concentration.
 
@@ -81,7 +81,7 @@ After calibration, QMS data from each 450 second inlet period were averaged from
 
 ADV velocity data were separated by data type, then velocity data lines were timestamped using count data and corresponding ADV status data lines, checking for malformed and out-of-sequence rows. A rolling Hampel filter was used to flag extreme outlying points, greater than 8 standard deviations from the running median. Gross range filters were then used to remove physically unreasonable values. After preprocessing, noisy or incoherent velocity data was removed by selecting data with greater than 50% correlation. The velocity time series was completed where possible using linear interpolation where gaps were smaller than 1 s, and consecutive 15 minute blocks were flagged for spectral analysis. Data were also divided into separate periods for each new position of the lander after maintenance to allow rotation of axes to minimize mean vertical current. Cross-power spectral density (CPSD) was used to determine covariance of horizontal and vertical velocity and from that the friction velocity ($\mathrm{u*}$) term for gradient flux determination. CPSD and $\mathrm{u*}$ were calculated using a vetted procedure in Matlab [@long_aquatic_2021].
 
-Flux was calculated for each 15 minute block using the gradient method [@coogan_evaluating_2022; @takeshita_assessment_2016, @mcgillis_productivity_2011]. Flux is estimated using the chemical gradient ($\frac{dO}{dz'}$) and a parameterization of eddy diffusivity (@eq-flux). The eddy diffusivity term ($-K_{DO}$) is in turn parameterized using the friction velocity, turbulent length scale, and von Kármán constant ($\kappa$, taken as 0.4 here, @eq-kdo). The turbulent length scale ($l$) is estimated based on height above the bed surface following McGillis et al. [-@mcgillis_productivity_2011]. Continuous estimation of the turbulent length scale was not possible without shear velocity profiles from a co-deployed ADCP. The covariance of the horizontal and vertical current velocity components provided an estimate for the friction velocity ($\mathrm{u*}$) using the root of the CPSD of horizontal and vertical components ($\overline{u'w'}$, @eq-ustar).
+Flux was calculated for each 15 minute block using the gradient method [@coogan_evaluating_2022; @takeshita_assessment_2016, @mcgillis_productivity_2011]. Flux is estimated using the chemical gradient ($\frac{dO}{dz'}$) and parameterization of eddy diffusivity (@eq-flux). The eddy diffusivity term ($-K_{DO}$) is in turn parameterized using the friction velocity, turbulent length scale, and von Kármán constant ($\kappa$, taken as 0.4 here, @eq-kdo). The turbulent length scale ($l$) is estimated based on height above the bed surface following McGillis et al. [-@mcgillis_productivity_2011]. Continuous estimation of the turbulent length scale was not possible without shear velocity profiles from a co-deployed ADCP. The covariance of the horizontal and vertical current velocity components provided an estimate for the friction velocity ($\mathrm{u*}$) using the root of the CPSD of horizontal and vertical components ($\overline{u'w'}$, @eq-ustar).
 
 $$Flux=-K_{DO}\frac{dO}{dz'}$$ {#eq-flux}
 
@@ -93,19 +93,19 @@ Flux was integrated to provide an hourly flux (mmol m^-2^ h^-1^).
 
 # Results
 
-## QMS data
+## QMS Data
 
 Dissolved gas measurements over time from the GEMS system (@fig-mass-trace) show clear variability in dissolved oxygen and carbon dioxide concentrations and gradients.
 Low concentration and interference with ions from other species make determination of methane, nitrogen, and hydrogen sulfide fluxes difficult or impossible.
 Discrete measurements of methane showed low but measurable concentrations at the site (20 μmol L^-1^),
 but interference with peaks from water and oxygen (mass 16) made reliable determination impossible.
-Discrete measurements of hydrogen sulfide showed no measureable H~2~S at the site, so we believe any signal at mass 34 is likely a known interference with oxygen.
+Discrete measurements of hydrogen sulfide showed no measurable H~2~S at the site, so we believe any signal at mass 34 is likely a known interference with oxygen.
 We were able to greatly reduce the signal to noise ration in QMS data for the 2025 deployment
 as compared to the 2022 deployment (@fig-noise-comparison)
 by improving the microcontroller-based data acquisition system, adjusting the QMS chamber pressure, and reducing electrical noise.
 We found that normalizing signals to Argon (mass 40) greatly improved signal stability.
-As argon is similar in physical behavior to the other gasses of interest, but is not modified by ecosystem processes,
-normalizing removes much of the effect of environmental factors like temperature, pressure and air-sea gas exchange,
+Argon is similar in physical behavior to the other gasses of interest, but is not modified by ecosystem processes.
+Normalizing to argon removes much of the effect of environmental factors like temperature, pressure, and air-sea gas exchange,
 and system factors like flow rate, membrane permeability and biofouling (@fig-argon-norm).
 
 * Do we need these figures?*
@@ -124,7 +124,7 @@ We chose to co-deploy sensors 2 m in the mean upcurrent direction to avoid distu
 If the co-deployed sensors could sample the GEMS inlets directly without disturbing current or sample loop flow,
 the calibration uncertainty may be reduced.
 
-## Gradients and fluxes
+## Gradients and Fluxes
 
 Hourly fluxes for the duration of the deployment were determined for Oxygen (@fig-flux-timeseries) and Carbon Dioxide.
 Fluxes show a clear diel cycle (@fig-flux-zoom).
@@ -139,7 +139,7 @@ among carbonate species (CO~2~, CO~3~^2-^, HCO^3-^).
 Monthly  and daily (@fig-nem) estimates of net ecosystem metabolism show that
 while net fluxes vary on multiple time scales, the net metabolism of the system is close to zero.
 
-## Eelgrass growth data
+## Eelgrass Growth Data
 
 Eelgrass growth in mass and shoot length was measured at the Hadleys Harbor site semi-monthly for the duration of the project.
 Growth data are presented in @fig-eelgrass.

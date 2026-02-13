@@ -17,11 +17,11 @@
 #' @export
 process_rga_to_wide <- function(data, cycle_start_mass = 18) {
   data |>
-    mutate(cycle = cumsum(mass == cycle_start_mass)) %>%
-    group_by(cycle) %>%
-    mutate(cycle_ts = mean(timestamp)) %>%
-    ungroup() %>%
-    select(timestamp = cycle_ts, mass, pressure) %>%
+    mutate(cycle = cumsum(mass == cycle_start_mass)) |>
+    group_by(cycle) |>
+    mutate(cycle_ts = mean(timestamp)) |>
+    ungroup() |>
+    select(timestamp = cycle_ts, mass, pressure) |>
     tidyr::pivot_wider(
       names_from = mass,
       names_prefix = "mass_",

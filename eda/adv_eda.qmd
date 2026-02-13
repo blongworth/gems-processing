@@ -52,9 +52,9 @@ These must be added manually in eddyflux_batch.m.
 # TODO: generated non-averaged ADV dataset from raw file here
 # df_binned_mv |>
 #   group_by(lander_position) |>
-#   nest() %>%
-#   mutate(data = map(data, \(x) rotate_to_minimize_z(x, "u", "v", "w")$phi)) %>%
-#   unnest(data) %>%
+#   nest() |>
+#   mutate(data = map(data, \(x) rotate_to_minimize_z(x, "u", "v", "w")$phi)) |>
+#   unnest(data) |>
 #   ungroup()
 ```
 

@@ -40,13 +40,13 @@ load_and_bin_adv <- function(adv_raw_file, moves_file, min_correlation = NULL) {
 
   df_bin_rot <- df_binned_mv |>
     group_by(lander_position) |>
-    nest() %>%
+    nest() |>
     mutate(
       data = map(data, \(x) {
         rotate_to_minimize_z(x, "u", "v", "w")$rotated_data
       })
-    ) %>%
-    unnest(data) %>%
+    ) |>
+    unnest(data) |>
     ungroup()
 
   df_bin_rot
@@ -135,12 +135,12 @@ rotate_to_minimize_z <- function(data, u_col, v_col, w_col) {
   w_rot <- -u_temp * sin(phi) + w * cos(phi)
 
   # Return rotated data and angles
-  result <- data %>%
+  result <- data |>
     mutate(
       u_rot = u_rot,
       v_rot = v_rot,
       w_rot = w_rot
-    ) %>%
+    ) |>
     select(
       all_of(c(setdiff(names(data), c(u_col, v_col, w_col)))),
       u_rot,
