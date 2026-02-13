@@ -10,7 +10,7 @@ format:
   docx:
     fig-dpi: 300
     reference-doc: custom-reference-doc.docx
-  # pdf: default
+  typst: default
 echo: false
 abstract: >
   We developed and deployed a membrane inlet quadrupole mass spectrometer (MIMS) system for continuous monitoring within a ~Zostera marina~ (eelgrass) meadow in Woods Hole, Massachusetts, USA. The benthic system measured dissolved O₂, CO₂, N₂, Ar, CH₄, and H₂S at two heights spaced ~1 m apart above the seagrass canopy, enabling vertical flux calculations using the gradient exchange method when combined with velocity measurements from an acoustic Doppler velocimeter (ADV). Data was remotely telemetered using GSM cellular communication to a web-based data store with real-time monitoring dashboard.
@@ -26,7 +26,7 @@ keywords:
   - dissolved gases
   - coastal ecosystems
   - Zostera marina
-bibliography: gems_report.bib
+bibliography: gems.bib
 ---
 
 # Project History
@@ -134,15 +134,15 @@ Monthly patterns in the diel oxygen fluxes (@fig-flux-diel-monthly) show larger 
 when more light is available and water temperature is higher.
 The relationship between oxygen and carbon dioxide fluxes is complex (@fig-co2-vs-o2).
 Speciation of CO~2~ in the carbonate system and the balance of system respiration and photorespiration likely drive this relationship.
-Niether pH nor alkalinity were measured concurrently with dissolved gasses, so it is difficult to quantify inorganic carbon
+Neither pH nor alkalinity were measured concurrently with dissolved gasses, so it is difficult to quantify inorganic carbon
 among carbonate species (CO~2~, CO~3~^2-^, HCO^3-^).
 Monthly  and daily (@fig-nem) estimates of net ecosystem metabolism show that
-while net fluxes vary on multiple time scales, the net metabolism of the system is close to zero.
+while net fluxes vary on multiple timescales, the net metabolism of the system is close to zero.
 
 ## Eelgrass Growth Data
 
-Eelgrass growth in mass and shoot length was measured at the Hadleys Harbor site semi-monthly for the duration of the project.
-Growth data are presented in @fig-eelgrass.
+Eelgrass growth measured as areal density and length of annual shoots was measured at the Hadleys Harbor site semi-monthly for the duration of the project.
+Growth data are presented in @fig-eelgrass. Growth trends are generally consistent from year to year. Maximum shoot biomass density and blade length occur late in the summer growth season.
 
 # Figures
 
@@ -150,7 +150,7 @@ Growth data are presented in @fig-eelgrass.
 
 ![The GEMS power, data and telemetry platform with undergraduate Guest Student Natalia Wierzbicki and Summer Student Fellow (NSF REU) Ryan Galusha. Natalia and Ryan helped build the platform for the 2022 deployment. For 2025, the platform was outfitted with improved power and data systems, including more reliable communication with the lander, a new GSM/GPS module transmitting more telemetry data, and a safety switch for the wind turbine.](report_photos/gems_barge.jpg){#fig-barge}
 
-![The GEMS set up for measurement of denitrification in eelgrass (*Zostera marina*) mesocosms. The evolution of ^15^N-labeled nitrate to labeled nitrogen gas was measured using the GEMS spectrometer in small, open bottom chambers. Argon was added to track loss of the label and nitrogen from the chamber system.](report_photos/gems_dn_chamber.png){#fig-label-setup width="70%"}
+![The GEMS set up for measurement of denitrification in *Zostera marina* (eelgrass) mesocosms. The evolution of ^15^N-labeled nitrate to labeled nitrogen gas was measured using the GEMS spectrometer in small, open bottom chambers. Argon was added to track loss of the label and nitrogen from the chamber system.](report_photos/gems_dn_chamber.png){#fig-label-setup width="70%"}
 
 ![Evolution through time of single- and doubly-labeled nitrogen and argon tracers during a denitrification experiment in an eelgrass mesocosm.](report_photos/n15_label_evolution.png){#fig-label-evolution}
 

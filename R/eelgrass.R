@@ -100,10 +100,8 @@ get_eelgrass_data <- function(
         sg_length_2021_file,
         sg_weight_2021_file
     )
-    combined_df <- bind_rows(combined_df, eelgrass_2021)
-    combined_df$year <- factor(
-        combined_df$year,
-        levels = sort(unique(combined_df$year))
-    )
+    combined_df <- bind_rows(combined_df, eelgrass_2021) |>
+        arrange(date) |>
+        mutate(year = as.factor(lubridate::year(date)))
     return(combined_df)
 }

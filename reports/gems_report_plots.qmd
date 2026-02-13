@@ -560,7 +560,7 @@ hmp <- hourly_stats |>
       ymin = ox_mean_umol_l_mean_mean - ox_mean_umol_l_mean_se,
       ymax = ox_mean_umol_l_mean_mean + ox_mean_umol_l_mean_se
     ),
-    size = 0.1,
+    size = 0.2,
     color = cb_print_4[1]
   ) +
   labs(x = NULL, y = expression("Oxygen [" * mmol ~ m^-3 * "]"))
@@ -573,7 +573,7 @@ hgp <- hourly_stats |>
       ymin = ox_gradient_umol_l_m_mean_mean - ox_gradient_umol_l_m_mean_se,
       ymax = ox_gradient_umol_l_m_mean_mean + ox_gradient_umol_l_m_mean_se
     ),
-    size = 0.1,
+    size = 0.2,
     color = cb_print_4[1]
   ) +
   geom_hline(yintercept = 0) +
@@ -603,7 +603,7 @@ flp <- hourly_stats |>
       ymin = ox_flux_mean - ox_flux_se,
       ymax = ox_flux_mean + ox_flux_se
     ),
-    size = 0.1,
+    size = 0.2,
     color = cb_print_4[1]
   ) +
   geom_hline(yintercept = 0) +
@@ -653,7 +653,7 @@ hmp <- hourly_stats |>
       ymin = co2_mean_umol_l_mean_mean - co2_mean_umol_l_mean_se,
       ymax = co2_mean_umol_l_mean_mean + co2_mean_umol_l_mean_se
     ),
-    size = 0.1,
+    size = 0.2,
     color = cb_print_4[1]
   ) +
   labs(x = NULL, y = expression("CO"[2] ~ "[" * mmol ~ m^-3 * "]"))
@@ -666,7 +666,7 @@ hgp <- hourly_stats |>
       ymin = co2_gradient_umol_l_m_mean_mean - co2_gradient_umol_l_m_mean_se,
       ymax = co2_gradient_umol_l_m_mean_mean + co2_gradient_umol_l_m_mean_se
     ),
-    size = 0.1,
+    size = 0.2,
     color = cb_print_4[1]
   ) +
   geom_hline(yintercept = 0) +
@@ -683,7 +683,7 @@ flp <- hourly_stats |>
       ymin = co2_flux_mean - co2_flux_se,
       ymax = co2_flux_mean + co2_flux_se
     ),
-    size = 0.1,
+    size = 0.2,
     color = cb_print_4[1]
   ) +
   geom_hline(yintercept = 0) +
@@ -822,7 +822,7 @@ hmp <- monthly_stats |>
       ymin = ox_mean_umol_l_mean_mean - ox_mean_umol_l_mean_se,
       ymax = ox_mean_umol_l_mean_mean + ox_mean_umol_l_mean_se
     ),
-    size = 0.1,
+    size = 0.2,
     # position = position_dodge(width = 0.5)
   ) +
   geom_hline(yintercept = 0) +
@@ -836,7 +836,7 @@ hgp <- monthly_stats |>
       ymin = ox_gradient_umol_l_m_mean_mean - ox_gradient_umol_l_m_mean_se,
       ymax = ox_gradient_umol_l_m_mean_mean + ox_gradient_umol_l_m_mean_se
     ),
-    size = 0.1,
+    size = 0.2,
     # position = position_dodge(width = 0.5)
   ) +
   geom_hline(yintercept = 0) +
@@ -853,7 +853,7 @@ flp <- monthly_stats |>
       ymin = ox_flux_mean - ox_flux_se,
       ymax = ox_flux_mean + ox_flux_se
     ),
-    size = 0.1,
+    size = 0.2,
     # position = position_dodge(width = 0.5)
   ) +
   geom_hline(yintercept = 0) +
@@ -947,7 +947,9 @@ bmp <- ggplot(eelgrass, aes(day_of_year, density_g_m2, color = year)) +
   geom_pointrange(aes(
     ymin = density_g_m2 - density_g_m2_sd,
     ymax = density_g_m2 + density_g_m2_sd
-  )) +
+  ),
+  size = 0.2
+  ) +
   scale_x_continuous(
     breaks = c(1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335),
     labels = month.abb
@@ -964,7 +966,7 @@ blp <- ggplot(eelgrass, aes(day_of_year, length_cm, color = year)) +
   geom_pointrange(aes(
     ymin = length_cm - length_cm_sd,
     ymax = length_cm + length_cm_sd
-  )) +
+  ), size = 0.2) +
   scale_x_continuous(
     breaks = c(1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335),
     labels = month.abb
