@@ -278,6 +278,7 @@ nnp <- sep_rga |>
 
 ```{r}
 #| label: fig-oxygen-long
+#| exec: false
 #| fig-cap: A record of the argon-normalized oxygen signal at the high (blue) and low (green) inlets for the duration of the deployment. Maintenance periods and times when the data were known to be poor due to system issues have been removed.
 ### Oxygen timeseries
 rga_calibrated |>
@@ -305,6 +306,7 @@ rga_calibrated |>
 
 ```{r}
 #| label: fig-oxygen-short
+#| exec: false
 #| fig-cap: >
 #|   The argon-normalized oxygen signal for July 16-20,
 #|   showing a clear gradient between the high (blue) and low (green) inlets.
@@ -401,7 +403,7 @@ cal_plot_df |>
 ```{r}
 #| label: fig-flux-timeseries
 #| fig-cap: >
-#|   Hourly oxygen flux (A) for the duration of the deployment.
+#|   Hourly oxygen flux (A) for the duration of the deployment. Maintenance periods and times when the data were known to be poor due to system issues have been removed.
 #|   estimated daily light integral (DLI, B) and seawater temperature at mid height (C) for comparison.
 #|   Flux decreases with decreasing light and temperature.
 #|   No light sensor was codeployed with GEMS,

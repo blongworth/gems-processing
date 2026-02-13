@@ -108,11 +108,6 @@ Argon is similar in physical behavior to the other gasses of interest, but is no
 Normalizing to argon removes much of the effect of environmental factors like temperature, pressure, and air-sea gas exchange,
 and system factors like flow rate, membrane permeability and biofouling (@fig-argon-norm).
 
-* Do we need these figures?*
-
-@fig-oxygen-long
-@fig-oxygen-short
-
 ## Calibration
 
 Time-correlated data from co-deployed sensors was used for calibration.
