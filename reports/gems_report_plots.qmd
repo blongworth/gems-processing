@@ -1,14 +1,4 @@
----
-title: "GEMS NSF Final Report Plots"
-format:
-  html:
-    embed-resources: true
-  docx:
-    fig-dpi: 300
-    reference-doc: custom-reference-doc.docx
-  # pdf: default
-echo: false
----
+
 ```{r setup}
 #| echo: false
 #| message: false
@@ -152,7 +142,6 @@ oxp <- rga_binned |>
     alpha = 0.6
   ) +
   labs(
-    title = "Oxygen/Argon ratio at high and low inlets",
     x = NULL,
     y = "Mass 32:40"
   )
@@ -408,7 +397,7 @@ cal_plot_df |>
 
 {{< pagebreak >}}
 
-  
+
 ```{r}
 #| label: fig-flux-timeseries
 #| fig-cap: >
@@ -708,9 +697,9 @@ flp <- hourly_stats |>
 ```{r}
 #| label: fig-co2-vs-o2
 #| fig-cap: >
-#|   The relationship between CO₂ and O₂ vertical gradients (A) and flux (B), colored by predicted PAR. Gradient scales are reversed to place in the same frame of reference as flux. 
-#| fig-height: 3 
-#| warning: false 
+#|   The relationship between CO₂ and O₂ vertical gradients (A) and flux (B), colored by predicted PAR. Gradient scales are reversed to place in the same frame of reference as flux.
+#| fig-height: 3
+#| warning: false
 
 # rga_calibrated |>
 #   ggplot(aes(mass_32_40_high, mass_44_40_high, color = par)) +
@@ -724,46 +713,42 @@ flp <- hourly_stats |>
 hour_to_color <- function(hours) {
   # Normalize hours into [0,24)
   hours <- hours %% 24
-  
-  night_col  <- grDevices::col2rgb("#1a4eb5ff")  # dark blue
-  day_col    <- grDevices::col2rgb("#fce23aff")  # yellow
-  
+
+  night_col <- grDevices::col2rgb("#1a4eb5ff") # dark blue
+  day_col <- grDevices::col2rgb("#fce23aff") # yellow
+
   # Initialize RGB matrix
   rgb_mat <- matrix(NA, nrow = 3, ncol = length(hours))
-  
+
   for (i in seq_along(hours)) {
     h <- hours[i]
-    
+
     if (h <= 6) {
       # Deep night: constant dark blue
       mix <- night_col
-      
     } else if (h > 6 && h < 8) {
       # Dawn: interpolate from blue -> yellow between 5 and 7
-      t <- (h - 6) / (8 - 6)  # 0 at 5, 1 at 7
+      t <- (h - 6) / (8 - 6) # 0 at 5, 1 at 7
       mix <- (1 - t) * night_col + t * day_col
-      
     } else if (h >= 8 && h <= 17) {
       # Full day: constant yellow
       mix <- day_col
-      
     } else if (h > 17 && h < 19) {
       # Dusk: interpolate from yellow -> blue between 17 and 19
-      t <- (h - 17) / (19 - 17)  # 0 at 17, 1 at 19
+      t <- (h - 17) / (19 - 17) # 0 at 17, 1 at 19
       mix <- (1 - t) * day_col + t * night_col
-      
     } else {
       # Night again: constant dark blue
       mix <- night_col
     }
-    
+
     rgb_mat[, i] <- mix
   }
-  
+
   grDevices::rgb(
-    red   = rgb_mat[1, ] / 255,
+    red = rgb_mat[1, ] / 255,
     green = rgb_mat[2, ] / 255,
-    blue  = rgb_mat[3, ] / 255
+    blue = rgb_mat[3, ] / 255
   )
 }
 
@@ -775,7 +760,7 @@ hour_palette <- function(n = 256) {
 }
 
 gp <- rga_calibrated |>
-  mutate(hour = (hour(timestamp) - 4) %% 24 ) |>
+  mutate(hour = (hour(timestamp) - 4) %% 24) |>
   ggplot(aes(ox_gradient_umol_l_m, co2_gradient_umol_l_m, color = hour)) +
   geom_hline(yintercept = 0) +
   geom_vline(xintercept = 0) +
@@ -787,16 +772,18 @@ gp <- rga_calibrated |>
     limits = c(0, 24),
     breaks = c(0, 6, 12, 18, 24),
     labels = c("00:00", "06:00", "12:00", "18:00", "24:00"),
-    name   = "Hour of day"
+    name = "Hour of day"
   ) +
-  labs(x = expression("O"[2] ~ "Gradient [" * mmol ~ m^-4 * "]"),
-  y = expression("CO"[2] ~ "Gradient [" * mmol ~ m^-4 * "]"),
-  color = "PAR") + 
-    theme(legend.position = "none")
+  labs(
+    x = expression("O"[2] ~ "Gradient [" * mmol ~ m^-4 * "]"),
+    y = expression("CO"[2] ~ "Gradient [" * mmol ~ m^-4 * "]"),
+    color = "PAR"
+  ) +
+  theme(legend.position = "none")
 
 fp <- hourly_flux |>
   filter(ox_flux < 30) |>
-  mutate(hour = (hour(timestamp) - 4) %% 24 ) |>
+  mutate(hour = (hour(timestamp) - 4) %% 24) |>
   ggplot(aes(ox_flux, co2_flux, color = hour)) +
   geom_hline(yintercept = 0) +
   geom_vline(xintercept = 0) +
@@ -806,14 +793,17 @@ fp <- hourly_flux |>
     limits = c(0, 24),
     breaks = c(0, 6, 12, 18, 24),
     labels = c("00:00", "06:00", "12:00", "18:00", "24:00"),
-    name   = "Hour of day"
+    name = "Hour of day"
   ) +
-  labs(x = expression("O"[2] ~ "flux [" * mmol ~ m^-2 ~ h^-1 * "]"),
-   y = expression("CO"[2] ~ "flux [" * mmol ~ m^-2 ~ h^-1 * "]"),
-  color = "Hour of Day")
+  labs(
+    x = expression("O"[2] ~ "flux [" * mmol ~ m^-2 ~ h^-1 * "]"),
+    y = expression("CO"[2] ~ "flux [" * mmol ~ m^-2 ~ h^-1 * "]"),
+    color = "Hour of Day"
+  )
 
 (gp + fp) + plot_annotation(tag_levels = 'A')
 ```
+
 ```{r}
 #| label: fig-flux-diel-monthly
 #| fig-cap: >
@@ -902,13 +892,13 @@ parp <- monthly_stats |>
 
 
 ```{r}
-#| label: fig-flux-nem-hourly
+#| label: fig-nem
 #| fig-cap: >
-#|   Oxygen flux integrated by month for the deployment period
+#|   Oxygen flux integrated by day (A) and by month (B) for the deployment period
 #|   to provide an estimate of net ecosystem metabolism (NEM).
-#|   The benthic system at Naushon Island is close
+#|   The benthic system at Naushon Island shows variability on daily and monthly scales, but the system is close
 #|   to net neutral over time.
-#| fig-height: 2.75
+#| fig-height: 5.5
 
 ## Net ecosystem metabolism
 monthly_nem$month_factor <- factor(
@@ -916,27 +906,24 @@ monthly_nem$month_factor <- factor(
   levels = 1:12,
   labels = month.abb # or month.abb
 )
-ggplot(monthly_nem, aes(month_factor, nem_mmol_m2_day)) +
+mp <- ggplot(monthly_nem, aes(month_factor, nem_mmol_m2_day)) +
   geom_col(fill = cb_print_4[1]) +
   geom_hline(yintercept = 0) +
   labs(
     x = NULL,
     y = expression("NEM [" * mmol ~ m^-2 ~ d^-1 * "]")
   )
-```
 
-
-```{r}
-#| label: fig-flux-nem-monthly
-#| fig-cap: Daily-integrated NEM for the deployment period. Daily NEM is variable, but is close to net-neutral over time.
-#| fig-height: 2.75
-ggplot(daily_nem, aes(day, nem_mmol_m2_h)) +
+dp <- ggplot(daily_nem, aes(day, nem_mmol_m2_h)) +
   geom_col(fill = cb_print_4[1]) +
   geom_hline(yintercept = 0) +
 
   labs(
     y = expression("NEM [" * mmol ~ m^-2 ~ h^-1 * "]")
   )
+
+(mp / dp) +
+  plot_annotation(tag_levels = "A")
 ```
 
 {{< pagebreak >}}

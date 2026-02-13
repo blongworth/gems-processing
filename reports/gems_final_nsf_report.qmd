@@ -1,6 +1,6 @@
 ---
 title: "Gradient Exchange Mass Spectrometry (GEMS) for Quantifying a Suite of Dissolved Gas Fluxes"
-author: 
+author:
   - name: Matthew Long
   - name: Adam Subhas
   - name: Scott Wankel
@@ -14,11 +14,11 @@ format:
 echo: false
 abstract: >
   We developed and deployed a membrane inlet quadrupole mass spectrometer (MIMS) system for continuous monitoring within a ~Zostera marina~ (eelgrass) meadow in Woods Hole, Massachusetts, USA. The benthic system measured dissolved O₂, CO₂, N₂, Ar, CH₄, and H₂S at two heights spaced ~1 m apart above the seagrass canopy, enabling vertical flux calculations using the gradient exchange method when combined with velocity measurements from an acoustic Doppler velocimeter (ADV). Data was remotely telemetered using GSM cellular communication to a web-based data store with real-time monitoring dashboard.
-  
+
   Clear concentration gradients were observed for oxygen and carbon dioxide, showing diel cycles driven by insolation and tidal forcing. Gas species were normalized to argon to control for physical gas fluxes. Methane, nitrogen, and hydrogen sulfide measurements showed variability close to the detection limit of the instrument. The MIMS system demonstrated stable performance during deployments ranging from weeks to months, though operational challenges included biofouling management, calibration, and maintenance in the marine environment.
 
   This study demonstrates the potential of MIMS and the gradient flux method for continuous biogeochemical monitoring in coastal marine ecosystems, providing high-resolution temporal data on multiple dissolved gas species simultaneously. The gradient flux approach offers advantages over traditional benthic chamber methods by maintaining natural flow conditions while enabling ecosystem-scale process measurements.
-keywords: 
+keywords:
   - membrane inlet mass spectrometry
   - seagrass
   - biogeochemistry
@@ -47,7 +47,7 @@ The final deployment in the summer of 2025 was 4 months in duration and tested a
 
 The gradient exchange mass spectrometry (GEMS) system combines a quadrupole mass spectrometer (QMS) sampling seawater from vertically spaced high and low inlets with an acoustic doppler velocimeter (ADV) to measure the current velocity between the inlets. The measurement system is deployed as a benthic lander. A surface barge provides power and data connections via a tether. Telemetry is provided via a GSM cellular data connection. Data acquisition, system control, and telemetry are handled by microcontrollers in the lander and barge and data is duplicated at both locations. The barge uses a wind turbine and solar panels for power generation.
 
-The 1.8 m x 1.8 m surface support platform (@fig-barge) is constructed using commercial dock flotation supporting a welded aluminum frame with solar panel and wind turbine supports. A centrally positioned watertight box holds the 200AH battery, charge controller (Victron BlueSolar MPPT 150/35), and electronics for control and communication. The barge is moored using two anchors set in opposition to maintain position and orientation. Power is provided by two 200 W South-oriented solar panels and a wind generator (Air X Air30) producing 100 W at 8 m s^-1^ wind velocity, feeding power through a charge controller to a 24 V, 200 Ah LiFePO~4~ battery. The power system provided ample power for the lander and surface systems for the duration of the deployment. Control, data, and communication is handled by a microcontroller with custom firmware (Teensy 4.1) in the surface electronics box. Commands and data between barge and lander use the UDP protocol over 100baseT wired ethernet, and time correction, GPS position, and GSM telemetry are provided via a serial connection to a GSM/GPS module.
+The 1.8 m x 1.8 m surface support platform (@fig-barge) is constructed using commercial dock flotation supporting a welded aluminum frame with solar panel and wind turbine supports. A centrally positioned watertight box holds the 200AH battery, charge controller (Victron BlueSolar MPPT 150/35), and electronics for control and communication. The barge is moored using two anchors set in opposition to maintain position and orientation. Power is provided by two 200 W South-oriented solar panels and a wind generator (Air-X Air30) producing 100 W at 8 m s^-1^ wind velocity, feeding power through a charge controller to a 24 V, 200 Ah LiFePO~4~ battery. The power system provided ample power for the lander and surface systems for the duration of the deployment. Control, data, and communication is handled by a microcontroller with custom firmware (Teensy 4.1) in the surface electronics box. Commands and data between barge and lander use the UDP protocol over 100baseT wired ethernet, and time correction, GPS position, and GSM telemetry are provided via a serial connection to a GSM/GPS module.
 
 Data is transmitted and received via a GSM network connection. The main surface microcontroller exchanges commands and data with a paired microcontroller and GSM module with custom firmware (Amtel AT21 and SIM7600 in a Maduino Zero module). The system is programmed to send the last 500 lines (\~60 s) of ADV and QMS data and receive commands every 10 minutes. This connection enables real-time visualization of system data for remote troubleshooting and maintenance visit planning (@fig-status).
 
@@ -65,7 +65,7 @@ The system was deployed from June to October 2025. Initial deployment was planne
 
 Co-deployments of calibrated sensors and discrete sampling were used for calibration of the QMS partial pressures for masses with measurable variability and gradient. Two week-long deployments of a Seabird SeapHOx were used to measure Oxygen, and a single two-week deployment of a Pro-Oceanus CO2-Pro was used to measure CO~2~. The SeapHOx was deployed on the seabed 2 m upcurrent of the GEMS lander, and the CO2-Pro was deployed below the barge, 4 m from the lander. Discrete samples for methane and hydrogen sulfide concentration were taken once before establishing that concentrations and variability were too small to quantify with the QMS data. Methane samples were taken in gas-tight 60 ml syringes and analyzed using GC-FID on an Agilent-6890 gas chromatograph. Methane concentration at the lower inlet was 20 μmol L^-1^. Hydrogen sulfide samples were taken in gas-tight syringes at the low inlet, fixed as ZnS by addition of zinc acetate and analyzed by the methylene blue technique [@cline_spectrophotometric_1969]. Total sulfide concentration was below the limit of detection for this method.
 
-Eelgrass growth samples were taken at the site roughly monthly during the deployment period, continuing a sampling series started at the site in 2023. Eelgrass shoots, epiphites, and algae were sampled from 3-5 20 cm square quadrats, randomly distributed within 15 m of the GEMS lander. Shoots were counted and measured, then shoots, algae, and epiphytes were dried at 60 C and weighed for biomass assessment.
+Eelgrass growth samples were taken at the site roughly monthly during the deployment period, continuing a sampling series started at the site in 2021. Eelgrass shoots, epiphites, and algae were sampled from 3-5 20 cm square quadrats, randomly distributed within 15 m of the GEMS lander. Shoots were counted and measured, then shoots, algae, and epiphytes were dried at 60 C and weighed for biomass assessment.
 
 The deployment was generally successful, but several issues resulted in planned and unplanned maintenance. In the coastal environment, fouling was a constant concern. Growth of algae on the upper and lower inlet screens and on the QMS inlet membrane altered the flow and pressure of water across the inlet, which in turn affected gas transport across the membrane. This was visible in QMS telemetry data as a reduction in partial pressure of gas species; this reduction was used as a diagnostic for site visits to clean the system. The QMS was generally reliable, but the system did shut down unexpectedly 24 h after a lander maintenance due to high QMS filament current triggering an interlock. This was likely due to the release of a small pocket of gas within the system after the initial evacuation and restart of the system after maintenance. After the event, the system was restarted remotely using the GSM communication system. Another unplanned breakdown was caused by the failure of an undersized DC-DC converter which supplied 12 V power to the valve and ADV modules. High current loads during valve movement caused the converter to fail to a state where 24 V was passed to the ADV and valve, resulting in issues with the valve and ADV. The inlet selector valve had several failures due to repeated actuations causing fatigue in a splined joint in the valve body. The valve was an off-the-shelf commercial 3-way fluid handling unit made from PVC. No test data were available from the manufacturer, but the valve was clearly not designed for continuous use. The valve failed repeatedly after roughly 5000 actuations. Our solution was to treat it as a field-replaceable part for the duration of the deployment, but a more durable valve and a gentle acceleration profile for the servo actuator are necessary to avoid future valve failures.
 
@@ -79,7 +79,7 @@ Data from co-deployed sensors and concurrent sampling were used for calibration 
 
 After calibration, QMS data from each 450 second inlet period were averaged from second 60 to 420 of the period to allow time for flushing water from the previous inlet from the system and stabilization of the QMS signal. Stepwise linear interpolation was used to combine neighboring high and low inlet periods into 15 minute averages for gradient and flux analysis.
 
-ADV velocity data were separated by data type, then velocity data lines were timestamped using count data and corresponding ADV status data lines, checking for malformed and out-of-sequence rows. A rolling Hampel filter was used to flag extreme outlying points, greater than 8 standard deviations from the running median. Gross range filters were then used to remove physically unreasonable values. After preprocessing, noisy or incoherent velocity data was removed by selecting data with greater than 50% correlation. The velocity time series was completed where possible using linear interpolation where gaps were smaller than 1 s, and consecutive 15 minute blocks were flagged for spectral analysis. Data were also divided into separate periods for each new position of the lander after maintenance to allow rotation of axes to minimize mean vertical current. Cross-power spectral density (CPSD) was used to determine covariance of horizontal and vertical velocity and from that the friction velocity (u-star) term for gradient flux determination. CPSD and u-star were calculated using a vetted procedure in Matlab [@long_aquatic_2021].
+ADV velocity data were separated by data type, then velocity data lines were timestamped using count data and corresponding ADV status data lines, checking for malformed and out-of-sequence rows. A rolling Hampel filter was used to flag extreme outlying points, greater than 8 standard deviations from the running median. Gross range filters were then used to remove physically unreasonable values. After preprocessing, noisy or incoherent velocity data was removed by selecting data with greater than 50% correlation. The velocity time series was completed where possible using linear interpolation where gaps were smaller than 1 s, and consecutive 15 minute blocks were flagged for spectral analysis. Data were also divided into separate periods for each new position of the lander after maintenance to allow rotation of axes to minimize mean vertical current. Cross-power spectral density (CPSD) was used to determine covariance of horizontal and vertical velocity and from that the friction velocity ($\mathrm{u*}$) term for gradient flux determination. CPSD and $\mathrm{u*}$ were calculated using a vetted procedure in Matlab [@long_aquatic_2021].
 
 Flux was calculated for each 15 minute block using the gradient method [@coogan_evaluating_2022; @takeshita_assessment_2016, @mcgillis_productivity_2011]. Flux is estimated using the chemical gradient ($\frac{dO}{dz'}$) and a parameterization of eddy diffusivity (@eq-flux). The eddy diffusivity term ($-K_{DO}$) is in turn parameterized using the friction velocity, turbulent length scale, and von Kármán constant ($\kappa$, taken as 0.4 here, @eq-kdo). The turbulent length scale ($l$) is estimated based on height above the bed surface following McGillis et al. [-@mcgillis_productivity_2011]. Continuous estimation of the turbulent length scale was not possible without shear velocity profiles from a co-deployed ADCP. The covariance of the horizontal and vertical current velocity components provided an estimate for the friction velocity ($\mathrm{u*}$) using the root of the CPSD of horizontal and vertical components ($\overline{u'w'}$, @eq-ustar).
 
@@ -93,36 +93,62 @@ Flux was integrated to provide an hourly flux (mmol m^-2^ h^-1^).
 
 # Results
 
-The summer 2025 deployment
-
 ## QMS data
 
-Mass trace data
-noise reduction
-argon normalization
-oxygen signal (gradients)
+Dissolved gas measurements over time from the GEMS system (@fig-mass-trace) show clear variability in dissolved oxygen and carbon dioxide concentrations and gradients.
+Low concentration and interference with ions from other species make determination of methane, nitrogen, and hydrogen sulfide fluxes difficult or impossible.
+Discrete measurements of methane showed low but measurable concentrations at the site (20 μmol L^-1^),
+but interference with peaks from water and oxygen (mass 16) made reliable determination impossible.
+Discrete measurements of hydrogen sulfide showed no measureable H~2~S at the site, so we believe any signal at mass 34 is likely a known interference with oxygen.
+We were able to greatly reduce the signal to noise ration in QMS data for the 2025 deployment
+as compared to the 2022 deployment (@fig-noise-comparison)
+by improving the microcontroller-based data acquisition system, adjusting the QMS chamber pressure, and reducing electrical noise.
+We found that normalizing signals to Argon (mass 40) greatly improved signal stability.
+As argon is similar in physical behavior to the other gasses of interest, but is not modified by ecosystem processes,
+normalizing removes much of the effect of environmental factors like temperature, pressure and air-sea gas exchange,
+and system factors like flow rate, membrane permeability and biofouling (@fig-argon-norm).
+
+* Do we need these figures?*
+
+@fig-oxygen-long
+@fig-oxygen-short
 
 ## Calibration
 
-cal fit
-cal compare
+Time-correlated data from co-deployed sensors was used for calibration.
+A linear fit between the argon-normalized mass of interest and calibrated sensor data was used to generate a calibration curve (@fig-cal).
+This produced a reasonable fit between the calibrated GEMS and sensor data (@fig-cal-timeseries).
+Cross-calibration with co-deployed sensors balances attempting to sample the same water concurrently with GEMS
+and disturbing eddy propagation and flow around and within the GEMS system.
+We chose to co-deploy sensors 2 m in the mean upcurrent direction to avoid disturbing eddy propagation.
+If the co-deployed sensors could sample the GEMS inlets directly without disturbing current or sample loop flow,
+the calibration uncertainty may be reduced.
 
 ## Gradients and fluxes
 
+Hourly fluxes for the duration of the deployment were determined for Oxygen (@fig-flux-timeseries) and Carbon Dioxide.
+Fluxes show a clear diel cycle (@fig-flux-zoom).
+Averaging these gradients by hour of solar day (@fig-gradient-diel) shows a mean daily maximum oxygen gradient of +- 10 mmol m^-4^.
+A clear diel cycle is apparent in the oxygen (@fig-flux-diel) and carbon dioxide (@fig-co2-diel) fluxes.
+Monthly patterns in the diel oxygen fluxes (@fig-flux-diel-monthly) show larger daily variability during summer months,
+when more light is available and water temperature is higher.
+The relationship between oxygen and carbon dioxide fluxes is complex (@fig-co2-vs-o2).
+Speciation of CO~2~ in the carbonate system and the balance of system respiration and photorespiration likely drive this relationship.
+Niether pH nor alkalinity were measured concurrently with dissolved gasses, so it is difficult to quantify inorganic carbon
+among carbonate species (CO~2~, CO~3~^2-^, HCO^3-^).
+Monthly  and daily (@fig-nem) estimates of net ecosystem metabolism show that
+while net fluxes vary on multiple time scales, the net metabolism of the system is close to zero.
+
 ## Eelgrass growth data
 
+Eelgrass growth in mass and shoot length was measured at the Hadleys Harbor site semi-monthly for the duration of the project.
+Growth data are presented in @fig-eelgrass.
 
 # Figures
 
+![The initial gradients measured by the prototype GEMS system during the 2021 deployment. Blue traces are the upper (1.1 m) height, red are the lower (0.2 m) height (left axis), and the yellow bars indicate the magnitude of the gradient through time (right axis). Notice the opposite magnitudes of the carbon dioxide (CO~2~, middle) and oxygen (O~2~, top) gradients consistent with diel rates of photosynthesis and respiration. The hydrogen sulfide (H~2~S, bottom) gradients appear to co-vary with the oxygen gradients. We now believe this indicates mass interference with oxygen in the QMS.](report_photos/gradients_2021.png){#fig-2021-gradients}
+
 ![The GEMS power, data and telemetry platform with undergraduate Guest Student Natalia Wierzbicki and Summer Student Fellow (NSF REU) Ryan Galusha. Natalia and Ryan helped build the platform for the 2022 deployment. For 2025, the platform was outfitted with improved power and data systems, including more reliable communication with the lander, a new GSM/GPS module transmitting more telemetry data, and a safety switch for the wind turbine.](report_photos/gems_barge.jpg){#fig-barge}
-
-![For the 2025 deployment, we created a publicly accessible website summarizing all telemetry data (https://blongworth.github.io/GEMS_status/). The site was mostly used to monitor the system and troubleshoot issues. The site uses a simple API to collect data from a WHOI-hosted server, which in turn communicates directly with GEMS and stores telemetry data.](report_photos/gems_status.png){#fig-status}
-
-![The GEMS lander, redesigned for the 2025 deployment. The central housing (A) contains the QMS, power handling and system microcontroller. The ADV transducer (D) and housing (B) collect velocity data at mid-height. The valve housing (C) contains control and power electronics for the system pump and servo controlled valve for switching between high (E) and low inlets.](report_photos/gems_lander.jpg){#fig-lander width="80%"}
-
-![The GEMS power, data and telemetry platform (top left) and GEMS lander (bottom right). A 10m cable providing 24V power and ethernet-based data runs between the platform and lander.](report_photos/gems_deployment.jpg){#fig-deployment}
-
-![The GEMS platform during the 2025 deployment. Samuel Koeck (MIT/WHOI PhD student) is above the lander deployment location.](report_photos/gems_deployment_2025.jpg){#fig-deployment-2025}
 
 ![The GEMS set up for measurement of denitrification in eelgrass (*Zostera marina*) mesocosms. The evolution of ^15^N-labeled nitrate to labeled nitrogen gas was measured using the GEMS spectrometer in small, open bottom chambers. Argon was added to track loss of the label and nitrogen from the chamber system.](report_photos/gems_dn_chamber.png){#fig-label-setup width="70%"}
 
@@ -130,6 +156,14 @@ cal compare
 
 ![Denitrification rates for three replicates of 4 experimental treatments at different time points during the experiments. Open crates have 4 cm open mesh sides and bottom and are lined with coir to prevent sediment loss. Closed crates have solid sides and bottom. Grass crates have healthy seagrass. Sediment crates have identical substrates with no seagrass. Rates from top to bottom are determined 2.5 hours after label injection, at 0.2 of the time of maximum ^15^N~2~ concentration, and at the time anoxia is reached.](report_photos/crate_dn_comparison.png){#fig-dn-rates}
 
-![The initial gradients measured by the prototype GEMS system during the 2021 deployment. Blue traces are the upper (1.1 m) height, red are the lower (0.2 m) height (left axis), and the yellow bars indicate the magnitude of the gradient through time (right axis). Notice the opposite magnitudes of the carbon dioxide (CO~2~, middle) and oxygen (O~2~, top) gradients consistent with diel rates of photosynthesis and respiration. The hydrogen sulfide (H~2~S, bottom) gradients appear to co-vary with the oxygen gradients. We now believe this indicates mass interference with oxygen in the QMS.](report_photos/gradients_2021.png){#fig-2021-gradients}
+![The GEMS lander, redesigned for the 2025 deployment. The central housing (A) contains the QMS, power handling and system microcontroller. The ADV transducer (D) and housing (B) collect velocity data at mid-height. The valve housing (C) contains control and power electronics for the system pump and servo controlled valve for switching between high (E) and low inlets.](report_photos/gems_lander.jpg){#fig-lander width="80%"}
+
+![For the 2025 deployment, we created a publicly accessible website summarizing all telemetry data (https://blongworth.github.io/GEMS_status/). The site was mostly used to monitor the system and troubleshoot issues. The site uses a simple API to collect data from a WHOI-hosted server, which in turn communicates directly with GEMS and stores telemetry data.](report_photos/gems_status.png){#fig-status}
+
+![The GEMS power, data and telemetry platform (top left) and GEMS lander (bottom right). A 10m cable providing 24V power and ethernet-based data runs between the platform and lander.](report_photos/gems_deployment.jpg){#fig-deployment}
+
+![The GEMS platform during the 2025 deployment. Samuel Koeck (MIT/WHOI PhD student) is above the lander deployment location.](report_photos/gems_deployment_2025.jpg){#fig-deployment-2025}
+
+
 
 {{< include gems_report_plots.qmd >}}
