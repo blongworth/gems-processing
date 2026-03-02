@@ -12,7 +12,7 @@ library(suntools)
 library(patchwork)
 library(targets)
 
-tar_load(c(rga_binned, rga_interp_test, rga_oxygen))
+tar_load(c(rga_binned, rga_temp_clean, rga_oxygen))
 ```
 
 Oxygen/Argon, colored by inlet
@@ -25,45 +25,92 @@ p <- ggplotly(e, dynamicTicks = TRUE)
 p
 ```
 
-```{r}
-e <- rga_interp_test |>
-  select(time_grid, mass_32_40_low, mass_32_40_high) |>
-  pivot_longer(
-    cols = c(mass_32_40_low, mass_32_40_high),
-    names_to = "inlet",
-    names_pattern = ".*_(low|high)$",
-    values_to = "mass_32_40",
-  ) |>
-ggplot(aes(time_grid, mass_32_40, color = inlet)) +
-  geom_line()
-
-p <- ggplotly(e, dynamicTicks = TRUE)
-p
-```
-
 ## Gradient plots
 
 TODO: check for gradient in CH4 and H2S (None seen initially)
 
 ```{r}
-e <- ggplot(rga_oxygen, aes(timestamp, mass_32_40_high_diff)) +
+gradient <- function(c_high, c_low, dz = 1.02) {
+  (c_high - c_low) / dz
+}
+```
+
+```{r}
+
+rga_clean_grad <- rga_temp_clean |> 
+  mutate(
+    ox_grad = gradient(mass_32_40_high, mass_32_40_low),
+    co2_grad = gradient(mass_44_40_high, mass_44_40_low),
+    meth_grad = gradient(mass_15_40_high, mass_15_40_low),
+    meth16_grad = gradient(mass_16_40_high, mass_16_40_low),
+    h2s_grad = gradient(mass_34_40_high, mass_34_40_low)
+  )
+
+o <- ggplot(rga_clean_grad, aes(timestamp, ox_grad)) +
   geom_line()
 
-f <- ggplot(rga_oxygen, aes(timestamp, par)) +
+e <- ggplot(rga_clean_grad, aes(timestamp, meth16_grad)) +
+  geom_line()
+
+s <- ggplot(rga_clean_grad, aes(timestamp, ox_grad - meth16_grad)) +
+  geom_line()
+
+f <- ggplot(rga_clean_grad, aes(timestamp, par)) +
   geom_line()
 
 # Convert to interactive plotly
-p1_pl <- ggplotly(e, dynamicTicks = TRUE)
-p2_pl <- ggplotly(f, dynamicTicks = TRUE)
+p1_pl <- ggplotly(o, dynamicTicks = TRUE)
+p2_pl <- ggplotly(e, dynamicTicks = TRUE)
+p3_pl <- ggplotly(s, dynamicTicks = TRUE)
+p4_pl <- ggplotly(f, dynamicTicks = TRUE)
 
 subplot(
   p1_pl,
   p2_pl,
-  nrows = 2,
+  p3_pl,
+  p4_pl,
+  nrows = 4,
   shareX = TRUE,
   titleY = TRUE,
-  heights = c(0.5, 0.5)
+  heights = c(0.3, 0.3, 0.3, 0.1)
 )
+```
+
+Can we remove the effect of Oxygen on mass 16?
+Use a linear fit of oxygen on mass 16, then plot the residuals as a "corrected" methane signal.
+
+
+```{r}
+meth16_fit <- lm(mass_16_40_high ~ mass_32_40_high, data = rga_temp_clean)
+rga_temp_clean_cor <- rga_temp_clean |>
+  mutate(
+    meth16_corrected = mass_16_40_high - (meth16_fit$coefficients[2] * mass_32_40_high + meth16_fit$coefficients[1])
+  )
+
+c <- ggplot(rga_temp_clean_cor, aes(timestamp, meth16_corrected)) +
+  geom_line()
+
+o <- ggplot(rga_temp_clean_cor, aes(timestamp, mass_32_40_high)) +
+  geom_line()
+
+f <- ggplot(rga_temp_clean_cor, aes(timestamp, par)) +
+  geom_line()
+
+# Convert to interactive plotly
+p1_pl <- ggplotly(c, dynamicTicks = TRUE)
+p2_pl <- ggplotly(o, dynamicTicks = TRUE)
+p3_pl <- ggplotly(f, dynamicTicks = TRUE)
+
+subplot(
+  p1_pl,
+  p2_pl,
+  p3_pl,
+  nrows = 3,
+  shareX = TRUE,
+  titleY = TRUE,
+  heights = c(0.4, 0.4, 0.2)
+)
+
 ```
 
 ```{r}
