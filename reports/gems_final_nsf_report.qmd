@@ -143,7 +143,7 @@ Growth data are presented in @fig-eelgrass. Growth trends are generally consiste
 
 ![The initial gradients measured by the prototype GEMS system during the 2021 deployment. Blue traces are the upper (1.1 m) height, red are the lower (0.2 m) height (left axis), and the yellow bars indicate the magnitude of the gradient through time (right axis). Notice the opposite magnitudes of the carbon dioxide (CO~2~, middle) and oxygen (O~2~, top) gradients consistent with diel rates of photosynthesis and respiration. The hydrogen sulfide (H~2~S, bottom) gradients appear to co-vary with the oxygen gradients. We now believe this indicates mass interference with oxygen in the QMS.](report_photos/gradients_2021.png){#fig-2021-gradients}
 
-![The GEMS power, data and telemetry platform with undergraduate Guest Student Natalia Wierzbicki and Summer Student Fellow (NSF REU) Ryan Galusha. Natalia and Ryan helped build the platform for the 2022 deployment. For 2025, the platform was outfitted with improved power and data systems, including more reliable communication with the lander, a new GSM/GPS module transmitting more telemetry data, and a safety switch for the wind turbine.](report_photos/gems_barge.jpg){#fig-barge}
+![The GEMS power, data and telemetry platform with undergraduate Guest Student Natalia Wierzbicki and Summer Student Fellow (NSF REU) Ryan Galusha. Wierzbicki and Galusha helped build the platform for the 2022 deployment. For 2025, the platform was outfitted with improved power and data systems, including more reliable communication with the lander, a new GSM/GPS module transmitting more telemetry data, and a safety switch for the wind turbine.](report_photos/gems_barge.jpg){#fig-barge}
 
 ![The GEMS set up for measurement of denitrification in *Zostera marina* (eelgrass) mesocosms. The evolution of ^15^N-labeled nitrate to labeled nitrogen gas was measured using the GEMS spectrometer in small, open bottom chambers. Argon was added to track loss of the label and nitrogen from the chamber system.](report_photos/gems_dn_chamber.png){#fig-label-setup width="70%"}
 
@@ -158,7 +158,5 @@ Growth data are presented in @fig-eelgrass. Growth trends are generally consiste
 ![The GEMS power, data and telemetry platform (top left) and GEMS lander (bottom right). A 10m cable providing 24V power and ethernet-based data runs between the platform and lander.](report_photos/gems_deployment.jpg){#fig-deployment}
 
 ![The GEMS platform during the 2025 deployment. Samuel Koeck (MIT/WHOI PhD student) is above the lander deployment location.](report_photos/gems_deployment_2025.jpg){#fig-deployment-2025}
-
-
 
 {{< include gems_report_plots.qmd >}}
