@@ -86,6 +86,11 @@ list(
     "data/2025_Hadleys_Harbor/prooceanus/prooceanus_co2_gems_hadley_2025-08-19.txt",
     format = "file"
   ),
+  tar_target(
+    gems_2022_file,
+    "data/2022_Hadleys_Harbor/gems_rga_2022_jeff.mat",
+    format = "file"
+  ),
   # location for calculating PAR
   tar_target(crds, matrix(c(-70.7003, 41.51875), nrow = 1)),
 
