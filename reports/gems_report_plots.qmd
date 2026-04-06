@@ -807,6 +807,20 @@ fp <- hourly_flux |>
 ```
 
 ```{r}
+#| label: fig-flux-dic-vs-o2
+#| fig-cap: GEMS DIC flux relationship to oxygen flux. DIC flux is determined for the period of the SeapHOx codeployment, using measured seapHOx pH and calibrated GEMS CO₂, assuming uniform pH between top and bottom inlets, and using CO2SYS for carbonate system calculations. 
+
+tar_read(dic_vs_o2_flux_plot)
+```
+
+```{r}
+#| label: fig-flux-dic-o2
+#| fig-cap: Hourly GEMS DIC flux (A) compared to oxygen flux (B). DIC flux is determined for the period of the SeapHOx codeployment, using measured seapHOx pH and calibrated GEMS CO₂, assuming uniform pH between top and bottom inlets, and using CO2SYS for carbonate system calculations. 
+
+tar_read(dic_o2_flux_plot)
+```
+
+```{r}
 #| label: fig-flux-diel-monthly
 #| fig-cap: >
 #|   GEMS oxygen flux (A) and predicted PAR (B) aggregated hourly and separated by month. Hour is adjusted to the mean solar noon for the deployment. June data is not shown due to bias from only 3 days of data acquisition.

@@ -296,6 +296,9 @@ add_grad_flux <- function(rga_adv_processed, flux_dataset, length_scale) {
   ustar_data <- get_ustar(flux_dataset)
   von_karman <- 0.41
   rga_adv_processed |>
+    select(
+      !c(oxygen_high, oxygen_low, starts_with("mass_"))
+    ) |>
     left_join(ustar_data, by = join_by(timestamp)) |>
     mutate(
       lscale = length_scale,
@@ -309,23 +312,15 @@ add_grad_flux <- function(rga_adv_processed, flux_dataset, length_scale) {
 
 calc_hourly_flux <- function(rga_adv_flux) {
   rga_adv_flux |>
-    select(
-      !c(oxygen_high, oxygen_low, starts_with("mass_"))
-    ) |>
     mutate(
       timestamp = lubridate::floor_date(timestamp, unit = "hour")
     ) |>
     group_by(timestamp) |>
     summarise(
       across(
-        !c(ox_flux, co2_flux),
-        c(
-          mean = \(x) mean(x, na.rm = TRUE) #,
-          # sd = \(x) sd(x, na.rm = TRUE),
-          # se = \(x) sd(x, na.rm = TRUE) / sqrt(length(x))
-        )
+        everything(),
+        \(x) mean(x, na.rm = TRUE)
       ),
-      across(c(ox_flux, co2_flux), \(x) sum(x, na.rm = TRUE)),
       .groups = "drop"
     )
 }

@@ -18,9 +18,11 @@ tar_option_set(
     "dplyr",
     "imputeTS",
     "readr",
+    "R.matlab",
     "quarto",
     "tidyr",
     "purrr",
+    "seacarb",
     "stringr"
   ),
 )
@@ -34,6 +36,7 @@ source("R/par.R")
 source("R/flux.R")
 source("R/analyse.R")
 source("R/eelgrass.R")
+source("R/plots.R")
 
 # config variables
 data_dir_path <- "data/processed/lander"
@@ -317,6 +320,53 @@ list(
     )
   ),
 
+  # add alkalinity calculations DIC flux and hourly stats
+  tar_target(
+    rga_calibrated_carbonate,
+    carbonate_calculations(
+      rga_calibrated,
+      seaphox_df_jul,
+      flux_dataset,
+      rga_adv_flux,
+      length_scale,
+      sensor_separation = 1.02
+    )
+  ),
+  tar_target(
+    hourly_carb_flux,
+    calc_hourly_flux(rga_calibrated_carbonate)
+  ),
+  # hourly stats with carbonate calculations
+  tar_target(
+    hourly_stats_carb,
+    calculate_hourly_statistics(hourly_carb_flux)
+  ),
+
+  # Plots
+  tar_target(
+    rga_mass_plot,
+    plot_rga_masses(rga_binned)
+  ),
+  tar_target(
+    qms_noise_plot,
+    plot_qms_noise_comparison(rga_binned, gems_2022_file)
+  ),
+  tar_target(
+    argon_norm_plot,
+    plot_argon_normalization(rga_binned)
+  ),
+  tar_target(
+    ox_short_plot,
+    plot_rep_daily_flux(hourly_flux)
+  ),
+  tar_target(
+    dic_vs_o2_flux_plot,
+    plot_dic_o2_flux(rga_calibrated_carbonate)
+  ),
+  tar_target(
+    dic_o2_flux_plot,
+    plot_flux_dic_par(hourly_stats_carb)
+  ),
   # EDA
   #tar_quarto(adv_eda, "eda/adv_eda.qmd"),
   tar_quarto(calibration_eda, "eda/calibration_eda.qmd"),
@@ -325,6 +375,6 @@ list(
   #tar_quarto(co2_report, "reports/gems_co2_issue.qmd"),
   tar_quarto(eelgrass_report, "reports/eelgrass.qmd"),
   tar_quarto(gems_report_plots, "reports/gems_report_plots.qmd"),
-  tar_quarto(gems_report, "reports/gems_final_nsf_report.qmd"),
-  tar_quarto(flux_report, "reports/gems_flux_report.qmd")
+  tar_quarto(gems_report, "reports/gems_final_nsf_report.qmd")
+  #tar_quarto(flux_report, "reports/gems_flux_report.qmd")
 )

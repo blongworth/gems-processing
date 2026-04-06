@@ -1,5 +1,12 @@
 # Plots for GEMS Data
 
+cb_print_4 <- c(
+  "#0072B2", # blue
+  "#009E73", # bluish green
+  "#D55E00", # vermillion
+  "#E69F00" # orange
+)
+
 # RGA mass plot for July data
 plot_rga_masses <- function(rga_binned) {
   jul_rga <- rga_binned |>
@@ -397,6 +404,8 @@ plot_diel_flux <- function(hourly_flux) {
 plot_rep_daily_flux <- function(hourly_flux) {
   jul_flux <- hourly_flux |>
     filter(
+      # timestamp > as.POSIXct("2025-07-01 00:00:00"),
+      # timestamp < as.POSIXct("2025-07-17 00:00:00")
       timestamp > as.POSIXct("2025-07-15 00:00:00"),
       timestamp < as.POSIXct("2025-07-19 12:00:00")
     )
@@ -792,4 +801,96 @@ plot_eelgrass <- function(eelgrass) {
     labs(x = NULL, y = "Length [cm]")
 
   (bmp / blp) + plot_annotation(tag_levels = 'A')
+}
+
+# DIC vs O2 flux
+plot_dic_o2_flux <- function(rga_calibrated_carbonate) {
+  model <- lm(dic_flux ~ ox_flux, data = rga_calibrated_carbonate)
+  r2 <- summary(model)$r.squared
+  slope <- coef(model)[2]
+  intercept <- coef(model)[1]
+
+  eq_label <- paste0(
+    "y = ",
+    round(intercept, 2),
+    " + ",
+    round(slope, 2),
+    "x\n",
+    "R² = ",
+    round(r2, 3)
+  )
+
+  ggplot(rga_calibrated_carbonate, aes(ox_flux, dic_flux)) +
+    geom_hline(yintercept = 0) +
+    geom_vline(xintercept = 0) +
+    geom_point(size = 1, alpha = .6) +
+    geom_smooth(method = "lm", se = FALSE, color = "darkgrey") +
+    annotate(
+      "text",
+      size = 3,
+      x = Inf,
+      y = Inf,
+      label = eq_label,
+      hjust = 1.1,
+      vjust = 1.3
+    ) +
+    labs(
+      x = expression("O"[2] ~ "flux [" * mmol ~ m^-2 ~ h^-1 * "]"),
+      y = expression("DIC flux [" * mmol ~ m^-2 ~ h^-1 * "]")
+    )
+}
+
+# Oxygen and DIC flux and predicted par
+plot_flux_dic_par <- function(hourly_stats) {
+  flp <- hourly_stats |>
+    ggplot(aes(solar_hour, ox_flux_mean)) +
+    geom_line() +
+    geom_pointrange(
+      aes(
+        ymin = ox_flux_mean - ox_flux_se,
+        ymax = ox_flux_mean + ox_flux_se
+      ),
+      size = 0.2,
+      color = cb_print_4[1]
+    ) +
+    geom_hline(yintercept = 0) +
+    labs(x = NULL, y = expression("Oxygen flux [" * mmol ~ m^-2 ~ h^-1 * "]"))
+
+  dfp <- hourly_stats |>
+    ggplot(aes(solar_hour, dic_flux_mean)) +
+    geom_line() +
+    geom_pointrange(
+      aes(
+        ymin = dic_flux_mean - dic_flux_se,
+        ymax = dic_flux_mean + dic_flux_se
+      ),
+      size = 0.2,
+      color = cb_print_4[1]
+    ) +
+    geom_hline(yintercept = 0) +
+    labs(x = NULL, y = expression("DIC flux [" * mmol ~ m^-2 ~ h^-1 * "]"))
+
+  parp <- hourly_stats |>
+    ggplot(aes(solar_hour, par_mean_mean)) +
+    geom_line(color = cb_print_4[1]) +
+    labs(
+      x = "Hour of Day",
+      y = expression(
+        PAR ~ "[" *
+          mu *
+          "mol " *
+          m^{
+            -2
+          } *
+          " " *
+          s^{
+            -1
+          } *
+          "]"
+      )
+    )
+
+  (flp / dfp / parp) +
+    plot_layout(heights = c(3, 3, 1)) +
+    plot_annotation(tag_levels = 'A')
 }

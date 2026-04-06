@@ -96,3 +96,83 @@ calculate_nem_monthly <- function(monthly_stats) {
       nem_mmol_m2_day = sum(ox_flux_mean)
     )
 }
+
+#' Create dataset with pH from Seaphox
+#'
+#' @param seaphox_df Data frame with Seaphox data
+#' @param start_time Start time for filtering
+#' @param end_time End time for filtering
+#' @return Data frame with timestamp and pH columns
+#' @export
+carbonate_calculations <- function(
+  rga_calibrated,
+  seaphox_df,
+  flux_dataset,
+  rga_adv_flux,
+  length_scale,
+  sensor_separation
+) {
+  df <- seaphox_df |>
+    filter(
+      timestamp >= as.POSIXct("2025-06-26"),
+      timestamp <= as.POSIXct("2025-07-16 14:00:00")
+    ) |>
+    mutate(timestamp = floor_date(timestamp, unit = "15 min")) |>
+    group_by(timestamp) |>
+    summarise(
+      seaphox_temp_c = mean(seaphox_temp_c),
+      seaphox_salinity_psu = mean(seaphox_salinity_psu),
+      seaphox_pH = mean(seaphox_pH, na.rm = TRUE)
+    ) |>
+    left_join(rga_calibrated, by = "timestamp") |>
+    mutate(
+      dic_high_umol_l = seacarb::carb(
+        flag = 1,
+        var1 = seaphox_pH,
+        var2 = co2_high_umol_l,
+        S = seaphox_salinity_psu,
+        T = seaphox_temp_c
+      )$DIC,
+      dic_low_umol_l = seacarb::carb(
+        flag = 1,
+        var1 = seaphox_pH,
+        var2 = co2_low_umol_l,
+        S = seaphox_salinity_psu,
+        T = seaphox_temp_c
+      )$DIC,
+      dic_gradient_umol_l_m = (dic_high_umol_l - dic_low_umol_l) /
+        sensor_separation
+    )
+
+  df |>
+    left_join(
+      flux_dataset |>
+        select(timestamp, Ustar) |>
+        mutate(timestamp = floor_date(timestamp, unit = "15 min")),
+      by = "timestamp"
+    ) |>
+    mutate(
+      lscale = length_scale,
+      dic_flux = -1 * Ustar * 0.41 * lscale * dic_gradient_umol_l_m
+    ) |>
+    left_join(
+      select(
+        rga_adv_flux,
+        timestamp,
+        ox_flux,
+        co2_flux
+      ),
+      by = "timestamp"
+    ) |>
+    select(
+      timestamp,
+      par,
+      seaphox_temp_c,
+      seaphox_salinity_psu,
+      seaphox_pH,
+      adv_temp,
+      dic_flux,
+      ox_flux,
+      co2_flux
+    )
+}

@@ -95,49 +95,19 @@ Flux was integrated to provide an hourly flux (mmol m^-2^ h^-1^).
 
 ## QMS Data
 
-Dissolved gas measurements over time from the GEMS system (@fig-mass-trace) show clear variability in dissolved oxygen and carbon dioxide concentrations and gradients.
-Low concentration and interference with ions from other species make determination of methane, nitrogen, and hydrogen sulfide fluxes difficult or impossible.
-Discrete measurements of methane showed low but measurable concentrations at the site (20 μmol L^-1^),
-but low signal at mass 15 and interference with peaks from water and oxygen at mass 16 made reliable determination impossible.
-Discrete measurements of hydrogen sulfide showed no measurable H~2~S at the site, so we believe any signal at mass 34 is likely a known interference with oxygen.
-We were able to greatly reduce the signal to noise ration in QMS data for the 2025 deployment
-as compared to the 2022 deployment (@fig-noise-comparison)
-by improving the microcontroller-based data acquisition system, adjusting the QMS chamber pressure, and reducing electrical noise.
-We found that normalizing signals to Argon (mass 40) greatly improved signal stability.
-Argon is similar in physical behavior to the other gasses of interest, but is not modified by ecosystem processes.
-Normalizing to argon removes much of the effect of environmental factors like temperature, pressure, and air-sea gas exchange,
-and system factors like flow rate, membrane permeability and biofouling (@fig-argon-norm).
+Dissolved gas measurements over time from the GEMS system (@fig-mass-trace) show clear variability in dissolved oxygen and carbon dioxide concentrations and gradients. Low concentration and interference with ions from other species make determination of methane, nitrogen, and hydrogen sulfide fluxes difficult or impossible. Discrete measurements of methane showed low but measurable concentrations at the site (20 μmol L^-1^), but low signal at mass 15 and interference with peaks from water and oxygen at mass 16 made reliable determination impossible. Discrete measurements of hydrogen sulfide showed no measurable H~2~S at the site, so we believe any signal at mass 34 is likely a known interference with oxygen. We were able to greatly reduce the signal to noise ration in QMS data for the 2025 deployment as compared to the 2022 deployment (@fig-noise-comparison) by improving the microcontroller-based data acquisition system, adjusting the QMS chamber pressure, and reducing electrical noise. We found that normalizing signals to Argon (mass 40) greatly improved signal stability. Argon is similar in physical behavior to the other gasses of interest, but is not modified by ecosystem processes. Normalizing to argon removes much of the effect of environmental factors like temperature, pressure, and air-sea gas exchange, and system factors like flow rate, membrane permeability and biofouling (@fig-argon-norm).
 
 ## Calibration
 
-Time-correlated data from co-deployed sensors was used for calibration.
-A linear fit between the argon-normalized mass of interest and calibrated sensor data was used to generate a calibration curve (@fig-cal).
-This produced a reasonable fit between the calibrated GEMS and sensor data (@fig-cal-timeseries).
-Cross-calibration with co-deployed sensors balances attempting to sample the same water concurrently with GEMS
-and disturbing eddy propagation and flow around and within the GEMS system.
-We chose to co-deploy sensors 2 m in the mean upcurrent direction to avoid disturbing eddy propagation.
-If the co-deployed sensors could sample the GEMS inlets directly without disturbing current or sample loop flow,
-the calibration uncertainty may be reduced.
+Time-correlated data from co-deployed sensors was used for calibration. A linear fit between the argon-normalized mass of interest and calibrated sensor data was used to generate a calibration curve (@fig-cal). This produced a reasonable fit between the calibrated GEMS and sensor data (@fig-cal-timeseries). Cross-calibration with co-deployed sensors balances attempting to sample the same water concurrently with GEMS and disturbing eddy propagation and flow around and within the GEMS system. We chose to co-deploy sensors 2 m in the mean upcurrent direction to avoid disturbing eddy propagation. If the co-deployed sensors could sample the GEMS inlets directly without disturbing current or sample loop flow, the calibration uncertainty may be reduced.
 
 ## Gradients and Fluxes
 
-Hourly fluxes for the duration of the deployment were determined for Oxygen (@fig-flux-timeseries) and Carbon Dioxide.
-Fluxes show a clear diel cycle (@fig-flux-zoom).
-Averaging these gradients by hour of solar day (@fig-gradient-diel) shows a mean daily maximum oxygen gradient of ± 10 mmol m^-4^.
-A clear diel cycle is apparent in the oxygen (@fig-flux-diel) and carbon dioxide (@fig-co2-diel) fluxes.
-Monthly patterns in the diel oxygen fluxes (@fig-flux-diel-monthly) show larger daily variability during summer months,
-when more light is available and water temperature is higher.
-The relationship between oxygen and carbon dioxide fluxes is complex (@fig-co2-vs-o2).
-Speciation of CO~2~ in the carbonate system and the balance of system respiration and photorespiration likely drive this relationship.
-Neither pH nor alkalinity were measured concurrently with dissolved gasses, so it is difficult to quantify inorganic carbon
-among carbonate species (CO~2~, CO~3~^2-^, HCO^3-^).
-Monthly  and daily (@fig-nem) estimates of net ecosystem metabolism show that
-while net fluxes vary on multiple timescales, the net metabolism of the system is close to zero.
+Hourly fluxes for the duration of the deployment were determined for Oxygen (@fig-flux-timeseries) and Carbon Dioxide. Fluxes show a clear diel cycle (@fig-flux-zoom). Averaging these gradients by hour of solar day (@fig-gradient-diel) shows a mean daily maximum oxygen gradient of ± 10 mmol m^-4^. A clear diel cycle is apparent in the oxygen (@fig-flux-diel) and carbon dioxide (@fig-co2-diel) fluxes. Monthly patterns in the diel oxygen fluxes (@fig-flux-diel-monthly) show larger daily variability during summer months, when more light is available and water temperature is higher. The relationship between oxygen and carbon dioxide fluxes is complex (@fig-co2-vs-o2). Speciation of CO~2~ in the carbonate system and the balance of system respiration and photorespiration likely drive this relationship. Neither pH nor alkalinity were measured concurrently with dissolved gasses, so it is difficult to quantify inorganic carbon among carbonate species (CO~2~, CO~3~^2-^, HCO^3-^). Monthly and daily (@fig-nem) estimates of net ecosystem metabolism show that while net fluxes vary on multiple timescales, the net metabolism of the system is close to zero.
 
 ## Eelgrass Growth Data
 
-Eelgrass growth measured as areal density and length of annual shoots was measured at the Hadleys Harbor site semi-monthly for the duration of the project.
-Growth data are presented in @fig-eelgrass. Growth trends are generally consistent from year to year. Maximum shoot biomass density and blade length occur late in the summer growth season.
+Eelgrass growth measured as areal density and length of annual shoots was measured at the Hadleys Harbor site semi-monthly for the duration of the project. Growth data are presented in @fig-eelgrass. Growth trends are generally consistent from year to year. Maximum shoot biomass density and blade length occur late in the summer growth season.
 
 # Figures
 
