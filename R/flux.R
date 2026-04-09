@@ -9,7 +9,6 @@ process_adv_to_ml_input <- function(
 ) {
   adv_df <- read_adv_data(adv_file_name)
   proc_adv_df <- adv_df |>
-    scale_adv_velocity() |>
     impute_adv_data() |>
     group_adv_data() |>
     flag_adv_lander_moves(moves_file_name)
@@ -33,6 +32,8 @@ read_adv_data <- function(adv_file_path, min_correlation = NULL) {
     collect()
 }
 
+#' Scale ADV velocities by a factor (e.g., 10) to match expected ranges for MATLAB processing
+#' NOT USED
 scale_adv_velocity <- function(adv_data, scale_factor = 10) {
   adv_data |>
     mutate(

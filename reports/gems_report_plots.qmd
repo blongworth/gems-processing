@@ -441,13 +441,13 @@ tp <- hourly_flux |>
       lag(timestamp),
       units = "hours"
     )),
-    adv_temp_mean = ifelse(time_diff > 1, NA, adv_temp_mean),
+    adv_temp = ifelse(time_diff > 1, NA, adv_temp),
   ) |>
-  ggplot(aes(timestamp, adv_temp_mean)) +
+  ggplot(aes(timestamp, adv_temp)) +
   geom_line(color = cb_print_4[1]) +
   labs(x = NULL, y = "Temp [C]")
 
-gpp = ggplot(hourly_flux, aes(timestamp, par_mean)) +
+gpp = ggplot(hourly_flux, aes(timestamp, par)) +
   geom_line() +
   labs(
     x = NULL,
@@ -521,7 +521,7 @@ jfp <- jul_flux |>
   )
 
 jpp <- jul_flux |>
-  ggplot(aes(timestamp, par_mean)) +
+  ggplot(aes(timestamp, par)) +
   geom_line(color = cb_print_4[1]) +
   labs(
     x = NULL,
@@ -555,12 +555,12 @@ jpp <- jul_flux |>
 ### Concentration and gradient
 
 hmp <- hourly_stats |>
-  ggplot(aes(solar_hour, ox_mean_umol_l_mean_mean)) +
+  ggplot(aes(solar_hour, ox_mean_umol_l_mean)) +
   geom_line() +
   geom_pointrange(
     aes(
-      ymin = ox_mean_umol_l_mean_mean - ox_mean_umol_l_mean_se,
-      ymax = ox_mean_umol_l_mean_mean + ox_mean_umol_l_mean_se
+      ymin = ox_mean_umol_l_mean - ox_mean_umol_l_se,
+      ymax = ox_mean_umol_l_mean + ox_mean_umol_l_se
     ),
     size = 0.2,
     color = cb_print_4[1]
@@ -568,12 +568,12 @@ hmp <- hourly_stats |>
   labs(x = NULL, y = expression("Oxygen [" * mmol ~ m^-3 * "]"))
 
 hgp <- hourly_stats |>
-  ggplot(aes(solar_hour, ox_gradient_umol_l_m_mean_mean)) +
+  ggplot(aes(solar_hour, ox_gradient_umol_l_m_mean)) +
   geom_line() +
   geom_pointrange(
     aes(
-      ymin = ox_gradient_umol_l_m_mean_mean - ox_gradient_umol_l_m_mean_se,
-      ymax = ox_gradient_umol_l_m_mean_mean + ox_gradient_umol_l_m_mean_se
+      ymin = ox_gradient_umol_l_m_mean - ox_gradient_umol_l_m_se,
+      ymax = ox_gradient_umol_l_m_mean + ox_gradient_umol_l_m_se
     ),
     size = 0.2,
     color = cb_print_4[1]
@@ -612,7 +612,7 @@ flp <- hourly_stats |>
   labs(x = NULL, y = expression("Oxygen flux [" * mmol ~ m^-2 ~ h^-1 * "]"))
 
 parp <- hourly_stats |>
-  ggplot(aes(solar_hour, par_mean_mean)) +
+  ggplot(aes(solar_hour, par_mean)) +
   geom_line(color = cb_print_4[1]) +
   labs(
     x = "Hour of Day",
@@ -648,12 +648,12 @@ parp <- hourly_stats |>
 ### CO2 concentration, gradient and flux
 
 hmp <- hourly_stats |>
-  ggplot(aes(solar_hour, co2_mean_umol_l_mean_mean)) +
+  ggplot(aes(solar_hour, co2_mean_umol_l_mean)) +
   geom_line() +
   geom_pointrange(
     aes(
-      ymin = co2_mean_umol_l_mean_mean - co2_mean_umol_l_mean_se,
-      ymax = co2_mean_umol_l_mean_mean + co2_mean_umol_l_mean_se
+      ymin = co2_mean_umol_l_mean - co2_mean_umol_l_se,
+      ymax = co2_mean_umol_l_mean + co2_mean_umol_l_se
     ),
     size = 0.2,
     color = cb_print_4[1]
@@ -661,12 +661,12 @@ hmp <- hourly_stats |>
   labs(x = NULL, y = expression("CO"[2] ~ "[" * mmol ~ m^-3 * "]"))
 
 hgp <- hourly_stats |>
-  ggplot(aes(solar_hour, co2_gradient_umol_l_m_mean_mean)) +
+  ggplot(aes(solar_hour, co2_gradient_umol_l_m_mean)) +
   geom_line() +
   geom_pointrange(
     aes(
-      ymin = co2_gradient_umol_l_m_mean_mean - co2_gradient_umol_l_m_mean_se,
-      ymax = co2_gradient_umol_l_m_mean_mean + co2_gradient_umol_l_m_mean_se
+      ymin = co2_gradient_umol_l_m_mean - co2_gradient_umol_l_m_se,
+      ymax = co2_gradient_umol_l_m_mean + co2_gradient_umol_l_m_se
     ),
     size = 0.2,
     color = cb_print_4[1]
@@ -831,12 +831,12 @@ tar_read(dic_o2_flux_plot)
 monthly_stats <- mutate(monthly_stats, month = as.factor(month))
 
 hmp <- monthly_stats |>
-  ggplot(aes(solar_hour, ox_mean_umol_l_mean_mean, color = month)) +
+  ggplot(aes(solar_hour, ox_mean_umol_l_mean, color = month)) +
   geom_line() +
   geom_pointrange(
     aes(
-      ymin = ox_mean_umol_l_mean_mean - ox_mean_umol_l_mean_se,
-      ymax = ox_mean_umol_l_mean_mean + ox_mean_umol_l_mean_se
+      ymin = ox_mean_umol_l_mean - ox_mean_umol_l_se,
+      ymax = ox_mean_umol_l_mean + ox_mean_umol_l_se
     ),
     size = 0.2,
     # position = position_dodge(width = 0.5)
@@ -845,12 +845,12 @@ hmp <- monthly_stats |>
   labs(x = NULL, y = expression("Oxygen [" * mmol ~ m^-3 * "]"))
 
 hgp <- monthly_stats |>
-  ggplot(aes(solar_hour, ox_gradient_umol_l_m_mean_mean, color = month)) +
+  ggplot(aes(solar_hour, ox_gradient_umol_l_m_mean, color = month)) +
   geom_line() +
   geom_pointrange(
     aes(
-      ymin = ox_gradient_umol_l_m_mean_mean - ox_gradient_umol_l_m_mean_se,
-      ymax = ox_gradient_umol_l_m_mean_mean + ox_gradient_umol_l_m_mean_se
+      ymin = ox_gradient_umol_l_m_mean - ox_gradient_umol_l_m_se,
+      ymax = ox_gradient_umol_l_m_mean + ox_gradient_umol_l_m_se
     ),
     size = 0.2,
     # position = position_dodge(width = 0.5)
@@ -876,7 +876,7 @@ flp <- monthly_stats |>
   labs(x = NULL, y = expression("Oxygen flux [" * mmol ~ m^-2 ~ h^-1 * "]"))
 
 parp <- monthly_stats |>
-  ggplot(aes(solar_hour, par_mean_mean, color = month)) +
+  ggplot(aes(solar_hour, par_mean, color = month)) +
   geom_line() +
   labs(
     x = "Hour of Day",

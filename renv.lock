@@ -1,6 +1,6 @@
 {
   "R": {
-    "Version": "4.5.2",
+    "Version": "4.5.3",
     "Repositories": [
       {
         "Name": "CRAN",
@@ -386,6 +386,29 @@
       "Author": "Dirk Eddelbuettel [aut, cre] (ORCID: <https://orcid.org/0000-0001-6419-907X>), Romain Francois [aut] (ORCID: <https://orcid.org/0000-0002-2444-4226>), Doug Bates [aut] (ORCID: <https://orcid.org/0000-0001-8316-9503>), Binxiang Ni [aut], Conrad Sanderson [aut] (ORCID: <https://orcid.org/0000-0002-0049-4501>)",
       "Maintainer": "Dirk Eddelbuettel <edd@debian.org>",
       "Repository": "CRAN"
+    },
+    "SolveSAPHE": {
+      "Package": "SolveSAPHE",
+      "Version": "2.1.0",
+      "Source": "Repository",
+      "Title": "Solver Suite for Alkalinity-PH Equations",
+      "Date": "2021-04-09",
+      "Authors@R": "c(person(\"Jean-Marie\", \"Epitalon\", role = c(\"aut\", \"cre\", \"cph\"), email = \"jean-marie.epitalon@orange.fr\"), person(\"Jean-Pierre\", \"Gattuso\", role = c(\"cph\"), email = \"gattuso@obs-vlfr.fr\"), person(\"Guy\", \"Munhoven\", role = \"aut\", email = \"Guy.Munhoven@ulg.ac.be\") )",
+      "Depends": [
+        "R (>= 2.10)"
+      ],
+      "Imports": [
+        "stats"
+      ],
+      "Description": "Universal and robust algorithm for solving the total alkalinity-pH equation presented in G. Munhoven (2013) <doi:10.5194/gmd-6-1367-2013> and G. Munhoven (2021) <doi:10.5194/gmd-2020-447>. The total alkalinity-pH equation relates total alkalinity and pH for a given set of acid-base concentrations in a given water sample, among which carbonic acid. This package is particularly useful in marine chemistry involving dissolved inorganic carbon. Original package in Fortran can be found at <doi:10.5281/zenodo.4328965>.",
+      "Encoding": "UTF-8",
+      "URL": "https://CRAN.R-project.org/package=SolveSAPHE",
+      "License": "GPL (>= 2)",
+      "Repository": "CRAN",
+      "RoxygenNote": "7.1.0",
+      "NeedsCompilation": "no",
+      "Author": "Jean-Marie Epitalon [aut, cre, cph], Jean-Pierre Gattuso [cph], Guy Munhoven [aut]",
+      "Maintainer": "Jean-Marie Epitalon <jean-marie.epitalon@orange.fr>"
     },
     "TTR": {
       "Package": "TTR",
@@ -3766,6 +3789,57 @@
       "Maintainer": "Brian Ripley <Brian.Ripley@R-project.org>",
       "Repository": "CRAN"
     },
+    "oce": {
+      "Package": "oce",
+      "Version": "1.8-3",
+      "Source": "Repository",
+      "Title": "Analysis of Oceanographic Data",
+      "Authors@R": "c( person(given=\"Dan\", family=\"Kelley\", email=\"Dan.Kelley@Dal.Ca\", role=c(\"aut\", \"cre\"), comment=c(ORCID=\"https://orcid.org/0000-0001-7808-5911\")), person(given=\"Clark\", family=\"Richards\", email=\"clark.richards@gmail.com\", role=c(\"aut\"), comment=c(ORCID=\"https://orcid.org/0000-0002-7833-206X\")), person(given=\"Chantelle\", family=\"Layton\", email=\"chantelle.layton@dal.ca\", role=c(\"ctb\"), comment=c(ORCID=\"https://orcid.org/0000-0002-3199-5763\", \"curl() coauthor\")), person(given=\"British Geological Survey\", role=c(\"ctb\",\"cph\"), comment=\"magnetic-field subroutine\"))",
+      "Maintainer": "Dan Kelley <Dan.Kelley@Dal.Ca>",
+      "Depends": [
+        "R (>= 4.1.0)",
+        "gsw",
+        "methods",
+        "utils"
+      ],
+      "Suggests": [
+        "automap",
+        "DBI",
+        "foreign",
+        "interp",
+        "knitr",
+        "lubridate",
+        "ncdf4",
+        "ocedata",
+        "rmarkdown",
+        "RSQLite",
+        "R.utils",
+        "sf",
+        "terra",
+        "testthat (>= 3.0.0)",
+        "tiff",
+        "XML"
+      ],
+      "BugReports": "https://github.com/dankelley/oce/issues",
+      "Description": "Supports the analysis of Oceanographic data, including 'ADCP' measurements, measurements made with 'argo' floats, 'CTD' measurements, sectional data, sea-level time series, coastline and topographic data, etc. Provides specialized functions for calculating seawater properties such as potential temperature in either the 'UNESCO' or 'TEOS-10' equation of state. Produces graphical displays that conform to the conventions of the Oceanographic literature. This package is discussed extensively by Kelley (2018) \"Oceanographic Analysis with R\" <doi:10.1007/978-1-4939-8844-0>.",
+      "License": "GPL (>= 2)",
+      "Encoding": "UTF-8",
+      "URL": "https://dankelley.github.io/oce/",
+      "LazyData": "false",
+      "RoxygenNote": "7.3.2",
+      "BuildVignettes": "true",
+      "VignetteBuilder": "knitr",
+      "NeedsCompilation": "yes",
+      "LinkingTo": [
+        "Rcpp"
+      ],
+      "Imports": [
+        "Rcpp"
+      ],
+      "Config/testthat/edition": "3",
+      "Author": "Dan Kelley [aut, cre] (<https://orcid.org/0000-0001-7808-5911>), Clark Richards [aut] (<https://orcid.org/0000-0002-7833-206X>), Chantelle Layton [ctb] (<https://orcid.org/0000-0002-3199-5763>, curl() coauthor), British Geological Survey [ctb, cph] (magnetic-field subroutine)",
+      "Repository": "CRAN"
+    },
     "openssl": {
       "Package": "openssl",
       "Version": "2.3.2",
@@ -5055,6 +5129,30 @@
       "Author": "Hadley Wickham [aut], Thomas Lin Pedersen [cre, aut] (<https://orcid.org/0000-0002-5147-4711>), Dana Seidel [aut], Posit Software, PBC [cph, fnd] (03wc8by49)",
       "Maintainer": "Thomas Lin Pedersen <thomas.pedersen@posit.co>",
       "Repository": "CRAN"
+    },
+    "seacarb": {
+      "Package": "seacarb",
+      "Version": "3.3.3",
+      "Source": "Repository",
+      "Title": "Seawater Carbonate Chemistry",
+      "Date": "2024-02-14",
+      "LazyData": "true",
+      "Authors@R": "c(person(\"Jean-Pierre\", \"Gattuso\", role = c(\"aut\", \"cre\", \"cph\"), email = \"jean-pierre.gattuso@imev-mer.fr\"), person(\"Jean-Marie\", \"Epitalon\", role = \"aut\", email = \"jean-marie.epitalon@orange.fr\"), person(\"Heloise\", \"Lavigne\", role = \"aut\", email = \"lavigne@obs-vlfr.fr\"), person(\"James\", \"Orr\", role = \"aut\", email = \"james.orr@lsce.ipsl.fr\"), person(\"Bernard\", \"Gentili\", role = \"ctb\"), person(\"Mathilde\", \"Hagens\", role = \"ctb\"), person(\"Andreas\", \"Hofmann\", role = \"ctb\"), person(\"Jens-Daniel\", \"Mueller\", role = \"ctb\"), person(\"Aurélien\", \"Proye\", role = \"ctb\"), person(\"James\", \"Rae\", role = \"ctb\"), person(\"Karline\", \"Soetaert\", role = \"ctb\") )",
+      "Depends": [
+        "R (>= 3.5.0)",
+        "oce",
+        "gsw",
+        "SolveSAPHE"
+      ],
+      "Description": "Calculates parameters of the seawater carbonate system and assists the design of ocean acidification perturbation experiments.",
+      "Encoding": "UTF-8",
+      "URL": "https://CRAN.R-project.org/package=seacarb",
+      "License": "GPL (>= 2)",
+      "Repository": "CRAN",
+      "RoxygenNote": "7.1.1",
+      "NeedsCompilation": "no",
+      "Author": "Jean-Pierre Gattuso [aut, cre, cph], Jean-Marie Epitalon [aut], Heloise Lavigne [aut], James Orr [aut], Bernard Gentili [ctb], Mathilde Hagens [ctb], Andreas Hofmann [ctb], Jens-Daniel Mueller [ctb], Aurélien Proye [ctb], James Rae [ctb], Karline Soetaert [ctb]",
+      "Maintainer": "Jean-Pierre Gattuso <jean-pierre.gattuso@imev-mer.fr>"
     },
     "secretbase": {
       "Package": "secretbase",

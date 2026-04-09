@@ -117,12 +117,12 @@ Daily summary by hour-of-day
 
 ```{r}
 hmp <- hourly_stats |>
-  ggplot(aes(solar_hour, ox_mean_umol_l_mean_mean)) +
+  ggplot(aes(solar_hour, ox_mean_umol_l_mean)) +
   geom_line() +
   geom_pointrange(
     aes(
-      ymin = ox_mean_umol_l_mean_mean - ox_mean_umol_l_mean_se,
-      ymax = ox_mean_umol_l_mean_mean + ox_mean_umol_l_mean_se
+      ymin = ox_mean_umol_l_mean - ox_mean_umol_l_se,
+      ymax = ox_mean_umol_l_mean + ox_mean_umol_l_se
     ),
     size = 0.1,
     # position = position_dodge(width = 0.5)
@@ -131,12 +131,12 @@ hmp <- hourly_stats |>
   labs(x = NULL, y = "Oxygen Conc. [mmol/m3]")
 
 hgp <- hourly_stats |>
-  ggplot(aes(solar_hour, ox_gradient_umol_l_m_mean_mean)) +
+  ggplot(aes(solar_hour, ox_gradient_umol_l_m_mean)) +
   geom_line() +
   geom_pointrange(
     aes(
-      ymin = ox_gradient_umol_l_m_mean_mean - ox_gradient_umol_l_m_mean_se,
-      ymax = ox_gradient_umol_l_m_mean_mean + ox_gradient_umol_l_m_mean_se
+      ymin = ox_gradient_umol_l_m_mean - ox_gradient_umol_l_m_se,
+      ymax = ox_gradient_umol_l_m_mean + ox_gradient_umol_l_m_se
     ),
     size = 0.1,
     # position = position_dodge(width = 0.5)
@@ -159,7 +159,7 @@ flp <- hourly_stats |>
   labs(x = "Hour of Day", y = "Oxygen Flux [mmol/m2/h]")
 
 parp <- hourly_stats |>
-  ggplot(aes(solar_hour, par_mean_mean)) +
+  ggplot(aes(solar_hour, par_mean)) +
   geom_line() +
   labs(x = "Hour of Day", y = "Predicted PAR [mmol/m2]")
 
@@ -181,12 +181,12 @@ Monthly Oxygen flux
 monthly_stats <- mutate(monthly_stats, month = as.factor(month))
 
 hmp <- monthly_stats |>
-  ggplot(aes(solar_hour, ox_mean_umol_l_mean_mean, color = month)) +
+  ggplot(aes(solar_hour, ox_mean_umol_l_mean, color = month)) +
   geom_line() +
   geom_pointrange(
     aes(
-      ymin = ox_mean_umol_l_mean_mean - ox_mean_umol_l_mean_se,
-      ymax = ox_mean_umol_l_mean_mean + ox_mean_umol_l_mean_se
+      ymin = ox_mean_umol_l_mean - ox_mean_umol_l_se,
+      ymax = ox_mean_umol_l_mean + ox_mean_umol_l_se
     ),
     size = 0.1,
     # position = position_dodge(width = 0.5)
@@ -195,12 +195,12 @@ hmp <- monthly_stats |>
   labs(x = NULL, y = "Oxygen Conc. [mmol/m3]")
 
 hgp <- monthly_stats |>
-  ggplot(aes(solar_hour, ox_gradient_umol_l_m_mean_mean, color = month)) +
+  ggplot(aes(solar_hour, ox_gradient_umol_l_m_mean, color = month)) +
   geom_line() +
   geom_pointrange(
     aes(
-      ymin = ox_gradient_umol_l_m_mean_mean - ox_gradient_umol_l_m_mean_se,
-      ymax = ox_gradient_umol_l_m_mean_mean + ox_gradient_umol_l_m_mean_se
+      ymin = ox_gradient_umol_l_m_mean - ox_gradient_umol_l_m_se,
+      ymax = ox_gradient_umol_l_m_mean + ox_gradient_umol_l_m_se
     ),
     size = 0.1,
     # position = position_dodge(width = 0.5)
@@ -223,7 +223,7 @@ flp <- monthly_stats |>
   labs(x = "Hour of Day", y = "Oxygen Flux [mmol/m2/h]")
 
 parp <- monthly_stats |>
-  ggplot(aes(solar_hour, par_mean_mean, color = month)) +
+  ggplot(aes(solar_hour, par_mean, color = month)) +
   geom_line() +
   labs(x = "Hour of Day", y = "Predicted PAR [mmol/m2]")
 
@@ -241,12 +241,12 @@ Comparison of CO2 and O2 gradient
 ```{r}
 
 hgp <- hourly_stats |>
-  ggplot(aes(solar_hour, ox_gradient_umol_l_m_mean_mean)) +
+  ggplot(aes(solar_hour, ox_gradient_umol_l_m_mean)) +
   geom_line() +
   geom_pointrange(
     aes(
-      ymin = ox_gradient_umol_l_m_mean_mean - ox_gradient_umol_l_m_mean_se,
-      ymax = ox_gradient_umol_l_m_mean_mean + ox_gradient_umol_l_m_mean_se
+      ymin = ox_gradient_umol_l_m_mean - ox_gradient_umol_l_m_se,
+      ymax = ox_gradient_umol_l_m_mean + ox_gradient_umol_l_m_se
     ),
     size = 0.1,
     # position = position_dodge(width = 0.5)
@@ -255,14 +255,14 @@ hgp <- hourly_stats |>
   labs(x = "Hour of Day", y = "Oxygen Gradient [mmol/m4]")
 
 cgp <- hourly_stats |>
-  ggplot(aes(solar_hour, co2_gradient_umol_l_m_mean_mean)) +
+  ggplot(aes(solar_hour, co2_gradient_umol_l_m_mean)) +
   geom_line() +
   geom_pointrange(
     aes(
-      ymin = co2_gradient_umol_l_m_mean_mean -
-        co2_gradient_umol_l_m_mean_se,
-      ymax = co2_gradient_umol_l_m_mean_mean +
-        co2_gradient_umol_l_m_mean_se
+      ymin = co2_gradient_umol_l_m_mean -
+        co2_gradient_umol_l_m_se,
+      ymax = co2_gradient_umol_l_m_mean +
+        co2_gradient_umol_l_m_se
     ),
     size = 0.1,
     # position = position_dodge(width = 0.5)
