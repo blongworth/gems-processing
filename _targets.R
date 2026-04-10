@@ -473,10 +473,6 @@ list(
   #tar_quarto(co2_report, "reports/gems_co2_issue.qmd"),
   tar_quarto(eelgrass_report, "reports/eelgrass.qmd"),
   # tar_quarto(gems_report_plots, "reports/gems_report_plots.qmd"),
-  tar_quarto(
-    gems_report_plots_targets,
-    "reports/gems_report_plots_targets.qmd"
-  ),
   tar_quarto(gems_report, "reports/gems_final_nsf_report.qmd")
   #tar_quarto(flux_report, "reports/gems_flux_report.qmd")
 )

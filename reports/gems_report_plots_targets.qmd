@@ -116,12 +116,17 @@ tar_read(calibration_timeseries_plot)
 ```{r}
 #| label: fig-flux-timeseries
 #| fig-cap: >
-#|   Hourly oxygen flux (A) for the duration of the deployment. Maintenance periods and times when the data were known to be poor due to system issues have been removed.
-#|   estimated daily light integral (DLI, B) and seawater temperature at mid height (C) for comparison.
+#|   Hourly oxygen flux (A) for the duration of the deployment.
+#|   Maintenance periods and times when the data were known
+#|   to be poor due to system issues have been removed.
+#|   estimated daily light integral (DLI, B)
+#|   and seawater temperature at mid height (C) for comparison.
 #|   Flux decreases with decreasing light and temperature.
 #|   No light sensor was codeployed with GEMS,
 #|   therefore photosynthetically active radiation (PAR) and DLI
-#|   are estimated from modeled, cloud-free insolation. A high flux outlier on July 19 believed to be caused by fouling was removed from the plot.
+#|   are estimated from modeled, cloud-free insolation.
+#|   A high flux outlier on July 19 believed to be caused by fouling
+#|   was removed from the plot.
 #| warning: false
 #| fig-height: 5.5
 
@@ -193,7 +198,15 @@ tar_read(co2_vs_o2_plot)
 
 ```{r}
 #| label: fig-flux-dic-vs-o2
-#| fig-cap: GEMS DIC flux relationship to oxygen flux. DIC flux is determined for the period of the SeapHOx codeployment, using measured seapHOx pH and calibrated GEMS CO₂, assuming uniform pH between top and bottom inlets, and using CO2SYS for carbonate system calculations.
+#| fig-cap: >
+#|   GEMS DIC flux relationship to oxygen flux.
+#|   DIC flux is determined for the period of the SeapHOx codeployment,
+#|   using measured seapHOx pH and calibrated GEMS CO₂.
+#|   The shared pH plot (A) assumes uniform pH between top and bottom inlets.
+#|   The corrected DIC flux (B) holds high-inlet alkalinity constant
+#|   and predicts low-inlet DIC from low-inlet CO₂.
+#| fig-height: 6
+#| warning: false
 
 tar_read(dic_vs_o2_flux_plot)
 ```

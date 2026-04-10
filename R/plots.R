@@ -856,39 +856,64 @@ plot_eelgrass <- function(eelgrass) {
 
 # DIC vs O2 flux
 plot_dic_o2_flux <- function(rga_calibrated_carbonate) {
-  model <- lm(dic_flux ~ ox_flux, data = rga_calibrated_carbonate)
-  r2 <- summary(model)$r.squared
-  slope <- coef(model)[2]
-  intercept <- coef(model)[1]
+  make_flux_panel <- function(df, flux_col, title) {
+    plot_df <- df |>
+      filter(
+        is.finite(ox_flux),
+        is.finite(.data[[flux_col]]),
+        is.finite(par)
+      )
+    model <- lm(reformulate("ox_flux", flux_col), data = plot_df)
+    x_range <- range(plot_df$ox_flux, na.rm = TRUE)
+    eq_label <- paste0(
+      "y = ",
+      round(coef(model)[1], 2),
+      " + ",
+      round(coef(model)[2], 2),
+      "x\nR² = ",
+      round(summary(model)$r.squared, 3)
+    )
 
-  eq_label <- paste0(
-    "y = ",
-    round(intercept, 2),
-    " + ",
-    round(slope, 2),
-    "x\n",
-    "R² = ",
-    round(r2, 3)
+    ggplot(plot_df, aes(ox_flux, .data[[flux_col]], color = par)) +
+      geom_hline(yintercept = 0) +
+      geom_vline(xintercept = 0) +
+      geom_point(size = 1, alpha = .6) +
+      geom_smooth(method = "lm", se = FALSE, color = "darkgrey") +
+      geom_text(
+        aes(x = Inf, y = Inf, label = eq_label),
+        size = 3,
+        hjust = 1.1,
+        vjust = 1.3,
+        inherit.aes = FALSE
+      ) +
+      labs(
+        title = title,
+        x = expression("O"[2] ~ "flux [" * mmol ~ m^-2 ~ h^-1 * "]"),
+        y = expression("DIC flux [" * mmol ~ m^-2 ~ h^-1 * "]")
+      ) +
+      scale_colour_gradientn(
+        colours = c("#0D0887", "#7E03A8", "#CC4778", "#F89441", "#F0F921"),
+        name = "PAR"
+      ) +
+      scale_x_continuous(
+        limits = x_range,
+        expand = expansion(mult = 0)
+      ) +
+      theme(aspect.ratio = 1)
+  }
+
+  shared_ph_plot <- make_flux_panel(
+    rga_calibrated_carbonate,
+    "dic_flux",
+    "Shared pH DIC flux"
+  )
+  corrected_plot <- make_flux_panel(
+    rga_calibrated_carbonate,
+    "dic_flux_corrected",
+    "Corrected DIC flux"
   )
 
-  ggplot(rga_calibrated_carbonate, aes(ox_flux, dic_flux)) +
-    geom_hline(yintercept = 0) +
-    geom_vline(xintercept = 0) +
-    geom_point(size = 1, alpha = .6) +
-    geom_smooth(method = "lm", se = FALSE, color = "darkgrey") +
-    annotate(
-      "text",
-      size = 3,
-      x = Inf,
-      y = Inf,
-      label = eq_label,
-      hjust = 1.1,
-      vjust = 1.3
-    ) +
-    labs(
-      x = expression("O"[2] ~ "flux [" * mmol ~ m^-2 ~ h^-1 * "]"),
-      y = expression("DIC flux [" * mmol ~ m^-2 ~ h^-1 * "]")
-    )
+  (shared_ph_plot / corrected_plot) + plot_annotation(tag_levels = 'A')
 }
 
 # Oxygen and DIC flux and predicted par

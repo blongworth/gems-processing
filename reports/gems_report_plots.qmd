@@ -808,7 +808,7 @@ fp <- hourly_flux |>
 
 ```{r}
 #| label: fig-flux-dic-vs-o2
-#| fig-cap: GEMS DIC flux relationship to oxygen flux. DIC flux is determined for the period of the SeapHOx codeployment, using measured seapHOx pH and calibrated GEMS CO₂, assuming uniform pH between top and bottom inlets, and using CO2SYS for carbonate system calculations. 
+#| fig-cap: GEMS DIC flux relationship to oxygen flux. DIC flux is determined for the period of the SeapHOx codeployment, using measured seapHOx pH and calibrated GEMS CO₂, assuming uniform pH between top and bottom inlets, and using CO2SYS for carbonate system calculations. The corrected DIC flux holds high-inlet alkalinity constant and predicts low-inlet DIC from low-inlet CO₂.
 
 tar_read(dic_vs_o2_flux_plot)
 ```
