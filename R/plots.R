@@ -298,6 +298,10 @@ plot_cal_timeseries <- function(cal_plot_df, ox_model) {
     filter(timestamp > "2025-07-11 10:00:00") |>
     mutate(
       rga_ox = mass_32_40 * om + oi
+    ) |>
+    filter(
+      !is.na(seaphox_oxygen_umol_l),
+      !is.na(rga_ox)
     )
 
   cal_plot_df |>

@@ -110,6 +110,10 @@ oi <- ox_model$coefficients[1]
 ox_cal_df <- ox_cal_df |>
   mutate(
     rga_ox = mass_32_40 * om + oi
+  ) |>
+  filter(
+    !is.na(seaphox_oxygen_umol_l),
+    !is.na(rga_ox)
   )
 ```
 
@@ -193,6 +197,10 @@ ci <- co2_model$coefficients[1]
 co2_cal_df <- co2_cal_df |>
   mutate(
     rga_co2 = mass_44_40 * cm + ci
+  ) |>
+  filter(
+    !is.na(prooceanus_co2_umol_l),
+    !is.na(rga_co2)
   )
 ```
 
