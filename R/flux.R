@@ -29,12 +29,13 @@ read_adv_data <- function(adv_file_path, min_correlation = NULL) {
   }
   ds |>
     select(timestamp, pressure, u, v, w, amp3, corr3) |>
+    scale_adv_velocity() |>
     collect()
 }
 
 #' Scale ADV velocities by a factor (e.g., 10) to match expected ranges for MATLAB processing
-#' NOT USED
-scale_adv_velocity <- function(adv_data, scale_factor = 10) {
+#' Only needed if ADV data was processed with incorrect scaling
+scale_adv_velocity <- function(adv_data, scale_factor = .10) {
   adv_data |>
     mutate(
       u = u * scale_factor,
@@ -304,7 +305,12 @@ add_grad_flux <- function(rga_adv_processed, flux_dataset, length_scale) {
     mutate(
       lscale = length_scale,
       ox_flux = -1 * Ustar * von_karman * lscale * ox_gradient_umol_l_m * 3600,
-      co2_flux = -1 * Ustar * von_karman * lscale * co2_gradient_umol_l_m * 3600,
+      co2_flux = -1 *
+        Ustar *
+        von_karman *
+        lscale *
+        co2_gradient_umol_l_m *
+        3600,
       # fix fluxes for period of reversed inlet tubing
       ox_flux = ifelse(timestamp > "2025-09-24", -ox_flux, ox_flux),
       co2_flux = ifelse(timestamp > "2025-09-24", -co2_flux, co2_flux)
