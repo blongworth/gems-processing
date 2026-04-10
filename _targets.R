@@ -177,6 +177,7 @@ list(
     rga_temp_clean,
     remove_bad_rga_periods(rga_temp, bad_times)
   ),
+  tar_target(rga_periods, rga_temp_clean),
 
   # Add oxygen calibration
   tar_target(
@@ -189,17 +190,22 @@ list(
   ),
   tar_target(
     ox_cal_df,
-    make_ox_cal_df(rga_binned, seaphox_df_jul)
+    make_oxygen_calibration_df(rga_binned, seaphox_df_jul)
   ),
   tar_target(
     ox_model,
     fit_oxygen(ox_cal_df)
   ),
   tar_target(
+    ox_umol_model,
+    fit_oxygen_umol(ox_cal_df)
+  ),
+  tar_target(
     rga_oxygen,
     add_oxygen(
-      rga_temp_clean,
+      rga_periods,
       ox_model,
+      ox_umol_model,
       sensor_separation = 1.02
     )
   ),
@@ -215,7 +221,7 @@ list(
   ),
   tar_target(
     co2_cal_df,
-    make_co2_cal_df(rga_binned, proco2_df_jul, status_file)
+    make_co2_calibration_df(rga_binned, proco2_df_jul, status_file)
   ),
   tar_target(
     co2_model,

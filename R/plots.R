@@ -328,7 +328,7 @@ plot_diel_flux <- function(hourly_flux, par_model_df) {
     ggplot(aes(timestamp, ox_flux)) +
     geom_hline(yintercept = 0) +
     geom_line(color = cb_print_4[1], na.rm = TRUE) +
-    ylim(-15, 15) +
+    ylim(-180, 180) +
     labs(
       x = NULL,
       y = expression("Oxygen flux [" * mmol ~ m^-2 ~ h^-1 * "]")
