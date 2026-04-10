@@ -294,8 +294,7 @@ plot_oxygen_calibration <- function(ox_cal_df, ox_model) {
 plot_cal_timeseries <- function(cal_plot_df, ox_model) {
   om <- ox_model$coefficients[2]
   oi <- ox_model$coefficients[1]
-  r2 <- summary(ox_model)$r.squared
-  cal_plot_df <- ox_cal_df |>
+  cal_plot_df <- cal_plot_df |>
     filter(timestamp > "2025-07-11 10:00:00") |>
     mutate(
       rga_ox = mass_32_40 * om + oi
@@ -316,7 +315,7 @@ plot_cal_timeseries <- function(cal_plot_df, ox_model) {
 }
 
 # Diel Flux
-plot_diel_flux <- function(hourly_flux) {
+plot_diel_flux <- function(hourly_flux, par_model_df) {
   gop <- hourly_flux |>
     mutate(
       time_diff = as.numeric(difftime(
@@ -345,28 +344,29 @@ plot_diel_flux <- function(hourly_flux) {
         lag(timestamp),
         units = "hours"
       )),
-      adv_temp_mean = ifelse(time_diff > 1, NA, adv_temp_mean),
+      adv_temp = ifelse(time_diff > 1, NA, adv_temp),
     ) |>
-    ggplot(aes(timestamp, adv_temp_mean)) +
+    ggplot(aes(timestamp, adv_temp)) +
     geom_line(color = cb_print_4[1]) +
     labs(x = NULL, y = "Temp [C]")
 
-  gpp = ggplot(hourly_flux, aes(timestamp, par_mean)) +
+  gpp = ggplot(hourly_flux, aes(timestamp, par)) +
     geom_line() +
     labs(
       x = NULL,
       y = expression(
-        PAR ~ "[" *
-          mu *
-          "mol " *
-          m^{
-            -2
-          } *
-          " " *
-          s^{
-            -1
-          } *
-          "]"
+        PAR ~
+          "[" *
+            mu *
+            "mol " *
+            m^{
+              -2
+            } *
+            " " *
+            s^{
+              -1
+            } *
+            "]"
       )
     )
   # DLI daily PAR
@@ -381,17 +381,18 @@ plot_diel_flux <- function(hourly_flux) {
     labs(
       x = NULL,
       y = expression(
-        DLI ~ "[mol " *
-          m^{
-            -2
-          } *
-          " " *
-          {
-            day
-          }^{
-            -1
-          } *
-          "]"
+        DLI ~
+          "[mol " *
+            m^{
+              -2
+            } *
+            " " *
+            {
+              day
+            }^{
+              -1
+            } *
+            "]"
       )
     )
 
@@ -424,22 +425,65 @@ plot_rep_daily_flux <- function(hourly_flux) {
     labs(
       x = NULL,
       y = expression(
-        PAR ~ "[" *
-          mu *
-          "mol " *
-          m^{
-            -2
-          } *
-          " " *
-          s^{
-            -1
-          } *
-          "]"
+        PAR ~
+          "[" *
+            mu *
+            "mol " *
+            m^{
+              -2
+            } *
+            " " *
+            s^{
+              -1
+            } *
+            "]"
       )
     )
   (jfp / jpp) +
     plot_layout(heights = c(3, 1)) +
     plot_annotation(tag_levels = 'A')
+}
+
+# ADV velocity timeseries
+plot_adv_velocities <- function(adv_matlab_input) {
+  adv_plot_df <- adv_matlab_input |>
+    slice_sample(n = 10000) |>
+    arrange(timestamp) |>
+    mutate(
+      cur_speed = sqrt(u^2 + v^2),
+      time_diff = as.numeric(difftime(
+        timestamp,
+        lag(timestamp),
+        units = "hours"
+      )),
+      across(
+        c(u, v, w, cur_speed),
+        \(x) ifelse(time_diff > 1, NA, x)
+      )
+    )
+
+  up <- adv_plot_df |>
+    ggplot(aes(timestamp, u)) +
+    geom_line(color = cb_print_4[1], linewidth = 0.2, na.rm = TRUE) +
+    labs(x = NULL, y = expression("u [" * m ~ s^-1 * "]"))
+
+  vp <- adv_plot_df |>
+    ggplot(aes(timestamp, v)) +
+    geom_line(color = cb_print_4[2], linewidth = 0.2, na.rm = TRUE) +
+    labs(x = NULL, y = expression("v [" * m ~ s^-1 * "]"))
+
+  wp <- adv_plot_df |>
+    ggplot(aes(timestamp, w)) +
+    geom_hline(yintercept = 0, linewidth = 0.2) +
+    geom_line(color = cb_print_4[3], linewidth = 0.2, na.rm = TRUE) +
+    labs(x = NULL, y = expression("w [" * m ~ s^-1 * "]"))
+
+  sp <- adv_plot_df |>
+    ggplot(aes(timestamp, cur_speed)) +
+    geom_line(color = cb_print_4[4], linewidth = 0.2, na.rm = TRUE) +
+    labs(x = NULL, y = expression("Speed [" * m ~ s^-1 * "]"))
+
+  (up / vp / wp / sp) + plot_annotation(tag_levels = "A")
 }
 
 # Diel Concentration and gradient
@@ -499,17 +543,18 @@ plot_flux_par <- function(hourly_stats) {
     labs(
       x = "Hour of Day",
       y = expression(
-        PAR ~ "[" *
-          mu *
-          "mol " *
-          m^{
-            -2
-          } *
-          " " *
-          s^{
-            -1
-          } *
-          "]"
+        PAR ~
+          "[" *
+            mu *
+            "mol " *
+            m^{
+              -2
+            } *
+            " " *
+            s^{
+              -1
+            } *
+            "]"
       )
     )
 
@@ -573,17 +618,18 @@ plot_co2_flux <- function(hourly_stats) {
     labs(
       x = "Hour of Day",
       y = expression(
-        PAR ~ "[" *
-          mu *
-          "mol " *
-          m^{
-            -2
-          } *
-          " " *
-          s^{
-            -1
-          } *
-          "]"
+        PAR ~
+          "[" *
+            mu *
+            "mol " *
+            m^{
+              -2
+            } *
+            " " *
+            s^{
+              -1
+            } *
+            "]"
       )
     )
 
@@ -712,17 +758,18 @@ plot_diel_monthly <- function(monthly_stats) {
     labs(
       x = "Hour of Day",
       y = expression(
-        PAR ~ "[" *
-          mu *
-          "mol " *
-          m^{
-            -2
-          } *
-          " " *
-          s^{
-            -1
-          } *
-          "]"
+        PAR ~
+          "[" *
+            mu *
+            "mol " *
+            m^{
+              -2
+            } *
+            " " *
+            s^{
+              -1
+            } *
+            "]"
       )
     )
 
@@ -876,17 +923,18 @@ plot_flux_dic_par <- function(hourly_stats) {
     labs(
       x = "Hour of Day",
       y = expression(
-        PAR ~ "[" *
-          mu *
-          "mol " *
-          m^{
-            -2
-          } *
-          " " *
-          s^{
-            -1
-          } *
-          "]"
+        PAR ~
+          "[" *
+            mu *
+            "mol " *
+            m^{
+              -2
+            } *
+            " " *
+            s^{
+              -1
+            } *
+            "]"
       )
     )
 

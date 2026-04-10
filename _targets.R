@@ -356,8 +356,60 @@ list(
     plot_argon_normalization(rga_binned)
   ),
   tar_target(
+    oxygen_timeseries_plot,
+    plot_oxygen_timeseries(rga_calibrated)
+  ),
+  tar_target(
+    oxygen_timeseries_july_plot,
+    plot_oxygen_timeseries_july(rga_calibrated)
+  ),
+  tar_target(
+    oxygen_calibration_plot,
+    plot_oxygen_calibration(ox_cal_df, ox_model)
+  ),
+  tar_target(
+    calibration_timeseries_plot,
+    plot_cal_timeseries(ox_cal_df, ox_model)
+  ),
+  tar_target(
+    adv_velocity_plot,
+    plot_adv_velocities(adv_matlab_input)
+  ),
+  tar_target(
+    diel_flux_plot,
+    plot_diel_flux(hourly_flux, par_model_df)
+  ),
+  tar_target(
     ox_short_plot,
     plot_rep_daily_flux(hourly_flux)
+  ),
+  tar_target(
+    gradient_diel_plot,
+    plot_grad_diel(hourly_stats)
+  ),
+  tar_target(
+    flux_par_plot,
+    plot_flux_par(hourly_stats)
+  ),
+  tar_target(
+    co2_flux_plot,
+    plot_co2_flux(hourly_stats)
+  ),
+  tar_target(
+    co2_vs_o2_plot,
+    plot_co2_vs_o2(rga_calibrated, hourly_flux)
+  ),
+  tar_target(
+    diel_monthly_plot,
+    plot_diel_monthly(monthly_stats)
+  ),
+  tar_target(
+    nem_plot,
+    plot_nem(monthly_nem, daily_nem)
+  ),
+  tar_target(
+    eelgrass_plot,
+    plot_eelgrass(eelgrass)
   ),
   tar_target(
     dic_vs_o2_flux_plot,
