@@ -197,15 +197,10 @@ list(
     fit_oxygen(ox_cal_df)
   ),
   tar_target(
-    ox_umol_model,
-    fit_oxygen_umol(ox_cal_df)
-  ),
-  tar_target(
     rga_oxygen,
     add_oxygen(
       rga_periods,
       ox_model,
-      ox_umol_model,
       sensor_separation = 1.02
     )
   ),
@@ -432,7 +427,7 @@ list(
   # Reports
   #tar_quarto(co2_report, "reports/gems_co2_issue.qmd"),
   tar_quarto(eelgrass_report, "reports/eelgrass.qmd"),
-  tar_quarto(gems_report_plots, "reports/gems_report_plots.qmd"),
+  # tar_quarto(gems_report_plots, "reports/gems_report_plots.qmd"),
   tar_quarto(
     gems_report_plots_targets,
     "reports/gems_report_plots_targets.qmd"

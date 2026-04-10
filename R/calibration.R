@@ -12,14 +12,20 @@
 load_seaphox_oxygen <- function(seaphox_path, start_time, end_time) {
   data.table::fread(seaphox_path) |>
     janitor::clean_names() |>
-    mutate(timestamp = lubridate::mdy_hms(date_time_utc_00_00, tz = "UTC")) |>
+    mutate(
+      timestamp = lubridate::mdy_hms(date_time_utc_00_00, tz = "UTC"),
+      seaphox_oxygen_umol_l = o2_ml_l_to_umol_l(
+        oxygen_ml_l,
+        p_h_temperature_celsius
+      )
+    ) |>
     select(
       timestamp,
       seaphox_pH = internal_p_h_p_h,
       seaphox_temp_c = p_h_temperature_celsius,
       seaphox_pressure_db = pressure_decibar,
       seaphox_salinity_psu = salinity_psu,
-      seaphox_oxygen_ml_l = oxygen_ml_l
+      seaphox_oxygen_umol_l
     ) |>
     filter(timestamp >= start_time, timestamp <= end_time)
 }
@@ -92,15 +98,9 @@ make_oxygen_calibration_df <- function(
 ) {
   seaphox_periods <- build_reference_periods(
     seaphox_df,
-    value_cols = c("seaphox_oxygen_ml_l", "seaphox_temp_c")
+    value_cols = c("seaphox_oxygen_umol_l", "seaphox_temp_c")
   ) |>
-    mutate(
-      seaphox_oxygen_umol_l = o2_ml_l_to_umol_l(
-        seaphox_oxygen_ml_l,
-        seaphox_temp_c
-      )
-    ) |>
-    select(timestamp, mean_time, seaphox_oxygen_ml_l, seaphox_oxygen_umol_l)
+    select(timestamp, mean_time, seaphox_oxygen_umol_l)
 
   rga_df |>
     calculate_period_means() |>
@@ -115,18 +115,13 @@ make_ox_cal_df <- function(rga_df, seaphox_df) {
 }
 
 fit_oxygen <- function(ox_cal_df) {
-  lm(seaphox_oxygen_ml_l ~ mass_32_40, data = ox_cal_df)
-}
-
-fit_oxygen_umol <- function(ox_cal_df) {
   lm(seaphox_oxygen_umol_l ~ mass_32_40, data = ox_cal_df)
 }
 
 #' Add oxygen data to period-level RGA data
 #'
 #' @param rga_df Period-level RGA data with high/low mass ratios
-#' @param ox_model Linear model predicting oxygen in mL/L
-#' @param ox_umol_model Linear model predicting oxygen in umol/L
+#' @param ox_model Linear model predicting oxygen in umol/L
 #' @param sensor_separation Vertical separation between sensors in meters
 #'
 #' @return Period-level dataset with oxygen concentration and gradient columns
@@ -135,18 +130,13 @@ fit_oxygen_umol <- function(ox_cal_df) {
 add_oxygen <- function(
   rga_df,
   ox_model,
-  ox_umol_model,
   sensor_separation = 1.02
 ) {
-  ox_i <- coef(ox_model)[1]
-  ox_m <- coef(ox_model)[2]
-  ox_umol_i <- coef(ox_umol_model)[1]
-  ox_umol_m <- coef(ox_umol_model)[2]
+  ox_umol_i <- coef(ox_model)[1]
+  ox_umol_m <- coef(ox_model)[2]
 
   rga_df |>
     mutate(
-      oxygen_high = ox_i + ox_m * mass_32_40_high,
-      oxygen_low = ox_i + ox_m * mass_32_40_low,
       ox_high_umol_l = ox_umol_i + ox_umol_m * mass_32_40_high,
       ox_low_umol_l = ox_umol_i + ox_umol_m * mass_32_40_low
     ) |>
@@ -279,7 +269,7 @@ add_co2 <- function(
     )
 }
 
-#' Recompute oxygen units conversion and gradients from oxygen_high/low
+#' Recompute oxygen gradients from period-level oxygen concentrations
 #'
 #' @param rga_adv_data Data frame with oxygen and temperature
 #' @param sensor_separation Vertical separation between sensors in meters
@@ -289,10 +279,6 @@ add_co2 <- function(
 #' @export
 calculate_oxygen_metrics <- function(rga_adv_data, sensor_separation = 1.02) {
   rga_adv_data |>
-    mutate(
-      ox_high_umol_l = o2_ml_l_to_umol_l(oxygen_high, adv_temp),
-      ox_low_umol_l = o2_ml_l_to_umol_l(oxygen_low, adv_temp)
-    ) |>
     add_gradient_metrics(
       high_col = ox_high_umol_l,
       low_col = ox_low_umol_l,

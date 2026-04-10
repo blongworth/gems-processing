@@ -44,19 +44,19 @@ cal_plot_df <- ox_cal_df
 
 cal_plot_df |>
   pivot_longer(
-    cols = c(seaphox_oxygen_ml_l, rga_ox),
+    cols = c(seaphox_oxygen_umol_l, rga_ox),
     names_to = "source",
-    values_to = "oxygen_ml_l"
+    values_to = "oxygen_umol_l"
   ) |>
-  ggplot(aes(timestamp, oxygen_ml_l, color = source)) +
+  ggplot(aes(timestamp, oxygen_umol_l, color = source)) +
   geom_line() +
-  labs(title = "Calibration timeseries", x = NULL, y = "Oxygen [ml/l]")
+  labs(title = "Calibration timeseries", x = NULL, y = "Oxygen [umol/l]")
 ```
 
   1:1 plots of fit
 
 ```{r}
-ggplot(cal_plot_df, aes(mass_32_40, seaphox_oxygen_ml_l)) +
+ggplot(cal_plot_df, aes(mass_32_40, seaphox_oxygen_umol_l)) +
   geom_abline(slope = om, intercept = oi) +
   geom_point(
     shape = 1,
@@ -68,12 +68,12 @@ ggplot(cal_plot_df, aes(mass_32_40, seaphox_oxygen_ml_l)) +
   labs(
     title = "Calibration fit",
     x = "GEMS 32:40",
-    y = "Optode oxygen [ml/l]"
+    y = "Optode oxygen [umol/l]"
   )
 ```
 
 ```{r}
-ggplot(cal_plot_df, aes(seaphox_oxygen_ml_l, rga_ox)) +
+ggplot(cal_plot_df, aes(seaphox_oxygen_umol_l, rga_ox)) +
   geom_abline(slope = 1, intercept = 0) +
   geom_point(
     shape = 1,
@@ -82,12 +82,10 @@ ggplot(cal_plot_df, aes(seaphox_oxygen_ml_l, rga_ox)) +
     stroke = 0.5,
     alpha = 0.2
   ) +
-  xlim(3, 9) +
-  ylim(3, 9) +
   labs(
     title = "Calibration fit",
-    x = "Optode oxygen [ml/l]",
-    y = "GEMS oxygen [ml/l]"
+    x = "Optode oxygen [umol/l]",
+    y = "GEMS oxygen [umol/l]"
   )
 ```
 

@@ -264,7 +264,7 @@ plot_oxygen_calibration <- function(ox_cal_df, ox_model) {
     round(r2, 3)
   )
 
-  ggplot(cal_plot_df, aes(mass_32_40, seaphox_oxygen_ml_l)) +
+  ggplot(cal_plot_df, aes(mass_32_40, seaphox_oxygen_umol_l)) +
     geom_smooth(method = "lm", se = FALSE, color = "darkgrey") +
     annotate(
       "text",
@@ -285,7 +285,7 @@ plot_oxygen_calibration <- function(ox_cal_df, ox_model) {
     #xlim(3, 9) +
     #ylim(3, 9) +
     labs(
-      y = "Optode oxygen [ml/l]",
+      y = expression("Optode oxygen [" * mmol ~ m^-3 * "]"),
       x = "GEMS mass 32:40"
     )
 }
@@ -302,16 +302,16 @@ plot_cal_timeseries <- function(cal_plot_df, ox_model) {
 
   cal_plot_df |>
     pivot_longer(
-      cols = c(seaphox_oxygen_ml_l, rga_ox),
+      cols = c(seaphox_oxygen_umol_l, rga_ox),
       names_to = "source",
-      values_to = "oxygen_ml_l"
+      values_to = "oxygen_umol_l"
     ) |>
     mutate(source = ifelse(source == "rga_ox", "GEMS", "Optode")) |>
-    ggplot(aes(timestamp, oxygen_ml_l, color = source)) +
+    ggplot(aes(timestamp, oxygen_umol_l, color = source)) +
     geom_line(
       alpha = 0.6
     ) +
-    labs(x = NULL, y = "Oxygen [ml/l]")
+    labs(x = NULL, y = expression("Oxygen [" * mmol ~ m^-3 * "]"))
 }
 
 # Diel Flux

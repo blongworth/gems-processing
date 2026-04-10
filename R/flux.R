@@ -299,7 +299,7 @@ add_grad_flux <- function(rga_adv_processed, flux_dataset, length_scale) {
   von_karman <- 0.41
   rga_adv_processed |>
     select(
-      !c(oxygen_high, oxygen_low, starts_with("mass_"))
+      !starts_with("mass_")
     ) |>
     left_join(ustar_data, by = join_by(timestamp)) |>
     mutate(
