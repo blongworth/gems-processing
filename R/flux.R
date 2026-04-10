@@ -303,8 +303,8 @@ add_grad_flux <- function(rga_adv_processed, flux_dataset, length_scale) {
     left_join(ustar_data, by = join_by(timestamp)) |>
     mutate(
       lscale = length_scale,
-      ox_flux = -1 * Ustar * von_karman * lscale * ox_gradient_umol_l_m,
-      co2_flux = -1 * Ustar * von_karman * lscale * co2_gradient_umol_l_m,
+      ox_flux = -1 * Ustar * von_karman * lscale * ox_gradient_umol_l_m * 3600,
+      co2_flux = -1 * Ustar * von_karman * lscale * co2_gradient_umol_l_m * 3600,
       # fix fluxes for period of reversed inlet tubing
       ox_flux = ifelse(timestamp > "2025-09-24", -ox_flux, ox_flux),
       co2_flux = ifelse(timestamp > "2025-09-24", -co2_flux, co2_flux)

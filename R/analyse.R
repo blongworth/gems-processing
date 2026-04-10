@@ -153,7 +153,7 @@ carbonate_calculations <- function(
     ) |>
     mutate(
       lscale = length_scale,
-      dic_flux = -1 * Ustar * 0.41 * lscale * dic_gradient_umol_l_m
+      dic_flux = -1 * Ustar * 0.41 * lscale * dic_gradient_umol_l_m * 3600
     ) |>
     left_join(
       select(
