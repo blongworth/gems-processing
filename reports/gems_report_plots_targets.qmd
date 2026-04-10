@@ -1,0 +1,251 @@
+```{r setup}
+#| echo: false
+#| message: false
+#| warning: false
+library(targets)
+library(here)
+library(ggplot2)
+
+tar_config_set(store = here("_targets"))
+
+theme_set(theme_classic(base_size = 8))
+
+update_geom_defaults("line", list(linewidth = 0.3))
+
+cb_print_4 <- c(
+  "#0072B2", # blue
+  "#009E73", # bluish green
+  "#D55E00", # vermillion
+  "#E69F00" # orange
+)
+
+options(ggplot2.discrete.colour = cb_print_4)
+```
+
+{{< pagebreak >}}
+
+## Quadrupole mass spectrometer signals
+
+```{r}
+#| label: fig-mass-trace
+#| fig-height: 5.5
+#| fig-cap: RGA signals for masses of interest. Each mass is measured approximately every 10 s. Mass traces are colored by the selected inlet; blue indicates the upper or "high" inlet, and green indicates the bottom or "low" inlet. A five day period of the deployment was chosen to highlight diel cycles. Each signal is normalized to mass 40 (Argon) to control for effects of temperature, pressure, and biofouling. The mass 34 signal is likely an interference with Oxygen, rather than a true hydrogen sufide signal.
+
+tar_read(rga_mass_plot)
+```
+
+{{< pagebreak >}}
+
+### QMS system noise
+
+```{r}
+#| label: fig-noise-comparison
+#| fig-cap: Comparison of QMS signal noise for argon-normalized oxygen at the high inlet between 2022 (A) and 2025 (B) deployments. Signal noise was greatly reduced for the 2025 deployment, improving the accuracy and limit of detection for gradient determination.
+
+tar_read(qms_noise_plot)
+```
+
+```{r}
+#| label: fig-argon-norm
+#| fig-cap: >
+#|   This figure shows Nitrogen (mass 28) un-normalized (A) and normalized (B)
+#|   using concurrent Argon (mass 40) measurements
+#|   across a period of increasing biofouling at the high inlet (blue),
+#|   followed by cleaning the inlets on Sept. 11.
+#|   Normalizing measured masses to Argon
+#|   controls for physical effects on gas solubility and membrane transport.
+#|   Gas transport across the membrane is affected by temperature, pressure and water flow rate.
+
+tar_read(argon_norm_plot)
+```
+
+{{< pagebreak >}}
+
+### Oxygen timeseries
+
+```{r}
+#| label: fig-oxygen-long
+#| exec: false
+#| fig-cap: A record of the argon-normalized oxygen signal at the high (blue) and low (green) inlets for the duration of the deployment. Maintenance periods and times when the data were known to be poor due to system issues have been removed.
+
+tar_read(oxygen_timeseries_plot)
+```
+
+```{r}
+#| label: fig-oxygen-short
+#| exec: false
+#| fig-cap: >
+#|   The argon-normalized oxygen signal for July 16-20,
+#|   showing a clear gradient between the high (blue) and low (green) inlets.
+#|   The diel variability of oxygen at the low inlet is higher
+#|   due to proximity to the eelgrass and seabed.
+
+tar_read(oxygen_timeseries_july_plot)
+```
+
+{{< pagebreak >}}
+
+## Calibration
+
+### Optode vs normalized mass 32
+
+```{r}
+#| label: fig-cal
+#| fig-cap: Oxygen calibration data for the SeapHOx codeployment. SeapHOx optode data is compared to GEMS mass 32:40 at the high inlet, which is nearer in height to the SeapHOx inlet (80cm). The line shows linear model fit.
+#| warning: false
+
+tar_read(oxygen_calibration_plot)
+```
+
+{{< pagebreak >}}
+
+### Fitted Oxygen
+
+```{r}
+#| label: fig-cal-timeseries
+#| fig-cap: SeapHOx optode (green) and fitted GEMS oxygen at the high inlet (blue) over the codeployment time period. Fitted RGA Oxygen data shows a reasonable match to the SeapHOx optode data for the codeployment period. The peak attenuation in the GEMS signal is likely due to the intermittent signal from inlet switching.
+#| warning: false
+
+tar_read(calibration_timeseries_plot)
+```
+
+{{< pagebreak >}}
+
+## Flux
+
+```{r}
+#| label: fig-flux-timeseries
+#| fig-cap: >
+#|   Hourly oxygen flux (A) for the duration of the deployment. Maintenance periods and times when the data were known to be poor due to system issues have been removed.
+#|   estimated daily light integral (DLI, B) and seawater temperature at mid height (C) for comparison.
+#|   Flux decreases with decreasing light and temperature.
+#|   No light sensor was codeployed with GEMS,
+#|   therefore photosynthetically active radiation (PAR) and DLI
+#|   are estimated from modeled, cloud-free insolation. A high flux outlier on July 19 believed to be caused by fouling was removed from the plot.
+#| warning: false
+#| fig-height: 5.5
+
+tar_read(diel_flux_plot)
+```
+
+```{r}
+#| label: fig-flux-zoom
+#| fig-cap: >
+#|   Oxygen flux (A) with predicted PAR (B) for comparison
+#|   for the period July 15-20.
+#|   Upward flux aligns with peak daily light.
+#|   Respiration flux increases through the dark hours.
+#|   Fluxes have strong daily variability.
+
+tar_read(ox_short_plot)
+```
+
+{{< pagebreak >}}
+
+## Diel Plots
+
+### Concentration and gradient
+
+```{r}
+#| label: fig-gradient-diel
+#| fig-cap: >
+#|   GEMS oxygen concentration (A) and gradient (B) aggregated across the deployment by hour of day. Hour is adjusted to the mean solar noon for the deployment. Oxygen concentration is the mean across both inlets.
+#|   Gradient is estimated using the difference between high and low inlets
+#|   over the difference in inlet height.
+#| fig-height: 5
+
+tar_read(gradient_diel_plot)
+```
+
+### Oxygen flux and predicted par
+
+```{r}
+#| label: fig-flux-diel
+#| fig-cap: >
+#|   GEMS oxygen flux (A) and predicted PAR (B) aggregated hourly for the duration of the deployment. Hour is adjusted to the mean solar noon for the deployment.
+#| fig-height: 5
+
+tar_read(flux_par_plot)
+```
+
+### CO2 concentration, gradient and flux
+
+```{r}
+#| label: fig-co2-diel
+#| fig-cap: >
+#|   GEMS carbon dioxide concentration (A) and gradient (B) and flux (C) aggregated across the deployment by hour of day. Hour is adjusted to the mean solar noon for the deployment, and predicted PAR is shown in (D). CO₂ concentration is the mean across both inlets.
+#|   Gradient is estimated using the difference between high and low inlets
+#|   over the difference in inlet height.
+#| fig-height: 5.5
+
+tar_read(co2_flux_plot)
+```
+
+```{r}
+#| label: fig-co2-vs-o2
+#| fig-cap: >
+#|   The relationship between CO₂ and O₂ vertical gradients (A) and flux (B), colored by predicted PAR. Gradient scales are reversed to place in the same frame of reference as flux.
+#| fig-height: 3
+#| warning: false
+
+tar_read(co2_vs_o2_plot)
+```
+
+```{r}
+#| label: fig-flux-dic-vs-o2
+#| fig-cap: GEMS DIC flux relationship to oxygen flux. DIC flux is determined for the period of the SeapHOx codeployment, using measured seapHOx pH and calibrated GEMS CO₂, assuming uniform pH between top and bottom inlets, and using CO2SYS for carbonate system calculations.
+
+tar_read(dic_vs_o2_flux_plot)
+```
+
+```{r}
+#| label: fig-flux-dic-o2
+#| fig-cap: Hourly GEMS DIC flux (A) compared to oxygen flux (B). DIC flux is determined for the period of the SeapHOx codeployment, using measured seapHOx pH and calibrated GEMS CO₂, assuming uniform pH between top and bottom inlets, and using CO2SYS for carbonate system calculations.
+
+tar_read(dic_o2_flux_plot)
+```
+
+### Monthly variability
+
+```{r}
+#| label: fig-flux-diel-monthly
+#| fig-cap: >
+#|   GEMS oxygen flux (A) and predicted PAR (B) aggregated hourly and separated by month. Hour is adjusted to the mean solar noon for the deployment. June data is not shown due to bias from only 3 days of data acquisition.
+#| fig-height: 5
+
+tar_read(diel_monthly_plot)
+```
+
+{{< pagebreak >}}
+
+## Net ecosystem metabolism
+
+```{r}
+#| label: fig-nem
+#| fig-cap: >
+#|   Oxygen flux integrated by day (A) and by month (B) for the deployment period
+#|   to provide an estimate of net ecosystem metabolism (NEM).
+#|   The benthic system at Naushon Island shows variability on daily and monthly scales, but the system is close
+#|   to net neutral over time.
+#| fig-height: 5.5
+
+tar_read(nem_plot)
+```
+
+{{< pagebreak >}}
+
+## Eelgrass growth
+
+```{r}
+#| label: fig-eelgrass
+#| fig-cap: >
+#|   Naushon eelgrass shoot biomass (A) and shoot length (B) data by year.
+#|   Eelgrass was sampled from 3-5 20 cm² quadrats.
+#|   Point error bars are the standard deviation of quadrats for mass and count
+#|   and the standard deviation of all blade lengths for length.
+#|   The fit line is a loess fit through all data.
+#| message: false
+#| fig-height: 6
+
+tar_read(eelgrass_plot)
+```

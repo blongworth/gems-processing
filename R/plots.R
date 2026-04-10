@@ -420,7 +420,7 @@ plot_rep_daily_flux <- function(hourly_flux) {
     )
 
   jpp <- jul_flux |>
-    ggplot(aes(timestamp, par_mean)) +
+    ggplot(aes(timestamp, par)) +
     geom_line(color = cb_print_4[1]) +
     labs(
       x = NULL,

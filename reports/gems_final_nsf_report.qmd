@@ -129,4 +129,4 @@ Eelgrass growth measured as areal density and length of annual shoots was measur
 
 ![The GEMS platform during the 2025 deployment. Samuel Koeck (MIT/WHOI PhD student) is above the lander deployment location.](report_photos/gems_deployment_2025.jpg){#fig-deployment-2025}
 
-{{< include gems_report_plots.qmd >}}
+{{< include gems_report_plots_targets.qmd >}}
