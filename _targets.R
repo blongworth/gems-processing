@@ -100,6 +100,10 @@ list(
   # length scale in meters for flux calculation
   tar_target(length_scale, 0.4),
 
+  # calibration predictor mode: "high" or "mean"
+  tar_target(oxygen_calibration_mode, "mean"),
+  tar_target(co2_calibration_mode, "high"),
+
   # minimum correlation for ADV data filtering
   tar_target(min_correlation, 50),
 
@@ -189,8 +193,28 @@ list(
     )
   ),
   tar_target(
+    ox_cal_df_high,
+    make_oxygen_calibration_df(rga_binned, seaphox_df_jul, "high")
+  ),
+  tar_target(
+    ox_cal_df_mean,
+    make_oxygen_calibration_df(rga_binned, seaphox_df_jul, "mean")
+  ),
+  tar_target(
+    ox_model_high,
+    fit_oxygen(ox_cal_df_high)
+  ),
+  tar_target(
+    ox_model_mean,
+    fit_oxygen(ox_cal_df_mean)
+  ),
+  tar_target(
     ox_cal_df,
-    make_oxygen_calibration_df(rga_binned, seaphox_df_jul)
+    make_oxygen_calibration_df(
+      rga_binned,
+      seaphox_df_jul,
+      oxygen_calibration_mode
+    )
   ),
   tar_target(
     ox_model,
@@ -215,8 +239,29 @@ list(
     )
   ),
   tar_target(
+    co2_cal_df_high,
+    make_co2_calibration_df(rga_binned, proco2_df_jul, status_file, "high")
+  ),
+  tar_target(
+    co2_cal_df_mean,
+    make_co2_calibration_df(rga_binned, proco2_df_jul, status_file, "mean")
+  ),
+  tar_target(
+    co2_model_high,
+    fit_co2(co2_cal_df_high)
+  ),
+  tar_target(
+    co2_model_mean,
+    fit_co2(co2_cal_df_mean)
+  ),
+  tar_target(
     co2_cal_df,
-    make_co2_calibration_df(rga_binned, proco2_df_jul, status_file)
+    make_co2_calibration_df(
+      rga_binned,
+      proco2_df_jul,
+      status_file,
+      co2_calibration_mode
+    )
   ),
   tar_target(
     co2_model,

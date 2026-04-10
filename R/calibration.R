@@ -55,6 +55,50 @@ build_reference_periods <- function(
     select(timestamp, mean_time, all_of(value_cols))
 }
 
+#' Build a calibration predictor from RGA inlet period means
+#'
+#' @param rga_df RGA inlet-period data
+#' @param value_col Mass-ratio column name
+#' @param calibration_mode Either "high" or "mean"
+#'
+#' @return Period-level predictor data frame with timestamp and predictor column
+#' @export
+build_rga_calibration_predictor <- function(
+  rga_df,
+  value_col,
+  calibration_mode = c("high", "mean")
+) {
+  calibration_mode <- match.arg(calibration_mode)
+  value_col <- rlang::ensym(value_col)
+
+  period_means <- rga_df |>
+    calculate_period_means() |>
+    arrange(timestamp) |>
+    mutate(pair_id = cumsum(inlet == "low"))
+
+  if (calibration_mode == "high") {
+    return(
+      period_means |>
+        filter(inlet == "high") |>
+        transmute(
+          timestamp,
+          mean_time,
+          predictor = !!value_col
+        )
+    )
+  }
+
+  period_means |>
+    group_by(pair_id) |>
+    filter(n_distinct(inlet) == 2) |>
+    summarise(
+      timestamp = max(timestamp[inlet == "high"]),
+      mean_time = max(mean_time[inlet == "high"]),
+      predictor = mean(!!value_col, na.rm = TRUE),
+      .groups = "drop"
+    )
+}
+
 #' Add mean, high-low gradient columns for a paired concentration
 #'
 #' @param df Wide period-level data
@@ -94,18 +138,23 @@ add_gradient_metrics <- function(
 #' @export
 make_oxygen_calibration_df <- function(
   rga_df,
-  seaphox_df
+  seaphox_df,
+  calibration_mode = c("high", "mean")
 ) {
+  calibration_mode <- match.arg(calibration_mode)
+
   seaphox_periods <- build_reference_periods(
     seaphox_df,
     value_cols = c("seaphox_oxygen_umol_l", "seaphox_temp_c")
   ) |>
     select(timestamp, mean_time, seaphox_oxygen_umol_l)
 
-  rga_df |>
-    calculate_period_means() |>
-    filter(inlet == "high") |>
-    transmute(timestamp, mean_time, mass_32_40) |>
+  build_rga_calibration_predictor(
+    rga_df,
+    value_col = mass_32_40,
+    calibration_mode = calibration_mode
+  ) |>
+    transmute(timestamp, mean_time, mass_32_40 = predictor) |>
     left_join(seaphox_periods, by = join_by(timestamp))
 }
 
@@ -177,8 +226,11 @@ load_prooceanus_co2 <- function(file_path, start_time, end_time) {
 make_co2_calibration_df <- function(
   rga_df,
   prooceanus_df,
-  status_file = NULL
+  status_file = NULL,
+  calibration_mode = c("high", "mean")
 ) {
+  calibration_mode <- match.arg(calibration_mode)
+
   prooceanus_periods <- build_reference_periods(
     prooceanus_df,
     value_cols = c("prooceanus_co2_ppm", "cell_pressure")
@@ -193,10 +245,12 @@ make_co2_calibration_df <- function(
       select(timestamp, adv_temp)
   }
 
-  co2_cal_df <- rga_df |>
-    calculate_period_means() |>
-    filter(inlet == "high") |>
-    transmute(timestamp, mean_time, mass_44_40) |>
+  co2_cal_df <- build_rga_calibration_predictor(
+    rga_df,
+    value_col = mass_44_40,
+    calibration_mode = calibration_mode
+  ) |>
+    transmute(timestamp, mean_time, mass_44_40 = predictor) |>
     left_join(prooceanus_periods, by = join_by(timestamp))
 
   if (!is.null(status_temp_df)) {

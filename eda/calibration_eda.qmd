@@ -17,10 +17,84 @@ tar_load(hourly_stats)
 tar_load(rga_oxygen)
 tar_load(seaphox_df_jul)
 tar_load(proco2_df_jul)
+tar_load(oxygen_calibration_mode)
+tar_load(co2_calibration_mode)
 tar_load(ox_cal_df)
+tar_load(ox_cal_df_high)
+tar_load(ox_cal_df_mean)
 tar_load(co2_cal_df)
+tar_load(co2_cal_df_high)
+tar_load(co2_cal_df_mean)
 tar_load(ox_model)
+tar_load(ox_model_high)
+tar_load(ox_model_mean)
 tar_load(co2_model)
+tar_load(co2_model_high)
+tar_load(co2_model_mean)
+```
+
+# Calibration mode
+
+```{r}
+tibble(
+  gas = c("oxygen", "co2"),
+  calibration_mode = c(oxygen_calibration_mode, co2_calibration_mode)
+)
+```
+
+# Method comparison
+
+```{r}
+summarize_calibration <- function(df, model, response, predictor, mode, gas) {
+  complete_df <- df |>
+    filter(!is.na(.data[[response]]), !is.na(.data[[predictor]]))
+
+  tibble(
+    gas = gas,
+    mode = mode,
+    n = nrow(complete_df),
+    intercept = unname(coef(model)[1]),
+    slope = unname(coef(model)[2]),
+    r_squared = summary(model)$r.squared,
+    residual_se = summary(model)$sigma
+  )
+}
+
+bind_rows(
+  summarize_calibration(
+    ox_cal_df_high,
+    ox_model_high,
+    "seaphox_oxygen_umol_l",
+    "mass_32_40",
+    "high",
+    "oxygen"
+  ),
+  summarize_calibration(
+    ox_cal_df_mean,
+    ox_model_mean,
+    "seaphox_oxygen_umol_l",
+    "mass_32_40",
+    "mean",
+    "oxygen"
+  ),
+  summarize_calibration(
+    co2_cal_df_high,
+    co2_model_high,
+    "prooceanus_co2_umol_l",
+    "mass_44_40",
+    "high",
+    "co2"
+  ),
+  summarize_calibration(
+    co2_cal_df_mean,
+    co2_model_mean,
+    "prooceanus_co2_umol_l",
+    "mass_44_40",
+    "mean",
+    "co2"
+  )
+) |>
+  arrange(gas, mode)
 ```
 
 # Oxygen
@@ -86,6 +160,21 @@ ggplot(cal_plot_df, aes(seaphox_oxygen_umol_l, rga_ox)) +
     title = "Calibration fit",
     x = "Optode oxygen [umol/l]",
     y = "GEMS oxygen [umol/l]"
+  )
+```
+
+```{r}
+bind_rows(
+  ox_cal_df_high |> mutate(mode = "high"),
+  ox_cal_df_mean |> mutate(mode = "mean")
+) |>
+  ggplot(aes(mass_32_40, seaphox_oxygen_umol_l, color = mode)) +
+  geom_point(alpha = 0.15, size = 1) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    title = "Oxygen calibration comparison",
+    x = "GEMS 32:40",
+    y = "Optode oxygen [umol/l]"
   )
 ```
 
@@ -161,4 +250,19 @@ ggplot(
   aes(prooceanus_co2_ppm, prooceanus_co2_umol_l)
 ) +
   geom_point()
+```
+
+```{r}
+bind_rows(
+  co2_cal_df_high |> mutate(mode = "high"),
+  co2_cal_df_mean |> mutate(mode = "mean")
+) |>
+  ggplot(aes(mass_44_40, prooceanus_co2_umol_l, color = mode)) +
+  geom_point(alpha = 0.15, size = 1) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    title = "CO2 calibration comparison",
+    x = "GEMS 44:40",
+    y = "ProCO2 CO2 [umol/l]"
+  )
 ```
