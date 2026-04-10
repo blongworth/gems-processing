@@ -169,9 +169,9 @@ fit_co2 <- function(co2_cal_df) {
   return(co2_model)
 }
 
-#' Add oxygen data to RGA data
+#' Add CO2 data to RGA data
 #'
-#' @param seaphox_df Data frame with timestamp and oxygen columns
+#' @param seaphox_df Data frame with timestamp and CO2 columns
 #' @param rga_df RGA data to join with
 #'
 #' @return Joined data frame ready for linear regression
@@ -209,7 +209,7 @@ calculate_oxygen_metrics <- function(rga_adv_data, sensor_separation = 1.02) {
       ox_high_umol_l = o2_ml_l_to_umol_l(oxygen_high, adv_temp),
       ox_low_umol_l = o2_ml_l_to_umol_l(oxygen_low, adv_temp),
       ox_mean_umol_l = (ox_low_umol_l + ox_high_umol_l) / 2,
-      ox_gradient_umol_l_m = (ox_low_umol_l - ox_high_umol_l) /
+      ox_gradient_umol_l_m = (ox_high_umol_l - ox_low_umol_l) /
         sensor_separation
     )
 }
