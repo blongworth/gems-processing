@@ -9,7 +9,6 @@ process_adv_to_ml_input <- function(
 ) {
   adv_df <- read_adv_data(adv_file_name)
   proc_adv_df <- adv_df |>
-    scale_adv_velocity() |>
     impute_adv_data() |>
     group_adv_data() |>
     flag_adv_lander_moves(moves_file_name)
@@ -30,10 +29,13 @@ read_adv_data <- function(adv_file_path, min_correlation = NULL) {
   }
   ds |>
     select(timestamp, pressure, u, v, w, amp3, corr3) |>
+    scale_adv_velocity() |>
     collect()
 }
 
-scale_adv_velocity <- function(adv_data, scale_factor = 10) {
+#' Scale ADV velocities by a factor (e.g., 10) to match expected ranges for MATLAB processing
+#' Only needed if ADV data was processed with incorrect scaling
+scale_adv_velocity <- function(adv_data, scale_factor = .10) {
   adv_data |>
     mutate(
       u = u * scale_factor,
@@ -140,9 +142,9 @@ lecs_to_ml <- function(
     # NA's crash Matlab. These should be taken care of better and earlier
     drop_na()
 
-  df_ml_ts <- df %>%
-    group_by(block) %>%
-    summarise(start = min(time), end = max(time)) %>%
+  df_ml_ts <- df |>
+    group_by(block) |>
+    summarise(start = min(time), end = max(time)) |>
     ungroup()
 
   # remove last row of times to make shift indexing work
@@ -156,8 +158,8 @@ lecs_to_ml <- function(
     write_delim(df_ml, data_file)
   }
   if (!is.null(timestamp_file)) {
-    df_ml_ts %>%
-      select(start, end) %>%
+    df_ml_ts |>
+      select(start, end) |>
       write_delim(timestamp_file, col_names = FALSE)
   }
   list(df_ml, df_ml_ts)
@@ -268,12 +270,12 @@ process_flux_data <- function(
 #' Calculate flux from concentration gradient and velocity
 #'
 #' @param data Data frame with oxygen gradient and Ustar values
-#' @param length_scale Turbulent length scale parameter (default: 0.3)
+#' @param length_scale Turbulent length scale parameter
 #'
 #' @return Data frame with ox_flux column added
 #'
 #' @export
-calculate_grad_flux <- function(data, grad_var, length_scale = 0.3) {
+calculate_grad_flux <- function(data, grad_var, length_scale) {
   data |>
     mutate(
       lscale = length_scale,
@@ -296,33 +298,36 @@ add_grad_flux <- function(rga_adv_processed, flux_dataset, length_scale) {
   ustar_data <- get_ustar(flux_dataset)
   von_karman <- 0.41
   rga_adv_processed |>
+    select(
+      !c(oxygen_high, oxygen_low, starts_with("mass_"))
+    ) |>
     left_join(ustar_data, by = join_by(timestamp)) |>
     mutate(
       lscale = length_scale,
-      ox_flux = -1 * Ustar * von_karman * lscale * ox_gradient_umol_l_m,
-      co2_flux = -1 * Ustar * von_karman * lscale * co2_gradient_umol_l_m
+      ox_flux = -1 * Ustar * von_karman * lscale * ox_gradient_umol_l_m * 3600,
+      co2_flux = -1 *
+        Ustar *
+        von_karman *
+        lscale *
+        co2_gradient_umol_l_m *
+        3600,
+      # fix fluxes for period of reversed inlet tubing
+      ox_flux = ifelse(timestamp > "2025-09-24", -ox_flux, ox_flux),
+      co2_flux = ifelse(timestamp > "2025-09-24", -co2_flux, co2_flux)
     )
 }
 
 calc_hourly_flux <- function(rga_adv_flux) {
   rga_adv_flux |>
-    select(
-      !c(mean_timestamp, oxygen_high, oxygen_low, u, v, starts_with("mass_"))
-    ) |>
     mutate(
       timestamp = lubridate::floor_date(timestamp, unit = "hour")
     ) |>
     group_by(timestamp) |>
     summarise(
       across(
-        !c(ox_flux, co2_flux),
-        c(
-          mean = \(x) mean(x, na.rm = TRUE) #,
-          # sd = \(x) sd(x, na.rm = TRUE),
-          # se = \(x) sd(x, na.rm = TRUE) / sqrt(length(x))
-        )
+        everything(),
+        \(x) mean(x, na.rm = TRUE)
       ),
-      across(c(ox_flux, co2_flux), \(x) sum(x, na.rm = TRUE)),
       .groups = "drop"
     )
 }

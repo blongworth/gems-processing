@@ -18,9 +18,11 @@ tar_option_set(
     "dplyr",
     "imputeTS",
     "readr",
+    "R.matlab",
     "quarto",
     "tidyr",
     "purrr",
+    "seacarb",
     "stringr"
   ),
 )
@@ -34,6 +36,7 @@ source("R/par.R")
 source("R/flux.R")
 source("R/analyse.R")
 source("R/eelgrass.R")
+source("R/plots.R")
 
 # config variables
 data_dir_path <- "data/processed/lander"
@@ -59,6 +62,16 @@ list(
     "data/eelgrass/Naushon_eelgrass_sampling.xlsx",
     format = "file"
   ),
+  tar_target(
+    sg_length_2021_file,
+    "data/eelgrass/Seagrass_Lengths.txt",
+    format = "file"
+  ),
+  tar_target(
+    sg_weight_2021_file,
+    "data/eelgrass/Seagrass_Weights.txt",
+    format = "file"
+  ),
 
   ### intermediate file targets ###
 
@@ -76,11 +89,16 @@ list(
     "data/2025_Hadleys_Harbor/prooceanus/prooceanus_co2_gems_hadley_2025-08-19.txt",
     format = "file"
   ),
+  tar_target(
+    gems_2022_file,
+    "data/2022_Hadleys_Harbor/gems_rga_2022_jeff.mat",
+    format = "file"
+  ),
   # location for calculating PAR
   tar_target(crds, matrix(c(-70.7003, 41.51875), nrow = 1)),
 
   # length scale in meters for flux calculation
-  tar_target(length_scale, 0.3),
+  tar_target(length_scale, 0.4),
 
   # minimum correlation for ADV data filtering
   tar_target(min_correlation, 50),
@@ -135,48 +153,58 @@ list(
   tar_target(rga_wide, load_and_widen_rga(rga_file)),
   tar_target(rga_clean, remove_bad_rga_periods(rga_wide, bad_times)),
   tar_target(rga_normalized, normalize_rga_by_argon(rga_clean)),
-
-  # Bin timeseries data
   tar_target(
     rga_binned,
-    bin_timeseries(
-      rga_normalized,
-      datetime_col = "timestamp",
-      value_cols = c(
-        "mass_15_40",
-        "mass_28_40",
-        "mass_32_40",
-        "mass_44_40"
-      )
-    )
+    assign_inlets(rga_normalized) |>
+      filter_inlet_window(window_start = 30, window_end = 420) |>
+      remove_bad_rga_periods(bad_times)
   ),
-
-  # Make one row for each high-low pair and widen
-  tar_target(rga_binned_wide, pair_gradient_measurements(rga_binned)),
-  tar_target(rga_with_par, add_par(rga_binned_wide, crds)),
+  tar_target(
+    rga_interpolated,
+    calculate_period_means(rga_binned) |>
+      interpolate_to_grid() |>
+      widen_binned_rga() |>
+      remove_bad_rga_periods(bad_times)
+  ),
+  tar_target(rga_with_par, add_par(rga_interpolated, crds)),
 
   # Add temperature and remove bad times
   tar_target(
     rga_temp,
-    add_status_temp(rga_with_par, status_file, bad_times)
+    add_status_temp(rga_with_par, status_file)
   ),
   tar_target(
-    seaphox_df_jul,
-    load_seaphox_oxygen(
-      seaphox_file,
-      "2025-07-12 00:00:00",
-      "2025-07-16 14:00:00"
-    )
+    rga_temp_clean,
+    remove_bad_rga_periods(rga_temp, bad_times)
   ),
 
   # Add oxygen calibration
   tar_target(
-    rga_oxygen,
-    add_oxygen(
-      rga_temp,
-      seaphox_df_jul
+    seaphox_df_jul,
+    load_seaphox_oxygen(
+      seaphox_file,
+      "2025-06-26 00:00:00",
+      "2025-07-16 14:00:00"
     )
   ),
+  tar_target(
+    ox_cal_df,
+    make_ox_cal_df(rga_binned, seaphox_df_jul)
+  ),
+  tar_target(
+    ox_model,
+    fit_oxygen(ox_cal_df)
+  ),
+  tar_target(
+    rga_oxygen,
+    add_oxygen(
+      rga_temp_clean,
+      ox_model,
+      sensor_separation = 1.02
+    )
+  ),
+
+  # Add CO2 calibration
   tar_target(
     proco2_df_jul,
     load_prooceanus_co2(
@@ -185,24 +213,33 @@ list(
       "2025-07-29 00:00:00"
     )
   ),
-
-  # Add calibrated CO2 to RGA data
+  tar_target(
+    co2_cal_df,
+    make_co2_cal_df(rga_binned, proco2_df_jul, status_file)
+  ),
+  tar_target(
+    co2_model,
+    fit_co2(co2_cal_df)
+  ),
   tar_target(
     rga_calibrated,
     add_co2(
       rga_oxygen,
-      proco2_df_jul
+      co2_model,
+      sensor_separation = 1.02
     )
   ),
 
   ### ADV data processing ###
 
+  # TODO: provide rotations for matlab
+
   # Load and bin ADV data
-  tar_target(
-    adv_bin_rot_df,
-    load_and_bin_adv(adv_file, moves_file, min_correlation)
-  ),
-  tar_target(rga_adv_joined, add_adv(rga_calibrated, adv_bin_rot_df)),
+  # tar_target(
+  #   adv_bin_rot_df,
+  #   load_and_bin_adv(adv_file, moves_file, min_correlation)
+  # ),
+  # tar_target(rga_adv_joined, add_adv(rga_calibrated, adv_bin_rot_df)),
 
   ### Flux calculation ###
 
@@ -220,9 +257,10 @@ list(
   tar_target(flux_dataset, process_flux_data(matlab_eddyflux, pos = pos_df)),
 
   # Join with Ustar and calculate flux
+  # TODO: final fields, need velocity from matlab
   tar_target(
     rga_adv_flux,
-    add_grad_flux(rga_adv_joined, flux_dataset, length_scale)
+    add_grad_flux(rga_calibrated, flux_dataset, length_scale)
   ),
   tar_target(
     hourly_flux,
@@ -238,24 +276,161 @@ list(
     }
   ),
 
+  # Filtered hourly flux to remove June
+  tar_target(
+    filtered_hourly_flux,
+    filter(
+      hourly_flux,
+      timestamp >= as.POSIXct("2025-07-01") # &
+      #  timestamp < as.POSIXct("2025-09-24")
+    )
+  ),
+
   # Calculate statistics
   tar_target(
     hourly_stats,
-    calculate_hourly_statistics(hourly_flux)
+    calculate_hourly_statistics(filtered_hourly_flux)
   ),
   tar_target(
     monthly_stats,
-    calculate_monthly_statistics(hourly_flux)
+    calculate_monthly_statistics(filtered_hourly_flux)
+  ),
+  tar_target(
+    monthly_nem,
+    calculate_nem_monthly(monthly_stats)
+  ),
+  tar_target(
+    daily_nem,
+    calculate_nem_daily(filtered_hourly_flux)
   ),
 
   # load eelgrass data
   tar_target(
     eelgrass,
-    get_eelgrass_data(eelgrass_file)
+    get_eelgrass_data(eelgrass_file, sg_length_2021_file, sg_weight_2021_file)
   ),
 
-  # Visualizations
-  tar_quarto(co2_report, "reports/gems_co2_issue.qmd"),
+  # make PAR model df
+  tar_target(
+    par_model_df,
+    make_dli_df(
+      start_date = "2025-06-01",
+      end_date = "2025-10-31",
+      crds = crds
+    )
+  ),
+
+  # add alkalinity calculations DIC flux and hourly stats
+  tar_target(
+    rga_calibrated_carbonate,
+    carbonate_calculations(
+      rga_calibrated,
+      seaphox_df_jul,
+      flux_dataset,
+      rga_adv_flux,
+      length_scale,
+      sensor_separation = 1.02
+    )
+  ),
+  tar_target(
+    hourly_carb_flux,
+    calc_hourly_flux(rga_calibrated_carbonate)
+  ),
+  # hourly stats with carbonate calculations
+  tar_target(
+    hourly_stats_carb,
+    calculate_hourly_statistics(hourly_carb_flux)
+  ),
+
+  # Plots
+  tar_target(
+    rga_mass_plot,
+    plot_rga_masses(rga_binned)
+  ),
+  tar_target(
+    qms_noise_plot,
+    plot_qms_noise_comparison(rga_binned, gems_2022_file)
+  ),
+  tar_target(
+    argon_norm_plot,
+    plot_argon_normalization(rga_binned)
+  ),
+  tar_target(
+    oxygen_timeseries_plot,
+    plot_oxygen_timeseries(rga_calibrated)
+  ),
+  tar_target(
+    oxygen_timeseries_july_plot,
+    plot_oxygen_timeseries_july(rga_calibrated)
+  ),
+  tar_target(
+    oxygen_calibration_plot,
+    plot_oxygen_calibration(ox_cal_df, ox_model)
+  ),
+  tar_target(
+    calibration_timeseries_plot,
+    plot_cal_timeseries(ox_cal_df, ox_model)
+  ),
+  tar_target(
+    adv_velocity_plot,
+    plot_adv_velocities(adv_matlab_input)
+  ),
+  tar_target(
+    diel_flux_plot,
+    plot_diel_flux(hourly_flux, par_model_df)
+  ),
+  tar_target(
+    ox_short_plot,
+    plot_rep_daily_flux(hourly_flux)
+  ),
+  tar_target(
+    gradient_diel_plot,
+    plot_grad_diel(hourly_stats)
+  ),
+  tar_target(
+    flux_par_plot,
+    plot_flux_par(hourly_stats)
+  ),
+  tar_target(
+    co2_flux_plot,
+    plot_co2_flux(hourly_stats)
+  ),
+  tar_target(
+    co2_vs_o2_plot,
+    plot_co2_vs_o2(rga_calibrated, hourly_flux)
+  ),
+  tar_target(
+    diel_monthly_plot,
+    plot_diel_monthly(monthly_stats)
+  ),
+  tar_target(
+    nem_plot,
+    plot_nem(monthly_nem, daily_nem)
+  ),
+  tar_target(
+    eelgrass_plot,
+    plot_eelgrass(eelgrass)
+  ),
+  tar_target(
+    dic_vs_o2_flux_plot,
+    plot_dic_o2_flux(rga_calibrated_carbonate)
+  ),
+  tar_target(
+    dic_o2_flux_plot,
+    plot_flux_dic_par(hourly_stats_carb)
+  ),
+  # EDA
+  #tar_quarto(adv_eda, "eda/adv_eda.qmd"),
+  tar_quarto(calibration_eda, "eda/calibration_eda.qmd"),
+
+  # Reports
+  #tar_quarto(co2_report, "reports/gems_co2_issue.qmd"),
   tar_quarto(eelgrass_report, "reports/eelgrass.qmd"),
-  tar_quarto(flux_report, "reports/gems_flux_report.qmd")
+  tar_quarto(gems_report_plots, "reports/gems_report_plots.qmd"),
+  tar_quarto(
+    gems_report_plots_targets,
+    "reports/gems_report_plots_targets.qmd"
+  ),
+  tar_quarto(gems_report, "reports/gems_final_nsf_report.qmd")
+  #tar_quarto(flux_report, "reports/gems_flux_report.qmd")
 )

@@ -1,0 +1,166 @@
+```{r}
+library(targets)
+library(dplyr)
+library(tidyr)
+library(lubridate)
+library(gemstools)
+library(ggplot2)
+library(plotly)
+library(patchwork)
+library(here)
+
+# Configure targets to look in parent directory
+tar_config_set(store = here("_targets"))
+
+tar_load(rga_adv_flux)
+tar_load(hourly_stats)
+tar_load(rga_oxygen)
+tar_load(seaphox_df_jul)
+tar_load(proco2_df_jul)
+tar_load(ox_cal_df)
+tar_load(co2_cal_df)
+tar_load(ox_model)
+tar_load(co2_model)
+```
+
+# Oxygen
+
+```{r}
+summary(ox_model)
+om <- ox_model$coefficients[2]
+oi <- ox_model$coefficients[1]
+
+```
+
+```{r}
+ox_cal_df <- ox_cal_df |>
+  mutate(
+    rga_ox = mass_32_40 * om + oi
+  )
+```
+
+```{r}
+cal_plot_df <- ox_cal_df
+
+cal_plot_df |>
+  pivot_longer(
+    cols = c(seaphox_oxygen_ml_l, rga_ox),
+    names_to = "source",
+    values_to = "oxygen_ml_l"
+  ) |>
+  ggplot(aes(timestamp, oxygen_ml_l, color = source)) +
+  geom_line() +
+  labs(title = "Calibration timeseries", x = NULL, y = "Oxygen [ml/l]")
+```
+
+  1:1 plots of fit
+
+```{r}
+ggplot(cal_plot_df, aes(mass_32_40, seaphox_oxygen_ml_l)) +
+  geom_abline(slope = om, intercept = oi) +
+  geom_point(
+    shape = 1,
+    color = "blue",
+    size = 2,
+    stroke = 0.5,
+    alpha = 0.2
+  ) +
+  labs(
+    title = "Calibration fit",
+    x = "GEMS 32:40",
+    y = "Optode oxygen [ml/l]"
+  )
+```
+
+```{r}
+ggplot(cal_plot_df, aes(seaphox_oxygen_ml_l, rga_ox)) +
+  geom_abline(slope = 1, intercept = 0) +
+  geom_point(
+    shape = 1,
+    color = "blue",
+    size = 2,
+    stroke = 0.5,
+    alpha = 0.2
+  ) +
+  xlim(3, 9) +
+  ylim(3, 9) +
+  labs(
+    title = "Calibration fit",
+    x = "Optode oxygen [ml/l]",
+    y = "GEMS oxygen [ml/l]"
+  )
+```
+
+
+# CO2
+
+Compare ProCO2 and RGA
+
+```{r}
+summary(co2_model)
+cm <- co2_model$coefficients[2]
+ci <- co2_model$coefficients[1]
+```
+
+```{r}
+co2_cal_df <- co2_cal_df |>
+  mutate(
+    rga_co2 = mass_44_40 * cm + ci
+  )
+```
+
+```{r}
+co2_cal_df |>
+  pivot_longer(
+    cols = c(prooceanus_co2_umol_l, rga_co2),
+    names_to = "source",
+    values_to = "co2_umol_l"
+  ) |>
+  ggplot(aes(timestamp, co2_umol_l, color = source)) +
+  geom_line() +
+  labs(title = "Calibration timeseries", x = NULL, y = "CO2 [umol/l]")
+```
+
+  1:1 plots of fit
+
+```{r}
+ggplot(co2_cal_df, aes(mass_44_40, prooceanus_co2_umol_l)) +
+  geom_abline(slope = cm, intercept = ci) +
+  geom_point(
+    shape = 1,
+    color = "blue",
+    size = 2,
+    stroke = 0.5,
+    alpha = 0.2
+  ) +
+  labs(
+    title = "Calibration fit",
+    x = "GEMS 44:40",
+    y = "ProCO2 CO2 [umol/l]"
+  )
+```
+
+```{r}
+ggplot(co2_cal_df, aes(rga_co2, prooceanus_co2_umol_l)) +
+  geom_abline(slope = 1, intercept = 0) +
+  geom_point(
+    shape = 1,
+    color = "blue",
+    size = 2,
+    stroke = 0.5,
+    alpha = 0.2
+  ) +
+  labs(
+    title = "Calibration fit",
+    x = "GEMS CO2 [umol/l]",
+    y = "ProCO2 CO2 [umol/l]"
+  )
+```
+
+```{r}
+ggplot(
+  co2_cal_df,
+  aes(prooceanus_co2_ppm, prooceanus_co2_umol_l)
+) +
+  geom_point()
+```

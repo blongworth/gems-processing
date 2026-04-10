@@ -1,0 +1,993 @@
+
+```{r setup}
+#| echo: false
+#| message: false
+#| warning: false
+library(targets)
+library(dplyr)
+library(tidyr)
+library(lubridate)
+library(gemstools)
+library(ggplot2)
+library(plotly)
+library(patchwork)
+library(here)
+library(R.matlab)
+
+theme_set(theme_classic(base_size = 8))
+
+update_geom_defaults("line", list(linewidth = 0.3))
+
+cb_print_4 <- c(
+  "#0072B2", # blue
+  "#009E73", # bluish green
+  "#D55E00", # vermillion
+  "#E69F00" # orange
+)
+# cb_print_4 <- c(
+#   "#440154", # dark purple
+#   "#31688E", # blue
+#   "#35B779", # green
+#   "#FDE725"
+# )
+#
+options(ggplot2.discrete.colour = cb_print_4)
+
+# scale_colour_discrete <- function(...) {
+#   scale_colour_viridis_d(end = 0.8, ...)
+# }
+# scale_fill_discrete <- function(end = 0.8, ...) {
+#   scale_fill_viridis_d(...)
+# }
+#
+# scale_colour_continuous <- function(...) {
+#   scale_colour_viridis_c(...)
+# }
+# scale_fill_continuous <- function(...) {
+#   scale_fill_viridis_c(...)
+# }
+
+# Configure targets to look in parent directory
+tar_config_set(store = here("_targets"))
+
+tar_load(c(
+  rga_binned,
+  rga_calibrated,
+  hourly_flux,
+  hourly_stats,
+  monthly_stats,
+  monthly_nem,
+  daily_nem,
+  rga_oxygen,
+  seaphox_df_jul,
+  proco2_df_jul,
+  ox_model,
+  ox_cal_df,
+  eelgrass,
+  par_model_df
+))
+```
+
+{{< pagebreak >}}
+
+
+```{r}
+#| label: fig-mass-trace
+#| fig-height: 5.5
+#| fig-cap: RGA signals for masses of interest. Each mass is measured approximately every 10 s. Mass traces are colored by the selected inlet; blue indicates the upper or "high" inlet, and green indicates the bottom or "low" inlet. A five day period of the deployment was chosen to highlight diel cycles. Each signal is normalized to mass 40 (Argon) to control for effects of temperature, pressure, and biofouling. The mass 34 signal is likely an interference with Oxygen, rather than a true hydrogen sufide signal.
+
+## Quadrupole mass spectrometer signals
+jul_rga <- rga_binned |>
+  filter(
+    timestamp > as.POSIXct("2025-07-15 00:00:00"),
+    timestamp < as.POSIXct("2025-07-20 00:00:00")
+  )
+
+mep <- jul_rga |>
+  ggplot(aes(timestamp, mass_15_40, color = inlet)) +
+  geom_line(
+    alpha = 0.6
+  ) +
+  labs(
+    title = "Methane (mass 15)",
+    x = NULL,
+    y = "Mass 15:40"
+  )
+
+nip <- jul_rga |>
+  ggplot(aes(timestamp, mass_28_40, color = inlet)) +
+  geom_line(
+    alpha = 0.6
+  ) +
+  labs(
+    title = "Nitrogen (mass 28)",
+    x = NULL,
+    y = "Mass 28:40"
+  ) +
+  theme(legend.position = "none")
+
+sup <- jul_rga |>
+  ggplot(aes(timestamp, mass_34_40, color = inlet)) +
+  geom_line(
+    alpha = 0.6
+  ) +
+  labs(
+    title = "Hydrogen Sulfide (mass 34)",
+    x = NULL,
+    y = "Mass 34:40"
+  ) +
+  theme(legend.position = "none")
+
+
+cop <- jul_rga |>
+  ggplot(aes(timestamp, mass_44_40, color = inlet)) +
+  geom_line(
+    alpha = 0.6
+  ) +
+  labs(
+    title = "Carbon Dioxide (mass 44)",
+    x = NULL,
+    y = "Mass 44:40"
+  ) +
+  theme(legend.position = "none")
+
+
+oxp <- rga_binned |>
+  filter(
+    timestamp > as.POSIXct("2025-07-15 00:00:00"),
+    timestamp < as.POSIXct("2025-07-20 00:00:00")
+  ) |>
+  ggplot(aes(timestamp, mass_32_40, color = inlet)) +
+  geom_line(
+    alpha = 0.6
+  ) +
+  labs(
+    x = NULL,
+    y = "Mass 32:40"
+  )
+
+op <- oxp +
+  ggtitle("Oxygen (mass 32)") +
+  theme(legend.position = "none")
+
+mep / nip / op / sup / cop
+```
+
+{{< pagebreak >}}
+
+
+```{r load-2022}
+### QMS system noise
+# Jeff's processed 2022 data. Unclear what inlet this is from.
+mat <- readMat(here::here("data/2022_Hadleys_Harbor/gems_rga_2022_jeff.mat"))
+
+# Adjust these names to match your .mat structure:
+# e.g. mat$date, mat$data_D, etc.
+date_matlab <- as.vector(mat$date) # numeric MATLAB datenums
+data_D <- as.matrix(mat$data.D) # numeric matrix
+
+# Helper: convert MATLAB datenum -> POSIXct (UTC)
+matlab_to_posix <- function(datenum) {
+  # MATLAB datenum origin: 0000-01-01, R: 1970-01-01
+  # Difference in days:
+  # as.numeric(as.Date("1970-01-01") - as.Date("0000-01-01")) == 719529
+  origin_shift <- 719529
+  as.POSIXct(
+    (datenum - origin_shift) * 86400,
+    origin = "1970-01-01",
+    tz = "UTC"
+  )
+}
+
+date <- matlab_to_posix(date_matlab)
+
+# Apply the MATLAB filters:
+
+# 1) id=find(data_D(:,10)<1.2*10^7);
+keep_idx1 <- data_D[, 10] >= 1.2 * 10^7
+data_D <- data_D[keep_idx1, ]
+date <- date[keep_idx1]
+
+# 2) id=find(date<datenum(2022,8,10,14,30,0) | date>datenum(2022,8,31,7,0,0));
+
+start_matlab <- as.numeric(as.POSIXct("2022-08-10 14:30:00", tz = "UTC")) /
+  86400 +
+  719529
+end_matlab <- as.numeric(as.POSIXct("2022-08-31 07:00:00", tz = "UTC")) /
+  86400 +
+  719529
+
+start_r <- matlab_to_posix(start_matlab)
+end_r <- matlab_to_posix(end_matlab)
+
+keep_idx2 <- date >= start_r & date <= end_r
+data_D <- data_D[keep_idx2, ]
+date <- date[keep_idx2]
+
+# Build a data.frame for ggplot
+df <- data.frame(
+  date = date,
+  ratio_O2_Ar = data_D[, 3] / data_D[, 5] # data_D(:,3)./data_D(:,5)
+)
+```
+
+```{r}
+#| label: fig-noise-comparison
+#| fig-cap: Comparison of QMS signal noise for argon-normalized oxygen at the high inlet between 2022 (A) and 2025 (B) deployments. Signal noise was greatly reduced for the 2025 deployment, improving the accuracy and limit of detection for gradient determination.
+
+jp <- df |>
+  filter(date > "2022-08-14", date < "2022-08-18") |>
+  ggplot(aes(date, ratio_O2_Ar)) +
+  geom_line(color = cb_print_4[1], linewidth = 0.2, alpha = 0.6) +
+  labs(x = "Date (2022)", y = "Mass 32:40")
+
+bp <- rga_binned |>
+  filter(inlet == "high", timestamp > "2025-08-14", timestamp < "2025-08-18") |>
+  ggplot(aes(timestamp, mass_32_40)) +
+  geom_line(color = cb_print_4[1], linewidth = 0.2, alpha = 0.6) +
+  labs(x = "Date (2025)", y = "Mass 32:40")
+
+(jp / bp) + plot_annotation(tag_levels = 'A')
+```
+
+
+```{r}
+#| label: fig-argon-norm
+#| fig-cap: >
+#|   This figure shows Nitrogen (mass 28) un-normalized (A) and normalized (B)
+#|   using concurrent Argon (mass 40) measurements
+#|   across a period of increasing biofouling at the high inlet (blue),
+#|   followed by cleaning the inlets on Sept. 11.
+#|   Normalizing measured masses to Argon
+#|   controls for physical effects on gas solubility and membrane transport.
+#|   Gas transport across the membrane is affected by temperature, pressure and water flow rate.
+
+### Effect of Argon normalization
+sep_rga <- rga_binned |>
+  filter(
+    timestamp > as.POSIXct("2025-09-04 00:00:00"),
+    timestamp < as.POSIXct("2025-09-14 00:00:00")
+  )
+
+nup <- sep_rga |>
+  ggplot(aes(timestamp, mass_28, color = inlet)) +
+  geom_line(
+    alpha = 0.6
+  ) +
+  labs(
+    x = NULL,
+    y = "Mass 28 [Torr]"
+  )
+
+nnp <- sep_rga |>
+  ggplot(aes(timestamp, mass_28_40, color = inlet)) +
+  geom_line(
+    alpha = 0.6
+  ) +
+  labs(
+    x = NULL,
+    y = "Mass 28:40"
+  ) +
+  theme(legend.position = "none")
+
+(nup / nnp) + plot_annotation(tag_levels = 'A')
+```
+
+{{< pagebreak >}}
+
+
+```{r}
+#| label: fig-oxygen-long
+#| exec: false
+#| fig-cap: A record of the argon-normalized oxygen signal at the high (blue) and low (green) inlets for the duration of the deployment. Maintenance periods and times when the data were known to be poor due to system issues have been removed.
+### Oxygen timeseries
+rga_calibrated |>
+  arrange(timestamp) |>
+  select(timestamp, mass_32_40_high, mass_32_40_low) |>
+  mutate(
+    time_diff = as.numeric(difftime(
+      timestamp,
+      lag(timestamp),
+      units = "hours"
+    )),
+    mass_32_40_high = ifelse(time_diff > 1, NA, mass_32_40_high),
+    mass_32_40_low = ifelse(time_diff > 1, NA, mass_32_40_low)
+  ) |>
+  pivot_longer(
+    cols = c(mass_32_40_low, mass_32_40_high),
+    names_to = "inlet",
+    names_prefix = "mass_32_40_",
+    values_to = "mass_32_40"
+  ) |>
+  ggplot(aes(timestamp, mass_32_40, color = inlet)) +
+  geom_line(na.rm = TRUE, alpha = 0.6) +
+  labs(x = NULL, y = "Mass 32:40")
+```
+
+```{r}
+#| label: fig-oxygen-short
+#| exec: false
+#| fig-cap: >
+#|   The argon-normalized oxygen signal for July 16-20,
+#|   showing a clear gradient between the high (blue) and low (green) inlets.
+#|   The diel variability of oxygen at the low inlet is higher
+#|   due to proximity to the eelgrass and seabed.
+oxp
+```
+
+{{< pagebreak >}}
+
+
+```{r cal-setup}
+## Calibration
+# TODO: calibration in umol/l
+om <- ox_model$coefficients[2]
+oi <- ox_model$coefficients[1]
+r2 <- summary(ox_model)$r.squared
+
+cal_plot_df <- ox_cal_df |>
+  filter(timestamp > "2025-07-11 10:00:00") |>
+  mutate(
+    rga_ox = mass_32_40 * om + oi
+  )
+```
+
+```{r}
+#| label: fig-cal
+#| fig-cap: Oxygen calibration data for the SeapHOx codeployment. SeapHOx optode data is compared to GEMS mass 32:40 at the high inlet, which is nearer in height to the SeapHOx inlet (80cm). The line shows linear model fit.
+#| warning: false
+
+### Optode vs normalized mass 32
+
+eq_label <- paste0(
+  "y = ",
+  round(oi, 2),
+  " + ",
+  round(om, 2),
+  "x\n",
+  "R² = ",
+  round(r2, 3)
+)
+
+ggplot(cal_plot_df, aes(mass_32_40, seaphox_oxygen_ml_l)) +
+  geom_smooth(method = "lm", se = FALSE, color = "darkgrey") +
+  annotate(
+    "text",
+    size = 3,
+    x = Inf,
+    y = -Inf,
+    label = eq_label,
+    hjust = 1.1,
+    vjust = -1
+  ) +
+  geom_point(
+    shape = 1,
+    color = "blue",
+    size = 2,
+    stroke = 0.5,
+    alpha = 0.2
+  ) +
+  #xlim(3, 9) +
+  #ylim(3, 9) +
+  labs(
+    y = "Optode oxygen [ml/l]",
+    x = "GEMS mass 32:40"
+  )
+```
+
+{{< pagebreak >}}
+
+
+```{r}
+#| label: fig-cal-timeseries
+#| fig-cap: SeapHOx optode (green) and fitted GEMS oxygen at the high inlet (blue) over the codeployment time period. Fitted RGA Oxygen data shows a reasonable match to the SeapHOx optode data for the codeployment period. The peak attenuation in the GEMS signal is likely due to the intermittent signal from inlet switching.
+#| warning: false
+### Fitted Oxygen
+cal_plot_df |>
+  pivot_longer(
+    cols = c(seaphox_oxygen_ml_l, rga_ox),
+    names_to = "source",
+    values_to = "oxygen_ml_l"
+  ) |>
+  mutate(source = ifelse(source == "rga_ox", "GEMS", "Optode")) |>
+  ggplot(aes(timestamp, oxygen_ml_l, color = source)) +
+  geom_line(
+    alpha = 0.6
+  ) +
+  labs(x = NULL, y = "Oxygen [ml/l]")
+```
+
+{{< pagebreak >}}
+
+
+```{r}
+#| label: fig-flux-timeseries
+#| fig-cap: >
+#|   Hourly oxygen flux (A) for the duration of the deployment. Maintenance periods and times when the data were known to be poor due to system issues have been removed.
+#|   estimated daily light integral (DLI, B) and seawater temperature at mid height (C) for comparison.
+#|   Flux decreases with decreasing light and temperature.
+#|   No light sensor was codeployed with GEMS,
+#|   therefore photosynthetically active radiation (PAR) and DLI
+#|   are estimated from modeled, cloud-free insolation. A high flux outlier on July 19 believed to be caused by fouling was removed from the plot.
+#| warning: false
+#| fig-height: 5.5
+## Flux
+
+gop <- hourly_flux |>
+  mutate(
+    time_diff = as.numeric(difftime(
+      timestamp,
+      lag(timestamp),
+      units = "hours"
+    )),
+    ox_flux = ifelse(time_diff > 1, NA, ox_flux),
+  ) |>
+  ggplot(aes(timestamp, ox_flux)) +
+  geom_hline(yintercept = 0) +
+  geom_line(color = cb_print_4[1], na.rm = TRUE) +
+  ylim(-15, 15) +
+  labs(
+    x = NULL,
+    y = expression("Oxygen flux [" * mmol ~ m^-2 ~ h^-1 * "]")
+  )
+
+gcp = ggplot(hourly_flux, aes(timestamp, co2_flux)) +
+  geom_line()
+
+tp <- hourly_flux |>
+  mutate(
+    time_diff = as.numeric(difftime(
+      timestamp,
+      lag(timestamp),
+      units = "hours"
+    )),
+    adv_temp = ifelse(time_diff > 1, NA, adv_temp),
+  ) |>
+  ggplot(aes(timestamp, adv_temp)) +
+  geom_line(color = cb_print_4[1]) +
+  labs(x = NULL, y = "Temp [C]")
+
+gpp = ggplot(hourly_flux, aes(timestamp, par)) +
+  geom_line() +
+  labs(
+    x = NULL,
+    y = expression(
+      PAR ~ "[" *
+        mu *
+        "mol " *
+        m^{
+          -2
+        } *
+        " " *
+        s^{
+          -1
+        } *
+        "]"
+    )
+  )
+# DLI daily PAR
+min_flux_ts <- as.Date(min(hourly_flux[["timestamp"]]))
+max_flux_ts <- as.Date(max(hourly_flux[["timestamp"]]))
+
+par_model_df <- par_model_df |>
+  filter(date >= min_flux_ts, date <= max_flux_ts)
+
+dpp <- ggplot(par_model_df, aes(date, dli_mol_m2_day)) +
+  geom_line(color = cb_print_4[1]) +
+  labs(
+    x = NULL,
+    y = expression(
+      DLI ~ "[mol " *
+        m^{
+          -2
+        } *
+        " " *
+        {
+          day
+        }^{
+          -1
+        } *
+        "]"
+    )
+  )
+
+(gop / dpp / tp) +
+  plot_layout(heights = c(3, 2, 2)) +
+  plot_annotation(tag_levels = 'A')
+```
+
+
+```{r}
+#| label: fig-flux-zoom
+#| fig-cap: >
+#|   Oxygen flux (A) with predicted PAR (B) for comparison
+#|   for the period July 15-20.
+#|   Upward flux aligns with peak daily light.
+#|   Respiration flux increases through the dark hours.
+#|   Fluxes have strong daily variability.
+### Representative daily flux
+jul_flux <- hourly_flux |>
+  filter(
+    timestamp > as.POSIXct("2025-07-15 00:00:00"),
+    timestamp < as.POSIXct("2025-07-19 12:00:00")
+  )
+jfp <- jul_flux |>
+  ggplot(aes(timestamp, ox_flux)) +
+  geom_hline(yintercept = 0) +
+  geom_line(color = cb_print_4[1]) +
+  labs(
+    x = NULL,
+    y = expression("Oxygen flux [" * mmol ~ m^-2 ~ h^-1 * "]")
+  )
+
+jpp <- jul_flux |>
+  ggplot(aes(timestamp, par)) +
+  geom_line(color = cb_print_4[1]) +
+  labs(
+    x = NULL,
+    y = expression(
+      PAR ~ "[" *
+        mu *
+        "mol " *
+        m^{
+          -2
+        } *
+        " " *
+        s^{
+          -1
+        } *
+        "]"
+    )
+  )
+(jfp / jpp) + plot_layout(heights = c(3, 1)) + plot_annotation(tag_levels = 'A')
+```
+
+{{< pagebreak >}}
+
+```{r}
+#| label: fig-gradient-diel
+#| fig-cap: >
+#|   GEMS oxygen concentration (A) and gradient (B) aggregated across the deployment by hour of day. Hour is adjusted to the mean solar noon for the deployment. Oxygen concentration is the mean across both inlets.
+#|   Gradient is estimated using the difference between high and low inlets
+#|   over the difference in inlet height.
+#| fig-height: 5
+## Diel Plots
+### Concentration and gradient
+
+hmp <- hourly_stats |>
+  ggplot(aes(solar_hour, ox_mean_umol_l_mean)) +
+  geom_line() +
+  geom_pointrange(
+    aes(
+      ymin = ox_mean_umol_l_mean - ox_mean_umol_l_se,
+      ymax = ox_mean_umol_l_mean + ox_mean_umol_l_se
+    ),
+    size = 0.2,
+    color = cb_print_4[1]
+  ) +
+  labs(x = NULL, y = expression("Oxygen [" * mmol ~ m^-3 * "]"))
+
+hgp <- hourly_stats |>
+  ggplot(aes(solar_hour, ox_gradient_umol_l_m_mean)) +
+  geom_line() +
+  geom_pointrange(
+    aes(
+      ymin = ox_gradient_umol_l_m_mean - ox_gradient_umol_l_m_se,
+      ymax = ox_gradient_umol_l_m_mean + ox_gradient_umol_l_m_se
+    ),
+    size = 0.2,
+    color = cb_print_4[1]
+  ) +
+  geom_hline(yintercept = 0) +
+  labs(
+    x = "Hour of Day",
+    y = expression("Oxygen Gradient [" * mmol ~ m^-4 * "]")
+  )
+
+(hmp / hgp) + plot_annotation(tag_levels = 'A')
+```
+
+{{< pagebreak >}}
+
+
+```{r}
+#| label: fig-flux-diel
+#| fig-cap: >
+#|   GEMS oxygen flux (A) and predicted PAR (B) aggregated hourly for the duration of the deployment. Hour is adjusted to the mean solar noon for the deployment.
+#| fig-height: 5
+### Oxygen flux and predicted par
+
+flp <- hourly_stats |>
+  ggplot(aes(solar_hour, ox_flux_mean)) +
+  geom_line() +
+  geom_pointrange(
+    aes(
+      ymin = ox_flux_mean - ox_flux_se,
+      ymax = ox_flux_mean + ox_flux_se
+    ),
+    size = 0.2,
+    color = cb_print_4[1]
+  ) +
+  geom_hline(yintercept = 0) +
+  labs(x = NULL, y = expression("Oxygen flux [" * mmol ~ m^-2 ~ h^-1 * "]"))
+
+parp <- hourly_stats |>
+  ggplot(aes(solar_hour, par_mean)) +
+  geom_line(color = cb_print_4[1]) +
+  labs(
+    x = "Hour of Day",
+    y = expression(
+      PAR ~ "[" *
+        mu *
+        "mol " *
+        m^{
+          -2
+        } *
+        " " *
+        s^{
+          -1
+        } *
+        "]"
+    )
+  )
+
+(flp / parp) +
+  plot_layout(heights = c(3, 1)) +
+  plot_annotation(tag_levels = 'A')
+```
+
+
+```{r}
+#| label: fig-co2-diel
+#| fig-cap: >
+#|   GEMS carbon dioxide concentration (A) and gradient (B) and flux (C) aggregated across the deployment by hour of day. Hour is adjusted to the mean solar noon for the deployment, and predicted PAR is shown in (D). CO₂ concentration is the mean across both inlets.
+#|   Gradient is estimated using the difference between high and low inlets
+#|   over the difference in inlet height.
+#| fig-height: 5.5
+
+### CO2 concentration, gradient and flux
+
+hmp <- hourly_stats |>
+  ggplot(aes(solar_hour, co2_mean_umol_l_mean)) +
+  geom_line() +
+  geom_pointrange(
+    aes(
+      ymin = co2_mean_umol_l_mean - co2_mean_umol_l_se,
+      ymax = co2_mean_umol_l_mean + co2_mean_umol_l_se
+    ),
+    size = 0.2,
+    color = cb_print_4[1]
+  ) +
+  labs(x = NULL, y = expression("CO"[2] ~ "[" * mmol ~ m^-3 * "]"))
+
+hgp <- hourly_stats |>
+  ggplot(aes(solar_hour, co2_gradient_umol_l_m_mean)) +
+  geom_line() +
+  geom_pointrange(
+    aes(
+      ymin = co2_gradient_umol_l_m_mean - co2_gradient_umol_l_m_se,
+      ymax = co2_gradient_umol_l_m_mean + co2_gradient_umol_l_m_se
+    ),
+    size = 0.2,
+    color = cb_print_4[1]
+  ) +
+  geom_hline(yintercept = 0) +
+  labs(
+    x = NULL,
+    y = expression("CO"[2] ~ "Gradient [" * mmol ~ m^-4 * "]")
+  )
+
+flp <- hourly_stats |>
+  ggplot(aes(solar_hour, co2_flux_mean)) +
+  geom_line() +
+  geom_pointrange(
+    aes(
+      ymin = co2_flux_mean - co2_flux_se,
+      ymax = co2_flux_mean + co2_flux_se
+    ),
+    size = 0.2,
+    color = cb_print_4[1]
+  ) +
+  geom_hline(yintercept = 0) +
+  labs(x = NULL, y = expression("CO"[2] ~ "flux [" * mmol ~ m^-2 ~ h^-1 * "]"))
+
+(hmp / hgp / flp / parp) +
+  plot_layout(heights = c(3, 3, 3, 1)) +
+  plot_annotation(tag_levels = 'A')
+```
+
+```{r}
+#| label: fig-co2-vs-o2
+#| fig-cap: >
+#|   The relationship between CO₂ and O₂ vertical gradients (A) and flux (B), colored by predicted PAR. Gradient scales are reversed to place in the same frame of reference as flux.
+#| fig-height: 3
+#| warning: false
+
+# rga_calibrated |>
+#   ggplot(aes(mass_32_40_high, mass_44_40_high, color = par)) +
+#   geom_point()
+
+# rga_calibrated |>
+#   ggplot(aes(mass_32_40_low, mass_44_40_low, color = par)) +
+#   geom_point()
+
+# Function to map hour (0-24) to color: dark blue at night, yellow in day
+hour_to_color <- function(hours) {
+  # Normalize hours into [0,24)
+  hours <- hours %% 24
+
+  night_col <- grDevices::col2rgb("#1a4eb5ff") # dark blue
+  day_col <- grDevices::col2rgb("#fce23aff") # yellow
+
+  # Initialize RGB matrix
+  rgb_mat <- matrix(NA, nrow = 3, ncol = length(hours))
+
+  for (i in seq_along(hours)) {
+    h <- hours[i]
+
+    if (h <= 6) {
+      # Deep night: constant dark blue
+      mix <- night_col
+    } else if (h > 6 && h < 8) {
+      # Dawn: interpolate from blue -> yellow between 5 and 7
+      t <- (h - 6) / (8 - 6) # 0 at 5, 1 at 7
+      mix <- (1 - t) * night_col + t * day_col
+    } else if (h >= 8 && h <= 17) {
+      # Full day: constant yellow
+      mix <- day_col
+    } else if (h > 17 && h < 19) {
+      # Dusk: interpolate from yellow -> blue between 17 and 19
+      t <- (h - 17) / (19 - 17) # 0 at 17, 1 at 19
+      mix <- (1 - t) * day_col + t * night_col
+    } else {
+      # Night again: constant dark blue
+      mix <- night_col
+    }
+
+    rgb_mat[, i] <- mix
+  }
+
+  grDevices::rgb(
+    red = rgb_mat[1, ] / 255,
+    green = rgb_mat[2, ] / 255,
+    blue = rgb_mat[3, ] / 255
+  )
+}
+
+# A convenience palette generator for gradientn
+hour_palette <- function(n = 256) {
+  # Sample hours evenly across 0-24
+  hours_seq <- seq(0, 24, length.out = n)
+  hour_to_color(hours_seq)
+}
+
+gp <- rga_calibrated |>
+  mutate(hour = (hour(timestamp) - 4) %% 24) |>
+  ggplot(aes(ox_gradient_umol_l_m, co2_gradient_umol_l_m, color = hour)) +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0) +
+  geom_point(size = 1, alpha = .6) +
+  scale_x_reverse() +
+  scale_y_reverse() +
+  scale_colour_gradientn(
+    colours = hour_palette(256),
+    limits = c(0, 24),
+    breaks = c(0, 6, 12, 18, 24),
+    labels = c("00:00", "06:00", "12:00", "18:00", "24:00"),
+    name = "Hour of day"
+  ) +
+  labs(
+    x = expression("O"[2] ~ "Gradient [" * mmol ~ m^-4 * "]"),
+    y = expression("CO"[2] ~ "Gradient [" * mmol ~ m^-4 * "]"),
+    color = "PAR"
+  ) +
+  theme(legend.position = "none")
+
+fp <- hourly_flux |>
+  filter(ox_flux < 30) |>
+  mutate(hour = (hour(timestamp) - 4) %% 24) |>
+  ggplot(aes(ox_flux, co2_flux, color = hour)) +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0) +
+  geom_point(size = 1, alpha = .5) +
+  scale_colour_gradientn(
+    colours = hour_palette(256),
+    limits = c(0, 24),
+    breaks = c(0, 6, 12, 18, 24),
+    labels = c("00:00", "06:00", "12:00", "18:00", "24:00"),
+    name = "Hour of day"
+  ) +
+  labs(
+    x = expression("O"[2] ~ "flux [" * mmol ~ m^-2 ~ h^-1 * "]"),
+    y = expression("CO"[2] ~ "flux [" * mmol ~ m^-2 ~ h^-1 * "]"),
+    color = "Hour of Day"
+  )
+
+(gp + fp) + plot_annotation(tag_levels = 'A')
+```
+
+```{r}
+#| label: fig-flux-dic-vs-o2
+#| fig-cap: GEMS DIC flux relationship to oxygen flux. DIC flux is determined for the period of the SeapHOx codeployment, using measured seapHOx pH and calibrated GEMS CO₂, assuming uniform pH between top and bottom inlets, and using CO2SYS for carbonate system calculations. 
+
+tar_read(dic_vs_o2_flux_plot)
+```
+
+```{r}
+#| label: fig-flux-dic-o2
+#| fig-cap: Hourly GEMS DIC flux (A) compared to oxygen flux (B). DIC flux is determined for the period of the SeapHOx codeployment, using measured seapHOx pH and calibrated GEMS CO₂, assuming uniform pH between top and bottom inlets, and using CO2SYS for carbonate system calculations. 
+
+tar_read(dic_o2_flux_plot)
+```
+
+```{r}
+#| label: fig-flux-diel-monthly
+#| fig-cap: >
+#|   GEMS oxygen flux (A) and predicted PAR (B) aggregated hourly and separated by month. Hour is adjusted to the mean solar noon for the deployment. June data is not shown due to bias from only 3 days of data acquisition.
+#| fig-height: 5
+
+### Monthly variability
+
+monthly_stats <- mutate(monthly_stats, month = as.factor(month))
+
+hmp <- monthly_stats |>
+  ggplot(aes(solar_hour, ox_mean_umol_l_mean, color = month)) +
+  geom_line() +
+  geom_pointrange(
+    aes(
+      ymin = ox_mean_umol_l_mean - ox_mean_umol_l_se,
+      ymax = ox_mean_umol_l_mean + ox_mean_umol_l_se
+    ),
+    size = 0.2,
+    # position = position_dodge(width = 0.5)
+  ) +
+  geom_hline(yintercept = 0) +
+  labs(x = NULL, y = expression("Oxygen [" * mmol ~ m^-3 * "]"))
+
+hgp <- monthly_stats |>
+  ggplot(aes(solar_hour, ox_gradient_umol_l_m_mean, color = month)) +
+  geom_line() +
+  geom_pointrange(
+    aes(
+      ymin = ox_gradient_umol_l_m_mean - ox_gradient_umol_l_m_se,
+      ymax = ox_gradient_umol_l_m_mean + ox_gradient_umol_l_m_se
+    ),
+    size = 0.2,
+    # position = position_dodge(width = 0.5)
+  ) +
+  geom_hline(yintercept = 0) +
+  labs(
+    x = "Hour of Day",
+    y = expression("Oxygen Gradient [" * mmol ~ m^-4 * "]")
+  )
+
+flp <- monthly_stats |>
+  ggplot(aes(solar_hour, ox_flux_mean, color = month)) +
+  geom_line() +
+  geom_pointrange(
+    aes(
+      ymin = ox_flux_mean - ox_flux_se,
+      ymax = ox_flux_mean + ox_flux_se
+    ),
+    size = 0.2,
+    # position = position_dodge(width = 0.5)
+  ) +
+  geom_hline(yintercept = 0) +
+  labs(x = NULL, y = expression("Oxygen flux [" * mmol ~ m^-2 ~ h^-1 * "]"))
+
+parp <- monthly_stats |>
+  ggplot(aes(solar_hour, par_mean, color = month)) +
+  geom_line() +
+  labs(
+    x = "Hour of Day",
+    y = expression(
+      PAR ~ "[" *
+        mu *
+        "mol " *
+        m^{
+          -2
+        } *
+        " " *
+        s^{
+          -1
+        } *
+        "]"
+    )
+  )
+
+(flp / parp) +
+  plot_layout(heights = c(3, 1)) +
+  plot_annotation(tag_levels = 'A')
+
+# hm_ply <- ggplotly(hmp, dynamicTicks = TRUE)
+# hg_ply <- ggplotly(hgp, dynamicTicks = TRUE)
+# subplot(hm_ply, hg_ply, nrows = 2, shareX = TRUE, titleY = TRUE)
+```
+
+{{< pagebreak >}}
+
+
+```{r}
+#| label: fig-nem
+#| fig-cap: >
+#|   Oxygen flux integrated by day (A) and by month (B) for the deployment period
+#|   to provide an estimate of net ecosystem metabolism (NEM).
+#|   The benthic system at Naushon Island shows variability on daily and monthly scales, but the system is close
+#|   to net neutral over time.
+#| fig-height: 5.5
+
+## Net ecosystem metabolism
+monthly_nem$month_factor <- factor(
+  monthly_nem$month,
+  levels = 1:12,
+  labels = month.abb # or month.abb
+)
+mp <- ggplot(monthly_nem, aes(month_factor, nem_mmol_m2_day)) +
+  geom_col(fill = cb_print_4[1]) +
+  geom_hline(yintercept = 0) +
+  labs(
+    x = NULL,
+    y = expression("NEM [" * mmol ~ m^-2 ~ d^-1 * "]")
+  )
+
+dp <- ggplot(daily_nem, aes(day, nem_mmol_m2_h)) +
+  geom_col(fill = cb_print_4[1]) +
+  geom_hline(yintercept = 0) +
+
+  labs(
+    y = expression("NEM [" * mmol ~ m^-2 ~ h^-1 * "]")
+  )
+
+(mp / dp) +
+  plot_annotation(tag_levels = "A")
+```
+
+{{< pagebreak >}}
+
+
+```{r}
+#| label: fig-eelgrass
+#| fig-cap: >
+#|   Naushon eelgrass shoot biomass (A) and shoot length (B) data by year.
+#|   Eelgrass was sampled from 3-5 20 cm² quadrats.
+#|   Point error bars are the standard deviation of quadrats for mass and count
+#|   and the standard deviation of all blade lengths for length.
+#|   The fit line is a loess fit through all data.
+#| message: false
+#| fig-height: 6
+
+## Eelgrass growth
+bmp <- ggplot(eelgrass, aes(day_of_year, density_g_m2, color = year)) +
+  geom_smooth(inherit.aes = FALSE, aes(day_of_year, density_g_m2), se = FALSE) +
+  geom_line() +
+  geom_pointrange(aes(
+    ymin = density_g_m2 - density_g_m2_sd,
+    ymax = density_g_m2 + density_g_m2_sd
+  ),
+  size = 0.2
+  ) +
+  scale_x_continuous(
+    breaks = c(1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335),
+    labels = month.abb
+  ) +
+  labs(
+    x = NULL,
+    y = expression("Density [" * g ~ m^-2 * "]")
+  )
+
+blp <- ggplot(eelgrass, aes(day_of_year, length_cm, color = year)) +
+  geom_smooth(inherit.aes = FALSE, aes(day_of_year, length_cm), se = FALSE) +
+  geom_line() +
+  geom_line() +
+  geom_pointrange(aes(
+    ymin = length_cm - length_cm_sd,
+    ymax = length_cm + length_cm_sd
+  ), size = 0.2) +
+  scale_x_continuous(
+    breaks = c(1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335),
+    labels = month.abb
+  ) +
+  labs(x = NULL, y = "Length [cm]")
+
+(bmp / blp) + plot_annotation(tag_levels = 'A')
+```
