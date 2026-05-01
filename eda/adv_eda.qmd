@@ -10,34 +10,34 @@ library(gemstools)
 library(plotly)
 library(targets)
 
-tar_load(c(adv_file, adv_bin_rot_df))
+tar_load(c(adv_file, adv_matlab_input))
 ```
 
 # Initial plots of ADV data
 
 ```{r}
-p <- ggplot(adv_bin_rot_df, aes(bin_time, pressure)) +
+p <- ggplot(adv_matlab_input, aes(bin_time, pressure)) +
   geom_line()
 
 ggplotly(p, dynamicTicks = TRUE)
 ```
 
 ```{r}
-p <- ggplot(adv_bin_rot_df, aes(bin_time, cur_speed)) +
+p <- ggplot(adv_matlab_input, aes(bin_time, cur_speed)) +
   geom_line()
 
 ggplotly(p, dynamicTicks = TRUE)
 ```
 
 ```{r}
-p <- ggplot(adv_bin_rot_df, aes(bin_time, cur_dir)) +
+p <- ggplot(adv_matlab_input, aes(bin_time, cur_dir)) +
   geom_line()
 
 ggplotly(p, dynamicTicks = TRUE)
 ```
 
 ```{r}
-p <- ggplot(adv_bin_rot_df, aes(bin_time, w_rot)) +
+p <- ggplot(adv_matlab_input, aes(bin_time, w_rot)) +
   geom_line()
 
 ggplotly(p, dynamicTicks = TRUE)
@@ -63,7 +63,7 @@ These must be added manually in eddyflux_batch.m.
 Horizontal current speed
 
 ```{r}
-p <- ggplot(adv_bin_rot_df, aes(bin_time, cur_speed)) +
+p <- ggplot(adv_matlab_input, aes(bin_time, cur_speed)) +
   geom_line()
 
 ggplotly(p, dynamicTicks = TRUE)
@@ -72,16 +72,23 @@ ggplotly(p, dynamicTicks = TRUE)
 Vertical current speed
 
 ```{r}
-p <- ggplot(adv_bin_rot_df, aes(bin_time, w_rot)) +
+p <- ggplot(adv_matlab_input, aes(bin_time, w_rot)) +
   geom_line()
 
 ggplotly(p, dynamicTicks = TRUE)
 ```
 
+ADV velocities
+
+```{r}
+ggplotly(tar_read(adv_velocity_plot))
+```
+
+
 tide height vs horizontal velocity
 
 ```{r}
-p <- ggplot(adv_bin_rot_df, aes(pressure, cur_speed)) +
+p <- ggplot(adv_matlab_input, aes(pressure, cur_speed)) +
   geom_smooth() +
   geom_point(alpha = 0.1)
 p

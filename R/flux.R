@@ -7,7 +7,7 @@ process_adv_to_ml_input <- function(
   moves_file_name,
   min_correlation = NULL
 ) {
-  adv_df <- read_adv_data(adv_file_name)
+  adv_df <- read_adv_data(adv_file_name, min_correlation)
   proc_adv_df <- adv_df |>
     impute_adv_data() |>
     group_adv_data() |>
@@ -29,7 +29,7 @@ read_adv_data <- function(adv_file_path, min_correlation = NULL) {
   }
   ds |>
     select(timestamp, pressure, u, v, w, amp3, corr3) |>
-    scale_adv_velocity() |>
+    #scale_adv_velocity() |>
     collect()
 }
 
@@ -291,6 +291,19 @@ get_ustar <- function(flux_dataset) {
     ) |>
     group_by(timestamp) |>
     summarize(Ustar = mean(Ustar, na.rm = TRUE))
+}
+
+calc_mean_ustar_velocity_ratio <- function(flux_dataset) {
+  flux_dataset |>
+    filter(is.finite(Ustar), is.finite(vmean), vmean > 0) |>
+    mutate(ustar_over_mean_velocity = Ustar / vmean) |>
+    summarize(
+      mean_ustar_over_mean_velocity = mean(
+        ustar_over_mean_velocity,
+        na.rm = TRUE
+      ),
+      n = n()
+    )
 }
 
 # Join with Ustar and calculate flux

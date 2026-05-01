@@ -217,6 +217,34 @@ tar_read(calibration_timeseries_plot)
 ```
 
 ```{r}
+#| label: fig-ustar-velocity
+#| fig-cap: >
+#|   Friction velocity from spectral ADV processing plotted against
+#|   mean velocity for each 15 minute flux interval.
+#| warning: false
+
+tar_read(ustar_velocity_plot)
+```
+
+```{r}
+#| label: fig-ustar-u
+#| fig-cap: >
+#|   Friction velocity from spectral ADV processing plotted against
+#|   the mean ADV u velocity component for each 15 minute flux interval.
+#| warning: false
+
+tar_read(ustar_u_plot)
+```
+
+```{r}
+#| label: fig-ustar-velocity-ratio
+#| fig-cap: !expr sprintf("Ratio of friction velocity to mean current velocity for each 15 minute flux interval. Mean ratio = %.3f (n = %s).", tar_read(mean_ustar_velocity_ratio)$mean_ustar_over_mean_velocity, tar_read(mean_ustar_velocity_ratio)$n)
+#| warning: false
+
+tar_read(ustar_velocity_ratio_plot)
+```
+
+```{r}
 #| label: fig-flux-timeseries
 #| fig-cap: >
 #|   Hourly oxygen flux (A) for the duration of the deployment.

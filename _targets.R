@@ -105,7 +105,7 @@ list(
   tar_target(co2_calibration_mode, "high"),
 
   # minimum correlation for ADV data filtering
-  tar_target(min_correlation, 50),
+  tar_target(min_correlation, 20),
 
   ### Initial processing from raw files ###
 
@@ -418,8 +418,28 @@ list(
     plot_cal_timeseries(ox_cal_df, ox_model)
   ),
   tar_target(
+    adv_file_velocity_plot,
+    plot_adv_file_velocities(adv_file)
+  ),
+  tar_target(
     adv_velocity_plot,
     plot_adv_velocities(adv_matlab_input)
+  ),
+  tar_target(
+    ustar_velocity_plot,
+    plot_ustar_velocity(flux_dataset)
+  ),
+  tar_target(
+    ustar_u_plot,
+    plot_ustar_u(flux_dataset)
+  ),
+  tar_target(
+    mean_ustar_velocity_ratio,
+    calc_mean_ustar_velocity_ratio(flux_dataset)
+  ),
+  tar_target(
+    ustar_velocity_ratio_plot,
+    plot_ustar_velocity_ratio(flux_dataset, mean_ustar_velocity_ratio)
   ),
   tar_target(
     diel_flux_plot,

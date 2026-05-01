@@ -448,7 +448,120 @@ plot_rep_daily_flux <- function(hourly_flux) {
     plot_annotation(tag_levels = 'A')
 }
 
+# ADV friction velocity vs mean velocity
+plot_ustar_velocity <- function(flux_dataset) {
+  flux_dataset |>
+    filter(is.finite(Ustar), is.finite(vmean)) |>
+    ggplot(aes(vmean, Ustar)) +
+    geom_point(color = cb_print_4[1], alpha = 0.6, size = 0.8) +
+    geom_smooth(
+      method = "lm",
+      formula = y ~ x,
+      se = FALSE,
+      color = "black",
+      linewidth = 0.4
+    ) +
+    labs(
+      x = expression("Mean velocity [" * m ~ s^-1 * "]"),
+      y = expression("Friction velocity, " * u["*"] * " [" * m ~ s^-1 * "]")
+    )
+}
+
+plot_ustar_u <- function(flux_dataset) {
+  flux_dataset |>
+    filter(is.finite(Ustar), is.finite(vxmean)) |>
+    ggplot(aes(abs(vxmean), Ustar)) +
+    geom_point(color = cb_print_4[1], alpha = 0.6, size = 0.8) +
+    geom_smooth(
+      method = "lm",
+      formula = y ~ x,
+      se = FALSE,
+      color = "black",
+      linewidth = 0.4
+    ) +
+    labs(
+      x = expression("Mean " * u * " velocity [" * m ~ s^-1 * "]"),
+      y = expression("Friction velocity, " * u["*"] * " [" * m ~ s^-1 * "]")
+    )
+}
+
+plot_ustar_velocity_ratio <- function(
+  flux_dataset,
+  mean_ustar_velocity_ratio
+) {
+  ratio_mean <- mean_ustar_velocity_ratio$mean_ustar_over_mean_velocity[[1]]
+  ratio_n <- mean_ustar_velocity_ratio$n[[1]]
+
+  flux_dataset |>
+    filter(is.finite(Ustar), is.finite(vmean), vmean > 0) |>
+    mutate(ustar_over_mean_velocity = Ustar / vmean) |>
+    ggplot(aes(vmean, ustar_over_mean_velocity)) +
+    geom_hline(
+      yintercept = ratio_mean,
+      color = cb_print_4[3],
+      linewidth = 0.4
+    ) +
+    geom_point(color = cb_print_4[1], alpha = 0.6, size = 0.8) +
+    labs(
+      x = expression("Mean current velocity [" * m ~ s^-1 * "]"),
+      y = expression(u["*"] / "mean current velocity"),
+      subtitle = sprintf("Mean ratio = %.3f (n = %s)", ratio_mean, ratio_n)
+    )
+}
+
 # ADV velocity timeseries
+plot_adv_file_velocities <- function(adv_file, max_points = 10000) {
+  adv_ds <- arrow::open_dataset(adv_file)
+  n_rows <- adv_ds |>
+    summarise(n = n()) |>
+    collect() |>
+    pull(n)
+
+  row_numbers <- sample.int(
+    n = n_rows,
+    size = min(max_points, n_rows)
+  ) |>
+    sort()
+
+  adv_table <- adv_ds |>
+    select(timestamp, u, v, w) |>
+    collect(as_data_frame = FALSE)
+
+  adv_plot_df <- adv_table$Take(
+    arrow::Array$create(as.integer(row_numbers - 1))
+  ) |>
+    as.data.frame() |>
+    arrange(timestamp) |>
+    mutate(
+      time_diff = as.numeric(difftime(
+        timestamp,
+        lag(timestamp),
+        units = "hours"
+      )),
+      across(
+        c(u, v, w),
+        \(x) ifelse(time_diff > 1, NA, x)
+      )
+    ) |>
+    select(timestamp, u, v, w) |>
+    pivot_longer(
+      cols = c(u, v, w),
+      names_to = "component",
+      values_to = "velocity"
+    )
+
+  adv_plot_df |>
+    ggplot(aes(timestamp, velocity, color = component)) +
+    geom_hline(yintercept = 0, linewidth = 0.2) +
+    geom_line(linewidth = 0.2, na.rm = TRUE) +
+    scale_color_manual(values = cb_print_4[1:3]) +
+    labs(
+      x = NULL,
+      y = expression("Velocity [" * m ~ s^-1 * "]"),
+      color = "Component"
+    )
+}
+
 plot_adv_velocities <- function(adv_matlab_input) {
   adv_plot_df <- adv_matlab_input |>
     slice_sample(n = 10000) |>
