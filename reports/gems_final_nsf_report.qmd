@@ -348,7 +348,7 @@ tar_read(diel_monthly_plot)
 #|   to net neutral over time.
 #| fig-height: 5.5
 
-#tar_read(nem_plot)
+tar_read(nem_plot)
 ```
 
 ```{r}

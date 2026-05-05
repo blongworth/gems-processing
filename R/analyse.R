@@ -84,7 +84,14 @@ calculate_nem_daily <- function(hourly_flux) {
     mutate(day = as.Date(timestamp)) |>
     group_by(day) |>
     summarise(
-      nem_mmol_m2_h = sum(ox_flux) / 24
+      n_hours = n(),
+      n_missing = sum(is.na(ox_flux)),
+      nem_mmol_m2_h = if_else(
+        all(is.na(ox_flux)),
+        NA_real_,
+        sum(ox_flux, na.rm = TRUE) / 24
+      ),
+      .groups = "drop"
     )
 }
 
@@ -93,7 +100,14 @@ calculate_nem_monthly <- function(monthly_stats) {
   monthly_stats |>
     group_by(month) |>
     summarise(
-      nem_mmol_m2_day = sum(ox_flux_mean)
+      n_hours = n(),
+      n_missing = sum(is.na(ox_flux_mean)),
+      nem_mmol_m2_day = if_else(
+        all(is.na(ox_flux_mean)),
+        NA_real_,
+        sum(ox_flux_mean, na.rm = TRUE)
+      ),
+      .groups = "drop"
     )
 }
 
