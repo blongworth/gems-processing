@@ -32,8 +32,8 @@ function eddyflux_batch(varargin)
     if nargin == 3
       disp("Using planar rotation")
       flagrotate = 2;
-      % rotations=[-0.507, -0.477, -0.040, -0.579, -0.570, 0.305];
-      rotations=[-29.2, -15, 4.63, -11.1, -25.4, 17.3];
+      rotations=[-0.507, -0.477, -0.040, -0.579, -0.570, 0.305];
+      % rotations=[-29.2, -15, 4.63, -11.1, -25.4, 17.3];
       planarzrot = rotations(varargin{3}); % planar rotation angle for 2nd rotation; planar z rotation
     else
       flagrotate = 1;

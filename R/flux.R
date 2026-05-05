@@ -72,7 +72,8 @@ impute_adv_data <- function(
       if (interpolation_max_gap_n == 0) {
         x
       } else {
-        na_interpolation(x, maxgap = interpolation_max_gap_n)
+        na_locf(x, maxgap = interpolation_max_gap_n)
+        # na_interpolation(x, maxgap = interpolation_max_gap_n)
       }
     }))
 }

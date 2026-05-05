@@ -411,8 +411,8 @@ plot_rep_daily_flux <- function(hourly_flux) {
     filter(
       # timestamp > as.POSIXct("2025-07-01 00:00:00"),
       # timestamp < as.POSIXct("2025-07-17 00:00:00")
-      timestamp > as.POSIXct("2025-07-15 00:00:00"),
-      timestamp < as.POSIXct("2025-07-19 12:00:00")
+      timestamp > as.POSIXct("2025-09-09 00:00:00"),
+      timestamp < as.POSIXct("2025-09-12 12:00:00")
     )
   jfp <- jul_flux |>
     ggplot(aes(timestamp, ox_flux)) +

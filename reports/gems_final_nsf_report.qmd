@@ -11,6 +11,7 @@ format:
     fig-dpi: 300
     reference-doc: custom-reference-doc.docx
   typst: default
+warning: false
 echo: false
 abstract: |
   We developed and deployed a membrane inlet quadrupole mass spectrometer (MIMS) system for continuous monitoring within a _Zostera marina_ (eelgrass) meadow in Woods Hole, Massachusetts, USA. The benthic system measured dissolved O₂, CO₂, N₂, Ar, CH₄, and H₂S at two heights spaced ~1 m apart above the seagrass canopy, enabling vertical flux calculations using the gradient exchange method when combined with velocity measurements from an acoustic Doppler velocimeter (ADV). Data was remotely telemetered using GSM cellular communication to a web-based data store with real-time monitoring dashboard.
@@ -217,16 +218,6 @@ tar_read(calibration_timeseries_plot)
 ```
 
 ```{r}
-#| label: fig-ustar-velocity
-#| fig-cap: >
-#|   Friction velocity from spectral ADV processing plotted against
-#|   mean velocity for each 15 minute flux interval.
-#| warning: false
-
-tar_read(ustar_velocity_plot)
-```
-
-```{r}
 #| label: fig-ustar-u
 #| fig-cap: >
 #|   Friction velocity from spectral ADV processing plotted against
@@ -268,7 +259,7 @@ tar_read(diel_flux_plot)
 #| label: fig-flux-zoom
 #| fig-cap: >
 #|   Oxygen flux (A) with predicted PAR (B) for comparison
-#|   for the period July 15-20.
+#|   for the period September 9-12.
 #|   Upward flux aligns with peak daily light.
 #|   Respiration flux increases through the dark hours.
 #|   Fluxes have strong daily variability.

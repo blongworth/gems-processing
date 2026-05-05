@@ -105,7 +105,7 @@ list(
   tar_target(co2_calibration_mode, "high"),
 
   # minimum correlation for ADV data filtering
-  tar_target(min_correlation, 50),
+  tar_target(min_correlation, 54),
 
   # maximum gap length, in seconds, to interpolate after ADV downsampling
   tar_target(adv_interpolation_max_gap_s, 15),
