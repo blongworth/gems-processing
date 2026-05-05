@@ -5,11 +5,12 @@
 process_adv_to_ml_input <- function(
   adv_file_name,
   moves_file_name,
-  min_correlation = NULL
+  min_correlation = NULL,
+  interpolation_max_gap_s = 1
 ) {
   adv_df <- read_adv_data(adv_file_name, min_correlation)
   proc_adv_df <- adv_df |>
-    impute_adv_data() |>
+    impute_adv_data(interpolation_max_gap_s = interpolation_max_gap_s) |>
     group_adv_data() |>
     flag_adv_lander_moves(moves_file_name)
   proc_adv_df |>
@@ -17,7 +18,10 @@ process_adv_to_ml_input <- function(
   proc_adv_df
 }
 
-read_adv_data <- function(adv_file_path, min_correlation = NULL) {
+read_adv_data <- function(
+  adv_file_path,
+  min_correlation = NULL
+) {
   ds <- open_dataset(adv_file_path)
   if (!is.null(min_correlation)) {
     ds <- ds |>
@@ -29,40 +33,54 @@ read_adv_data <- function(adv_file_path, min_correlation = NULL) {
   }
   ds |>
     select(timestamp, pressure, u, v, w, amp3, corr3) |>
-    #scale_adv_velocity() |>
+    # resample to 4 Hz
+    mutate(timestamp = floor_date(timestamp, ".250 sec")) |>
+    group_by(timestamp) |>
+    summarise(across(everything(), ~ mean(.x, na.rm = TRUE))) |>
+    ungroup() |>
+    arrange(timestamp) |>
     collect()
 }
 
-#' Scale ADV velocities by a factor (e.g., 10) to match expected ranges for MATLAB processing
-#' Only needed if ADV data was processed with incorrect scaling
-scale_adv_velocity <- function(adv_data, scale_factor = .10) {
-  adv_data |>
-    mutate(
-      u = u * scale_factor,
-      v = v * scale_factor,
-      w = w * scale_factor
-    )
-}
+# Impute by interpolation with a configurable max gap length
+impute_adv_data <- function(
+  adv_data,
+  interpolation_max_gap_s
+) {
+  if (
+    !is.numeric(interpolation_max_gap_s) ||
+      length(interpolation_max_gap_s) != 1 ||
+      is.na(interpolation_max_gap_s) ||
+      interpolation_max_gap_s < 0
+  ) {
+    stop("interpolation_max_gap_s must be a non-negative number")
+  }
 
-# Impute by interpolation with a max gap of 1 s
-impute_adv_data <- function(adv_data) {
   st <- min(adv_data$timestamp)
   et <- max(adv_data$timestamp)
-  ts_8hz <- seq(from = st, to = et, by = 0.125)
-  df_ts_8hz <- dplyr::tibble(timestamp = ts_8hz)
+  ts_regular <- seq(from = st, to = et, by = 0.250)
+  df_ts_regular <- dplyr::tibble(timestamp = ts_regular)
+  interpolation_max_gap_n <- as.integer(round(
+    interpolation_max_gap_s * 4
+  ))
 
-  df_8hz_all <- df_ts_8hz |>
+  df_regular_all <- df_ts_regular |>
     dplyr::left_join(adv_data)
 
-  df_8hz_all |>
+  df_regular_all |>
     dplyr::mutate(across(-timestamp, \(x) {
-      na_interpolation(x, maxgap = 8)
+      if (interpolation_max_gap_n == 0) {
+        x
+      } else {
+        na_interpolation(x, maxgap = interpolation_max_gap_n)
+      }
     }))
 }
 
 
 group_adv_data <- function(adv_df) {
   adv_df |>
+    arrange(timestamp) |>
     mutate(is_gap = is.na(u) & !is.na(lag(u, default = NA))) |>
     mutate(group = cumsum(is_gap) + 1) |>
     select(-is_gap) |>
@@ -115,7 +133,7 @@ write_grouped_adv_data <- function(df_grp_mv, grouped_adv_filename) {
 #' @export
 lecs_to_ml <- function(
   data,
-  min_time = .25,
+  min_time,
   data_file = NULL,
   timestamp_file = NULL
 ) {
@@ -145,15 +163,22 @@ lecs_to_ml <- function(
   df_ml_ts <- df |>
     group_by(block) |>
     summarise(start = min(time), end = max(time)) |>
-    ungroup()
-
-  # remove last row of times to make shift indexing work
-  df_ml_ts <- df_ml_ts[-nrow(df_ml_ts), ]
+    ungroup() |>
+    arrange(start)
 
   if (min_time > 0) {
     df_ml_ts <- df_ml_ts |>
       filter(end - start >= min_time)
   }
+
+  # remove final chronological burst to make MATLAB shift indexing work
+  df_ml_ts <- df_ml_ts |>
+    filter(row_number() < n())
+
+  if (nrow(df_ml_ts) == 0) {
+    return(list(df_ml, df_ml_ts))
+  }
+
   if (!is.null(data_file)) {
     write_delim(df_ml, data_file)
   }
@@ -205,6 +230,12 @@ copy_matlab_input_files <- function(
   dest_dir = "matlab"
 ) {
   files <- list.files(source_dir, full.names = TRUE)
+  old_files <- list.files(
+    path = dest_dir,
+    pattern = "^lecs_ml_.*\\.dat$",
+    full.names = TRUE
+  )
+  file.remove(old_files)
   file.copy(files, dest_dir, overwrite = TRUE)
 }
 
@@ -265,22 +296,6 @@ process_flux_data <- function(
     select(-c(file, timemean, ...38, t0)) |>
     arrange(timestamp) |>
     ungroup()
-}
-
-#' Calculate flux from concentration gradient and velocity
-#'
-#' @param data Data frame with oxygen gradient and Ustar values
-#' @param length_scale Turbulent length scale parameter
-#'
-#' @return Data frame with ox_flux column added
-#'
-#' @export
-calculate_grad_flux <- function(data, grad_var, length_scale) {
-  data |>
-    mutate(
-      lscale = length_scale,
-      ox_flux = -1 * Ustar * lscale * {{ grad_var }}
-    )
 }
 
 get_ustar <- function(flux_dataset) {

@@ -40,7 +40,7 @@ function eddyflux_batch(varargin)
     end
     mheight = 0.6; %measuring height for storage calc (m)
     heading = 0; % leave at 0  if using ENU; or heading of vector from .sen file (degrees) from column 11 if fixed frame and XYZ corrdinates
-    hz = 8; %frequency of measured data
+    hz = 4; %frequency of measured data
     windowsize = hz*60*5+1; %averaging window for running mean
     window = hz*60*14+1; %Hamming window that defines window size in pwelch and cpsd function
     Td = 5; % wave frequency for accumulativing at frequencies below the wave band using CPSD

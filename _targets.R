@@ -40,7 +40,7 @@ source("R/plots.R")
 
 # config variables
 data_dir_path <- "data/processed/lander"
-flux_output_file <- file.path(data_dir_path, "gems_2025_flux.parquet")
+flux_output_file <- file.path(data_dir_path, "gems_2025_flux")
 
 # define the pipeline
 list(
@@ -98,14 +98,17 @@ list(
   tar_target(crds, matrix(c(-70.7003, 41.51875), nrow = 1)),
 
   # length scale in meters for flux calculation
-  tar_target(length_scale, 0.4),
+  tar_target(length_scale, 0.2),
 
   # calibration predictor mode: "high" or "mean"
   tar_target(oxygen_calibration_mode, "mean"),
   tar_target(co2_calibration_mode, "high"),
 
   # minimum correlation for ADV data filtering
-  tar_target(min_correlation, 20),
+  tar_target(min_correlation, 50),
+
+  # maximum gap length, in seconds, to interpolate after ADV downsampling
+  tar_target(adv_interpolation_max_gap_s, 8),
 
   ### Initial processing from raw files ###
 
@@ -292,7 +295,12 @@ list(
   # ADV data and flux calculation
   tar_target(
     adv_matlab_input,
-    process_adv_to_ml_input(adv_file, moves_file, min_correlation)
+    process_adv_to_ml_input(
+      adv_file,
+      moves_file,
+      min_correlation,
+      interpolation_max_gap_s = adv_interpolation_max_gap_s
+    )
   ),
   tar_target(pos_df, get_lander_positions(adv_matlab_input)),
   tar_target(

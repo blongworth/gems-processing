@@ -1,6 +1,10 @@
 # functions for adv data
+library(arrow)
+library(dplyr)
+library(readr)
+library(tidyr)
 
-load_and_bin_adv <- function(adv_raw_file, moves_file, min_correlation = NULL) {
+load_and_bin_adv <- function(adv_raw_file, moves_file, min_correlation) {
   ds <- open_dataset(adv_raw_file)
   if (!is.null(min_correlation)) {
     ds <- ds |>
