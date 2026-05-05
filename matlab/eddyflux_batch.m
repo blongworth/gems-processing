@@ -1,8 +1,8 @@
 %Eddy flux Script
 %Date created: 6/5/2013; updated 9/14/18
 %Modified for batch input 11/21/24
-%User inputs: 
-%infile: file with time (h) ,x,y,z (m s-1),o2 (umol L-1),ph (units),pressure (dbar) 
+%User inputs:
+%infile: file with time (h) ,x,y,z (m s-1),o2 (umol L-1),ph (units),pressure (dbar)
 %outfile2: output filename for fluxes (mmol m-2 h-1)and burst means
 %outfile3: output filename with cumulative fluxes (mmol m-2 H-1)and o2 and ph means
 %flagrotate: yes = 1, no = 0
@@ -12,7 +12,7 @@
 %hz: sampling frequency
 %timestamps: input timestamps for beginning and end of each burst
 %flagwrite: yes = 1 (slow), no = 0
-%Hs = waveheight (m), TKE = total kinetic energy (m s-1), 
+%Hs = waveheight (m), TKE = total kinetic energy (m s-1),
 %Ustar (m s-1), Zzero (m), EddyDiff (m2 s-1), wave velocity (m s-1), Cd =
 %drag coefficient (dimensionless)
 
@@ -32,7 +32,8 @@ function eddyflux_batch(varargin)
     if nargin == 3
       disp("Using planar rotation")
       flagrotate = 2;
-      rotations=[-0.507, -0.477, -0.040, -0.579, -0.570, 0.305];
+      % rotations=[-0.507, -0.477, -0.040, -0.579, -0.570, 0.305];
+      rotations=[-29.2, -15, 4.63, -11.1, -25.4, 17.3];
       planarzrot = rotations(varargin{3}); % planar rotation angle for 2nd rotation; planar z rotation
     else
       flagrotate = 1;
@@ -85,7 +86,7 @@ function eddyflux_batch(varargin)
     %convert pH
     H = (10.^(-ph))*10.^6;  %H = hydrogen ion concentration in uMol L-1
     o2storage = zeros(length(o2),1); pHstorage = zeros(length(o2),1);
-    o2storage(j1(1):j2(end)) = movmean(o2(j1(1):j2(end)), hz*3600*6); 
+    o2storage(j1(1):j2(end)) = movmean(o2(j1(1):j2(end)), hz*3600*6);
     phstorage(j1(1):j2(end)) = movmean(H(j1(1):j2(end)), hz*3600*6);
 
     %calculate means for each burst
@@ -126,7 +127,7 @@ function eddyflux_batch(varargin)
         end
         %convert radian angle to degrees
         thetad = rad2deg(theta);
-        phid = rad2deg(phi);    
+        phid = rad2deg(phi);
     end
 
     if flagrotate == 2
@@ -149,13 +150,13 @@ function eddyflux_batch(varargin)
         end
         %convert radian angle to degrees
         thetad = rad2deg(theta);
-        phid = rad2deg(phi);    
+        phid = rad2deg(phi);
     end
 
     %calculate horizontal angle - this is incorrect (originally designed for
     %xyz ADV sampling and a fixed instrument heading)
     % Need to incorporate this:
-    % CurrDir = 90-atan2d(V2(:,3:end),V1(:,3:end)); 
+    % CurrDir = 90-atan2d(V2(:,3:end),V1(:,3:end));
     % CurrDir(CurrDir < 0) = CurrDir(CurrDir<0)+360;
     horz = zeros(n,1);
     thetad2 = zeros(n,1);
@@ -219,7 +220,7 @@ function eddyflux_batch(varargin)
                 o2fit(i,:) = polyfit(time(j1(i):j2(i)),o2(j1(i):j2(i)),1);
                 phfit(i,:) = polyfit(time(j1(i):j2(i)),H(j1(i):j2(i)),1);
                 vxfit(i,:) = polyfit(time(j1(i):j2(i)),vx(j1(i):j2(i)),1);
-                vyfit(i,:) = polyfit(time(j1(i):j2(i)),vy(j1(i):j2(i)),1);            
+                vyfit(i,:) = polyfit(time(j1(i):j2(i)),vy(j1(i):j2(i)),1);
                 vzfit(i,:) = polyfit(time(j1(i):j2(i)),vz(j1(i):j2(i)),1);
                 vxprime2(j1(i):j2(i)) = vx(j1(i):j2(i))-(vxfit(i,1)*time(j1(i):j2(i))+vxfit(i,2));
                 vyprime2(j1(i):j2(i)) = vy(j1(i):j2(i))-(vyfit(i,1)*time(j1(i):j2(i))+vyfit(i,2));
@@ -262,8 +263,8 @@ function eddyflux_batch(varargin)
     vxprime3 = zeros(length(time),1); vyprime3 = zeros(length(time),1); vzprime3 = zeros(length(time),1);
     o2prime3 = zeros(length(time),1); phprime3 = zeros(length(time),1);
 
-    if flagrotate == 0; 
-          for i = 1:n; 
+    if flagrotate == 0;
+          for i = 1:n;
                 vxprime3(j1(i):j2(i)) = vx(j1(i):j2(i))-smooth(vx(j1(i):j2(i)),windowsize);
                 vyprime3(j1(i):j2(i)) = vy(j1(i):j2(i))-smooth(vy(j1(i):j2(i)),windowsize);
                 vzprime3(j1(i):j2(i)) = vz(j1(i):j2(i))-smooth(vz(j1(i):j2(i)),windowsize);
@@ -277,14 +278,14 @@ function eddyflux_batch(varargin)
                 flux3phstor(i) = flux3ph(i)-(mean(phstorage(j1(i):(j1(i)+(hz*60))))-mean(phstorage((j2(i)-(hz*60)):j2(i))))*B*mheight;
                 TKE3(i) = ((mean(vxprime3(j1(i):j2(i)).^2))+(mean(vyprime3(j1(i):j2(i)).^2))+(mean(vzprime3(j1(i):j2(i)).^2))).^0.5;
                 wv3(i)= ((mean((vx(j1(i):j2(i))- vxmean(i)).^2))+(mean((vy(j1(i):j2(i))- vymean(i)).^2))).^0.5;
-                            
+
                 [Cxy,freqxy]=cpsd(vxprime3(j1(i):j2(i)),vzprime3(j1(i):j2(i)),window,[],[],hz);%compute co-spectrum of uprime wprime
                 df=diff(freqxy(1:2));%frequency interval
                 Flux_cpsd_xy(i)=sum(real(Cxy)*df);%integrate co-spectrum (real part only)
                 filt=find(freqxy<1/Td);%find frequencies lower than a wave with 3 second period
                 Flux_cpsd_xy_low(i)=sum(real(Cxy(filt))*df);%integrate only low frequency co-spectrum
                 Ustar(i) = ((Flux_cpsd_xy_low(i)^2)^0.5)^0.5;
-                Zzero(i) = mheight./(exp((vmean(i).*0.41)./Ustar(i))); 
+                Zzero(i) = mheight./(exp((vmean(i).*0.41)./Ustar(i)));
                 EddyDiff(i) = 0.41.*Ustar(i).*mheight;
                 if  vmean(i) < flagwv % removes Cd values that are contaminated due to waves
                     Cd(i) = NaN;
@@ -292,20 +293,20 @@ function eddyflux_batch(varargin)
                 else
                     Cd(i) = ((Flux_cpsd_xy_low(i)^2)^0.5)/(vmean(i).^2);
                     phi2(i) = phid(i);
-                end    
-                                  
+                end
+
                 [Co2vz,freqo2vz]=cpsd(o2prime3(j1(i):j2(i)),vzprime3(j1(i):j2(i)),window,[],[],hz);%compute co-spectrum of uprime wprime
                 df=diff(freqo2vz(1:2));%frequency interval
                 Flux3cpsd(i)=(sum(real(Co2vz)*df))*3600;%integrate co-spectrum (real part only)
                 low=find(freqo2vz<1/Td);%find frequencies lower than a wave with 3 second period
                 Flux3cpsdLow(i)=(sum(real(Co2vz(low))*df))*3600;%integrate only low frequency co-spectrum
                 Flux3cpsdLowStor(i) = Flux3cpsdLow(i)-(mean(o2storage(j1(i):(j1(i)+(hz*60))))-mean(o2storage((j2(i)-(hz*60)):j2(i))))*B*mheight;
-                
+
                 [Cphvz,freqphvz]=cpsd(phprime3(j1(i):j2(i)),vzprime3(j1(i):j2(i)),window,[],[],hz);%compute co-spectrum of uprime wprime
                 df=diff(freqphvz(1:2));%frequency interval
                 Flux3cpsdph(i)=(sum(real(Cphvz)*df))*3600;%integrate co-spectrum (real part only)
                 low=find(freqphvz<1/Td);%find frequencies lower than a wave with 3 second period
-                Flux3cpsdphLow(i)=(sum(real(Cphvz(low))*df))*3600;%integrate only low frequency co-spectrum    
+                Flux3cpsdphLow(i)=(sum(real(Cphvz(low))*df))*3600;%integrate only low frequency co-spectrum
                 Flux3cpsdphLowStor(i) = Flux3cpsdphLow(i)-(mean(phstorage(j1(i):(j1(i)+(hz*60))))-mean(phstorage((j2(i)-(hz*60)):j2(i))))*B*mheight;
             end
     end
@@ -325,14 +326,14 @@ function eddyflux_batch(varargin)
                 flux3phstor(i) = flux3ph(i)-(mean(phstorage(j1(i):(j1(i)+(hz*60))))-mean(phstorage((j2(i)-(hz*60)):j2(i))))*B*mheight;
                 TKE3(i) = ((mean(vxprime3(j1(i):j2(i)).^2))+(mean(vyprime3(j1(i):j2(i)).^2))+(mean(vzprime3(j1(i):j2(i)).^2))).^0.5;
                 wv3(i)= ((mean((vx(j1(i):j2(i))- vxmean(i)).^2))+(mean((vy(j1(i):j2(i))- vymean(i)).^2))).^0.5;
-                            
+
                 [Cxy,freqxy]=cpsd(vxprime3(j1(i):j2(i)),vzprime3(j1(i):j2(i)),window,[],[],hz);%compute co-spectrum of uprime wprime
                 df=diff(freqxy(1:2));%frequency interval
                 Flux_cpsd_xy(i)=sum(real(Cxy)*df);%integrate co-spectrum (real part only)
                 filt=find(freqxy<1/Td);%find frequencies lower than a wave with 3 second period
                 Flux_cpsd_xy_low(i)=sum(real(Cxy(filt))*df);%integrate only low frequency co-spectrum
                 Ustar(i) = ((Flux_cpsd_xy_low(i)^2)^0.5)^0.5;
-                Zzero(i) = mheight./(exp((vmean(i).*0.41)./Ustar(i))); 
+                Zzero(i) = mheight./(exp((vmean(i).*0.41)./Ustar(i)));
                 EddyDiff(i) = 0.41.*Ustar(i).*mheight;
                 if  vmean(i) < flagwv % removes Cd values that are contaminated due to waves
                     Cd(i) = NaN;
@@ -340,21 +341,21 @@ function eddyflux_batch(varargin)
                 else
                     Cd(i) = ((Flux_cpsd_xy_low(i)^2)^0.5)/(vmean(i).^2);
                     phi2(i) = phid(i);
-                end               
-                
-                                  
+                end
+
+
                 [Co2vz,freqo2vz]=cpsd(o2prime3(j1(i):j2(i)),vzprime3(j1(i):j2(i)),window,[],[],hz);%compute co-spectrum of uprime wprime
                 df=diff(freqo2vz(1:2));%frequency interval
                 Flux3cpsd(i)=(sum(real(Co2vz)*df))*3600;%integrate co-spectrum (real part only)
                 low=find(freqo2vz<1/Td);%find frequencies lower than a wave with 3 second period
                 Flux3cpsdLow(i)=(sum(real(Co2vz(low))*df))*3600;%integrate only low frequency co-spectrum
                 Flux3cpsdLowStor(i) = Flux3cpsdLow(i)-(mean(o2storage(j1(i):(j1(i)+(hz*60))))-mean(o2storage((j2(i)-(hz*60)):j2(i))))*B*mheight;
-                
+
                 [Cphvz,freqphvz]=cpsd(phprime3(j1(i):j2(i)),vzprime3(j1(i):j2(i)),window,[],[],hz);%compute co-spectrum of uprime wprime
                 df=diff(freqphvz(1:2));%frequency interval
                 Flux3cpsdph(i)=(sum(real(Cphvz)*df))*3600;%integrate co-spectrum (real part only)
                 low=find(freqphvz<1/Td);%find frequencies lower than a wave with 3 second period
-                Flux3cpsdphLow(i)=(sum(real(Cphvz(low))*df))*3600;%integrate only low frequency co-spectrum    
+                Flux3cpsdphLow(i)=(sum(real(Cphvz(low))*df))*3600;%integrate only low frequency co-spectrum
                 Flux3cpsdphLowStor(i) = Flux3cpsdphLow(i)-(mean(phstorage(j1(i):(j1(i)+(hz*60))))-mean(phstorage((j2(i)-(hz*60)):j2(i))))*B*mheight;
             end
     end
@@ -436,7 +437,7 @@ function eddyflux_batch(varargin)
     end
     disp('Done');
 
-  catch ME 
+  catch ME
     fprintf('Error: %s\n', ME.message);
     exit(1);
 end

@@ -108,7 +108,7 @@ list(
   tar_target(min_correlation, 50),
 
   # maximum gap length, in seconds, to interpolate after ADV downsampling
-  tar_target(adv_interpolation_max_gap_s, 8),
+  tar_target(adv_interpolation_max_gap_s, 15),
 
   ### Initial processing from raw files ###
 
@@ -300,6 +300,22 @@ list(
       moves_file,
       min_correlation,
       interpolation_max_gap_s = adv_interpolation_max_gap_s
+    )
+  ),
+  tar_target(
+    adv_rotations,
+    calculate_adv_rotations(
+      adv_matlab_input,
+      min_velocity = 0.06,
+      max_velocity = 0.2
+    )
+  ),
+  tar_target(
+    adv_rotations_from_rotate,
+    calculate_adv_rotations_with_rotate(
+      adv_matlab_input,
+      min_velocity = 0.06,
+      max_velocity = 0.2
     )
   ),
   tar_target(pos_df, get_lander_positions(adv_matlab_input)),
